@@ -16,13 +16,19 @@ import Hypatia
 import Hypatia.Cones: vec_copyto!, svec_length, svec_side, smat_to_svec!, svec_to_smat!
 
 import MOIPajarito
-# import MOIPajarito.Cones: Extender, Unextended, Extended, extender
+import MOIPajarito.Cones: Extender, Unextended, Extended, extender
 import MOIPajarito.Cones: ConeCache, clean_array!, dot_expr
 
 include("possemideftri.jl")
+include("epinormeucl.jl")
+include("hypogeomean.jl")
 
 # supported cones for outer approximation
-const OACone = Union{Hypatia.PosSemidefTriCone}
+const OACone = Union{
+    Hypatia.PosSemidefTriCone{Float64, <:RealOrComplex},
+    Hypatia.EpiNormEuclCone{Float64},
+    Hypatia.HypoGeoMeanCone{Float64},
+}
 
 # cone must be supported by both Pajarito and the conic solver
 function MOI.supports_constraint(
@@ -41,6 +47,11 @@ function svec_idx(::Type{ComplexF64}, row::Int, col::Int)
         (row, col) = (col, row)
     end
     return (row - 1) * row + col
+end
+
+function geomean(w::AbstractVector{Float64})
+    any(<=(eps()), w) && return eps()
+    return exp(sum(log, w) / length(w))
 end
 
 end

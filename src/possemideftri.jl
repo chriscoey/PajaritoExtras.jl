@@ -1,3 +1,8 @@
+#=
+real symmetric or complex Hermitian positive semidefinite matrix (svec scaled triangle)
+W ⪰ 0
+self-dual
+=#
 
 mutable struct PosSemidefTriCache{C <: RealOrComplex} <: ConeCache
     cone::Hypatia.PosSemidefTriCone{Float64, C}
