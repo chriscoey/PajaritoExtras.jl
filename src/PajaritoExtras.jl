@@ -12,14 +12,6 @@ const MOI = JuMP.MOI
 const VR = JuMP.VariableRef
 const AE = JuMP.AffExpr
 
-# to create symmetric containers of AbstractJuMPScalars
-LinearAlgebra.hermitian_type(::Type{T}) where {T <: JuMP.AbstractJuMPScalar} = T
-LinearAlgebra.hermitian(scalar::JuMP.AbstractJuMPScalar, ::Symbol) = scalar
-Base.isreal(::JuMP.AbstractJuMPScalar) = true
-Base.real(scalar::JuMP.AbstractJuMPScalar) = scalar
-# for linear algebra operations involving transposes
-# LinearAlgebra.adjoint(scalar::Complex{<:JuMP.AbstractJuMPScalar}) = ?
-
 import Hypatia
 import Hypatia.Cones: vec_copyto!, svec_length, svec_side, smat_to_svec!, svec_to_smat!
 
@@ -39,6 +31,16 @@ function MOI.supports_constraint(
     S::Type{<:OACone},
 )
     return MOI.supports_constraint(MOIPajarito.get_conic_opt(opt), F, S)
+end
+
+# TODO move to Hypatia array utilities?
+svec_idx(::Type{Float64}, row::Int, col::Int) = Hypatia.Cones.svec_idx(row, col)
+
+function svec_idx(::Type{ComplexF64}, row::Int, col::Int)
+    if row < col
+        (row, col) = (col, row)
+    end
+    return (row - 1) * row + col
 end
 
 end
