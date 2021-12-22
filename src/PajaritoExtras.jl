@@ -21,12 +21,14 @@ import MOIPajarito.Cones: ConeCache, clean_array!, dot_expr
 
 include("possemideftri.jl")
 include("epinormeucl.jl")
+include("epipersquare.jl")
 include("hypogeomean.jl")
 
 # supported cones for outer approximation
 const OACone = Union{
     Hypatia.PosSemidefTriCone{Float64, <:RealOrComplex},
     Hypatia.EpiNormEuclCone{Float64},
+    Hypatia.EpiPerSquareCone{Float64},
     Hypatia.HypoGeoMeanCone{Float64},
 }
 

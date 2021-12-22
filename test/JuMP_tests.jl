@@ -15,23 +15,25 @@ import Hypatia.Cones: svec_length
 
 # all instances
 inst_all = [
-    "possemideftri1",
-    "possemideftri2",
-    "epinormeucl1",
-    "epinormeucl2",
-    "hypogeomean1",
-    "hypogeomean2",
+    # "possemideftri1",
+    # "possemideftri2",
+    # "epinormeucl1",
+    # "epinormeucl2",
+    # "hypogeomean1",
+    # "hypogeomean2",
+    "epipersquare1",
+    "epipersquare2",
     # "expdesign",
 ]
 
 # instances to test with use_extended_form = false
 inst_noextend = [
-    "epinormeucl1",
-    "epinormeucl2",
-    "hypogeomean1",
-    "hypogeomean2",
     # "epinormeucl1",
     # "epinormeucl2",
+    # "hypogeomean1",
+    # "hypogeomean2",
+    "epipersquare1",
+    "epipersquare2",
 ]
 
 function runtests(oa_solver, conic_solver)
