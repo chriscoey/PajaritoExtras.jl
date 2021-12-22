@@ -107,6 +107,7 @@ end
 function epinormeucl2(opt)
     TOL = 1e-4
     m = JuMP.Model(opt)
+
     JuMP.@variable(m, x[1:3], Bin)
     K = Hypatia.EpiNormEuclCone{Float64}(4)
     c1 = JuMP.@constraint(m, vcat(inv(sqrt(2)), x .- 0.5) in K)
@@ -153,6 +154,23 @@ function hypogeomean1(opt)
     @test isapprox(JuMP.objective_value(m), opt_obj, atol = TOL)
     @test isapprox(JuMP.objective_bound(m), opt_obj, atol = TOL)
     @test isapprox(JuMP.value.(w), w_max, atol = TOL)
+    return
+end
+
+function hypogeomean2(opt)
+    TOL = 1e-4
+    m = JuMP.Model(opt)
+    JuMP.@variable(m, x, Bin)
+    JuMP.@variable(m, y[1:3], Int)
+    JuMP.@constraint(m, vcat(0.5 * x, y) in Hypatia.HypoGeoMeanCone{Float64}(4))
+    JuMP.@objective(m, Max, 5x - sum(y))
+    JuMP.optimize!(m)
+    @test JuMP.termination_status(m) == MOI.OPTIMAL
+    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+    @test isapprox(JuMP.objective_value(m), 2, atol = TOL)
+    @test isapprox(JuMP.objective_bound(m), 2, atol = TOL)
+    @test isapprox(JuMP.value(x), 1, atol = TOL)
+    @test isapprox(JuMP.value.(y), ones(3), atol = TOL)
     return
 end
 

@@ -2,12 +2,14 @@
 hypograph of geometric mean
 (u, w) : wᵢ ≥ 0, u ≤ (∏ᵢ wᵢ)^(1/d)
 
-extended formulation
-∃ θ ≥ 0, ∃ λ, Σᵢ λᵢ ≥ 0, (λᵢ, u + θ, wᵢ) ∈ HypoPerLog
-i.e. u + θ ≥ 0, wᵢ ≥ 0, λᵢ ≤ (u + θ) log(wᵢ / (u + θ))
-
 dual cone
 (u, w) : u ≤ 0, wᵢ ≥ 0, u ≥ -d (∏ᵢ wᵢ)^(1/d)
+
+extended formulation
+NOTE slightly different to EF in solver paper
+∃ θ ≥ u, ∃ λ, Σᵢ λᵢ ≥ 0, (λᵢ, θ, wᵢ) ∈ HypoPerLog
+i.e. θ ≥ 0, wᵢ ≥ 0, λᵢ ≤ θ log(wᵢ / θ)
+dual of HypoPerLog is (p, q, r) : p ≤ 0, r ≥ 0, q ≥ p * (log(-r / p) + 1)
 =#
 
 mutable struct HypoGeoMeanCache{E <: Extender} <: ConeCache
@@ -91,69 +93,78 @@ function _get_cuts(
     return [cut]
 end
 
-# # extended formulation
+# extended formulation
 
-# MOIPajarito.Cones.num_ext_variables(cache::HypoGeoMeanCache{Extended}) = cache.d
+MOIPajarito.Cones.num_ext_variables(cache::HypoGeoMeanCache{Extended}) = 1 + cache.d
 
-# function MOIPajarito.Cones.extend_start(
-#     cache::HypoGeoMeanCache{Extended},
-#     s_start::Vector{Float64},
-# )
-#     u_start = s_start[1]
-#     w_start = s_start[2:end]
-#     @assert u_start - LinearAlgebra.norm(w_start) >= -1e-7 # TODO
-#     if u_start < 1e-8
-#         return zeros(cache.d)
-#     end
-#     return [w_i / 2u_start * w_i for w_i in w_start]
-# end
+function MOIPajarito.Cones.extend_start(
+    cache::HypoGeoMeanCache{Extended},
+    s_start::Vector{Float64},
+)
+    u_start = s_start[1]
+    w_start = s_start[2:end]
+    w_geom = geomean(w_start)
+    @assert w_geom - u_start >= -1e-7 # TODO
+    if u_start < 1e-8
+        return zeros(1 + cache.d)
+    end
+    λ_start = [u_start * log(w_i / u_start) for w_i in w_start]
+    @assert sum(λ_start) >= -eps()
+    return vcat(u_start, λ_start)
+end
 
-# function MOIPajarito.Cones.setup_auxiliary(
-#     cache::HypoGeoMeanCache{Extended},
-#     oa_model::JuMP.Model,
-# )
-#     @assert cache.d >= 2
-#     λ = cache.λ = JuMP.@variable(oa_model, [1:(cache.d)], lower_bound = 0)
-#     u = cache.oa_s[1]
-#     JuMP.@constraint(oa_model, u >= 2 * sum(λ))
-#     return λ
-# end
+function MOIPajarito.Cones.setup_auxiliary(
+    cache::HypoGeoMeanCache{Extended},
+    oa_model::JuMP.Model,
+)
+    @assert cache.d >= 2
+    θ = cache.θ = JuMP.@variable(oa_model, lower_bound = 0)
+    u = cache.oa_s[1]
+    JuMP.@constraint(oa_model, θ >= u)
+    λ = cache.λ = JuMP.@variable(oa_model, [1:(cache.d)])
+    JuMP.@constraint(oa_model, sum(λ) >= 0)
+    return vcat(θ, λ)
+end
 
-# function MOIPajarito.Cones.add_init_cuts(
-#     cache::HypoGeoMeanCache{Extended},
-#     oa_model::JuMP.Model,
-# )
-#     u = cache.oa_s[1]
-#     @views w = cache.oa_s[2:end]
-#     d = cache.d
-#     λ = cache.λ
-#     # u ≥ 0, u ≥ |wᵢ|
-#     # disaggregated cut on (u, λᵢ, wᵢ) is (1, 2, ±2)
-#     JuMP.@constraints(oa_model, begin
-#         u >= 0
-#         [i in 1:d], u + 2 * λ[i] + 2 * w[i] >= 0
-#         [i in 1:d], u + 2 * λ[i] - 2 * w[i] >= 0
-#     end)
-#     return 1 + 2d
-# end
+function MOIPajarito.Cones.add_init_cuts(
+    cache::HypoGeoMeanCache{Extended},
+    oa_model::JuMP.Model,
+)
+    u = cache.oa_s[1]
+    @views w = cache.oa_s[2:end]
+    d = cache.d
+    θ = cache.θ
+    λ = cache.λ
+    # variable bounds wᵢ ≥ 0 and cut (-d, e)
+    # disaggregated cut on (λᵢ, θ, wᵢ) is (-1, -1, 1)
+    # TODO check implication in math
+    JuMP.@constraints(oa_model, begin
+        [i in 1:d], w[i] >= 0
+        [i in 1:d], -λ[i] - θ + w[i] >= 0
+    end)
+    return 2d
+end
 
-# function _get_cuts(
-#     r::Vector{Float64},
-#     cache::HypoGeoMeanCache{Extended},
-#     oa_model::JuMP.Model,
-# )
-#     clean_array!(r) && return AE[]
-#     p = LinearAlgebra.norm(r)
-#     u = cache.oa_s[1]
-#     @views w = cache.oa_s[2:end]
-#     λ = cache.λ
-#     cuts = AE[]
-#     for i in 1:(cache.d)
-#         r_i = r[i]
-#         iszero(r_i) && continue
-#         # strengthened disaggregated cut on (u, λᵢ, wᵢ) is (rᵢ² / 2‖r‖, ‖r‖, rᵢ)
-#         cut = JuMP.@expression(oa_model, r_i^2 / 2p * u + p * λ[i] + r_i * w[i])
-#         push!(cuts, cut)
-#     end
-#     return cuts
-# end
+function _get_cuts(
+    r::Vector{Float64},
+    cache::HypoGeoMeanCache{Extended},
+    oa_model::JuMP.Model,
+)
+    clean_array!(r) && return AE[]
+    p = -geomean(r)
+    @views w = cache.oa_s[2:end]
+    θ = cache.θ
+    λ = cache.λ
+    cuts = AE[]
+    for i in 1:(cache.d)
+        r_i = r[i]
+        iszero(r_i) && continue # TODO ?
+        # strengthened disaggregated cut on (λᵢ, θ, wᵢ) is
+        # p = -geom(r), (p, p * (log(-rᵢ / p) + 1), rᵢ)
+        # TODO check math
+        q = p * (log(-r_i / p) + 1)
+        cut = JuMP.@expression(oa_model, p * λ[i] + q * θ + r_i * w[i])
+        push!(cuts, cut)
+    end
+    return cuts
+end

@@ -15,19 +15,21 @@ import Hypatia.Cones: svec_length
 
 # all instances
 inst_all = [
-    # "possemideftri1",
-    # "possemideftri2",
-    # "epinormeucl1",
-    # "epinormeucl2",
+    "possemideftri1",
+    "possemideftri2",
+    "epinormeucl1",
+    "epinormeucl2",
     "hypogeomean1",
+    "hypogeomean2",
     # "expdesign",
 ]
 
 # instances to test with use_extended_form = false
 inst_noextend = [
-    # "epinormeucl1",
-    # "epinormeucl2",
+    "epinormeucl1",
+    "epinormeucl2",
     "hypogeomean1",
+    "hypogeomean2",
     # "epinormeucl1",
     # "epinormeucl2",
 ]
@@ -41,14 +43,14 @@ function runtests(oa_solver, conic_solver)
         @info "iterative, extended"
         run_jump_tests(inst_all, true, true, oa_solver, conic_solver)
     end
-    # @testset "one tree, natural" begin
-    #     @info "one tree, natural"
-    #     run_jump_tests(inst_noextend, false, false, oa_solver, conic_solver)
-    # end
-    # @testset "one tree, extended" begin
-    #     @info "one tree, extended"
-    #     run_jump_tests(inst_all, true, false, oa_solver, conic_solver)
-    # end
+    @testset "one tree, natural" begin
+        @info "one tree, natural"
+        run_jump_tests(inst_noextend, false, false, oa_solver, conic_solver)
+    end
+    @testset "one tree, extended" begin
+        @info "one tree, extended"
+        run_jump_tests(inst_all, true, false, oa_solver, conic_solver)
+    end
     return
 end
 
