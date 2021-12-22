@@ -54,19 +54,19 @@ function possemideftri2(opt)
         @test isapprox(JuMP.objective_value(m), λ₁, atol = TOL)
         @test isapprox(JuMP.objective_bound(m), λ₁, atol = TOL)
         x_val = JuMP.value.(x)
-        mat = Hermitian(smat(R, x_val), :U)
-        @test isapprox(tr(mat), 1, atol = TOL)
-        @test eigmin(mat) >= -TOL
+        x_mat = Hermitian(smat(R, x_val), :U)
+        @test isapprox(tr(x_mat), 1, atol = TOL)
+        @test eigmin(x_mat) >= -TOL
 
         JuMP.set_binary.(x_diag)
         JuMP.optimize!(m)
         @test JuMP.termination_status(m) == MOI.OPTIMAL
         @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
         x_val = JuMP.value.(x)
-        mat = Hermitian(smat(R, x_val), :U)
-        @test isapprox(tr(mat), 1, atol = TOL)
-        @test eigmin(mat) >= -TOL
-        @test isapprox(mat[d, d], 1, atol = TOL)
+        x_mat = Hermitian(smat(R, x_val), :U)
+        @test isapprox(tr(x_mat), 1, atol = TOL)
+        @test eigmin(x_mat) >= -TOL
+        @test isapprox(x_mat[d, d], 1, atol = TOL)
     end
     return
 end
@@ -210,5 +210,32 @@ function epipersquare2(opt)
     @test isapprox(JuMP.objective_value(m), 1, atol = TOL)
     @test isapprox(JuMP.objective_bound(m), 1, atol = TOL)
     @test isapprox(JuMP.value.(w), [0.5, 0.5], atol = 10TOL)
+    return
+end
+
+function epinormspectral1(opt)
+    TOL = 1e-4
+    for (d1, d2) in [(1, 2), (2, 3)], is_complex in (false, true)
+        R = (is_complex ? ComplexF64 : Float64)
+        dim = vec_length(R, d1 * d2)
+        vec = rand(0:3, dim)
+        rand_vec = 0.1 * (rand(dim) .- 0.5)
+        rand_mat = vec_copyto!(zeros(R, d1, d2), rand_vec)
+        σ₁ = svdvals(rand_mat)[1]
+        m = JuMP.Model(opt)
+
+        JuMP.@variable(m, y)
+        x = JuMP.@variable(m, [1:dim], Int)
+        JuMP.@constraint(m, 0 .<= x .<= 3)
+        K = Hypatia.EpiNormSpectralCone{Float64, R}(d1, d2)
+        JuMP.@constraint(m, vcat(y, vec + rand_vec - x) in K)
+        JuMP.@objective(m, Min, y)
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        @test isapprox(JuMP.objective_value(m), σ₁, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), σ₁, atol = TOL)
+        @test isapprox(JuMP.value.(x), vec, atol = TOL)
+    end
     return
 end

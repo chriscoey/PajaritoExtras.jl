@@ -27,6 +27,7 @@ function MOIPajarito.Cones.create_cache(
     cone::Hypatia.HypoGeoMeanCone{Float64},
     extend::Bool,
 )
+    @assert !cone.use_dual # TODO
     dim = MOI.dimension(cone)
     @assert dim == length(oa_s)
     d = dim - 1

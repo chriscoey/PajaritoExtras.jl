@@ -111,10 +111,10 @@ function MOIPajarito.Cones.get_sep_cuts(cache::PosSemidefTriCache, oa_model::JuM
 end
 
 function _get_cuts(
-    R_eig::Matrix{<:RealOrComplex},
-    cache::PosSemidefTriCache,
+    R_eig::Matrix{C},
+    cache::PosSemidefTriCache{C},
     oa_model::JuMP.Model,
-)
+) where {C}
     # cuts from eigendecomposition are rᵢ * rᵢ'
     cuts = AE[]
     R_vec_i = cache.w_temp

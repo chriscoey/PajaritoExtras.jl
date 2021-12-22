@@ -160,7 +160,6 @@ function _get_cuts(
     for i in 1:(cache.d)
         r_i = r[i]
         iszero(r_i) && continue
-        # DELETE strengthened disaggregated cut on (u, λᵢ, wᵢ) is (rᵢ² / 2‖r‖, ‖r‖, rᵢ)
         # p = ‖r‖² / 2q, strengthened disaggregated cut on (λᵢ, v, wᵢ) is (p, rᵢ² / 2p, rᵢ)
         # TODO check math
         q_i = r_i / 2p * r_i

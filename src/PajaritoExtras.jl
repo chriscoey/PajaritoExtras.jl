@@ -13,7 +13,8 @@ const VR = JuMP.VariableRef
 const AE = JuMP.AffExpr
 
 import Hypatia
-import Hypatia.Cones: vec_copyto!, svec_length, svec_side, smat_to_svec!, svec_to_smat!
+import Hypatia.Cones:
+    vec_length, vec_copyto!, svec_length, svec_side, smat_to_svec!, svec_to_smat!
 
 import MOIPajarito
 import MOIPajarito.Cones: Extender, Unextended, Extended, extender
@@ -23,12 +24,14 @@ include("possemideftri.jl")
 include("epinormeucl.jl")
 include("epipersquare.jl")
 include("hypogeomean.jl")
+include("epinormspectral.jl")
 
 # supported cones for outer approximation
 const OACone = Union{
     Hypatia.PosSemidefTriCone{Float64, <:RealOrComplex},
     Hypatia.EpiNormEuclCone{Float64},
     Hypatia.EpiPerSquareCone{Float64},
+    Hypatia.EpiNormSpectralCone{Float64, <:RealOrComplex},
     Hypatia.HypoGeoMeanCone{Float64},
 }
 
