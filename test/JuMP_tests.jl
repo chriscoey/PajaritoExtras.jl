@@ -19,10 +19,10 @@ inst_all = [
     # "possemideftri2",
     # "epinormeucl1",
     # "epinormeucl2",
+    # "epipersquare1",
+    "epipersquare2",
     # "hypogeomean1",
     # "hypogeomean2",
-    "epipersquare1",
-    "epipersquare2",
     # "expdesign",
 ]
 
@@ -30,10 +30,10 @@ inst_all = [
 inst_noextend = [
     # "epinormeucl1",
     # "epinormeucl2",
+    # "epipersquare1",
+    "epipersquare2",
     # "hypogeomean1",
     # "hypogeomean2",
-    "epipersquare1",
-    "epipersquare2",
 ]
 
 function runtests(oa_solver, conic_solver)

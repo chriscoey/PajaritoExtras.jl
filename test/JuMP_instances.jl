@@ -174,78 +174,41 @@ function hypogeomean2(opt)
     return
 end
 
-# # TODO use new cones
-# function expdesign(opt)
-#     TOL = 1e-4
-#     # experiment design
-#     V = [1 1 -0.2 -0.5; 1 -1 0.5 -0.2]
-#     function setup_exp_design()
-#         m = JuMP.Model(opt)
-#         JuMP.@variable(m, x[1:4], Int)
-#         JuMP.@constraint(m, x[1:2] .>= 1) # avoids ill-posedness
-#         JuMP.@constraint(m, x[3:4] .>= 0)
-#         JuMP.@constraint(m, sum(x) <= 8)
-#         Q = V * diagm(x) * V'
-#         return (m, x, Q)
-#     end
+function epipersquare1(opt)
+    TOL = 1e-4
+    m = JuMP.Model(opt)
 
-#     # A-optimal
-#     (m, x, Q) = setup_exp_design()
-#     JuMP.set_start_value.(x, [4, 4, 0, 0]) # partial warm start
-#     JuMP.@variable(m, y[1:2])
-#     JuMP.@objective(m, Min, sum(y))
-#     for i in 1:2
-#         ei = zeros(2)
-#         ei[i] = 1
-#         Qyi = [Q ei; ei' y[i]]
-#         JuMP.@constraint(m, Symmetric(Qyi) in JuMP.PSDCone())
-#     end
-#     JuMP.optimize!(m)
-#     @test JuMP.termination_status(m) == MOI.OPTIMAL
-#     @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-#     @test isapprox(JuMP.objective_value(m), 1 / 4, atol = TOL)
-#     @test isapprox(JuMP.objective_bound(m), 1 / 4, atol = TOL)
-#     x_val = JuMP.value.(x)
-#     @test isapprox(x_val, [4, 4, 0, 0], atol = TOL)
-#     @test isapprox(JuMP.value.(y[1]), JuMP.value.(y[2]), atol = TOL)
+    JuMP.@variable(m, x[1:3], Int)
+    K = Hypatia.EpiPerSquareCone{Float64}(5)
+    JuMP.@constraint(m, vcat(0.25, 1, x .- 0.5) in K)
+    JuMP.optimize!(m)
+    @test JuMP.termination_status(m) == MOI.INFEASIBLE
+    @test JuMP.primal_status(m) == MOI.NO_SOLUTION
+    return
+end
 
-#     # E-optimal
-#     (m, x, Q) = setup_exp_design()
-#     JuMP.@variable(m, y)
-#     JuMP.set_start_value.(vcat(x, y), [4, 4, 0, 0, 8]) # full warm start
-#     JuMP.@objective(m, Max, y)
-#     Qy = Q - y * Matrix(I, 2, 2)
-#     JuMP.@constraint(m, Symmetric(Qy) in JuMP.PSDCone())
-#     JuMP.optimize!(m)
-#     @test JuMP.termination_status(m) == MOI.OPTIMAL
-#     @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-#     @test isapprox(JuMP.objective_value(m), 8, atol = TOL)
-#     @test isapprox(JuMP.objective_bound(m), 8, atol = TOL)
-#     x_val = JuMP.value.(x)
-#     @test isapprox(x_val, [4, 4, 0, 0], atol = TOL)
+function epipersquare2(opt)
+    TOL = 1e-4
+    m = JuMP.Model(opt)
 
-#     # D-optimal
-#     for use_logdet in (true, false)
-#         opt_x = [4, 4, 0, 0]
-#         opt_Q = Symmetric(V * Diagonal(opt_x) * V')
-#         (m, x, Q) = setup_exp_design()
-#         JuMP.@variable(m, y)
-#         JuMP.@objective(m, Max, y)
-#         Qvec = [Q[1, 1], Q[2, 1], Q[2, 2]]
-#         if use_logdet
-#             JuMP.@constraint(m, vcat(y, 1.0, Qvec) in MOI.LogDetConeTriangle(2))
-#             opt_val = logdet(opt_Q)
-#         else
-#             JuMP.@constraint(m, vcat(y, Qvec) in MOI.RootDetConeTriangle(2))
-#             opt_val = sqrt(det(opt_Q))
-#         end
-#         JuMP.optimize!(m)
-#         @test JuMP.termination_status(m) == MOI.OPTIMAL
-#         @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-#         @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
-#         @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
-#         x_val = JuMP.value.(x)
-#         @test isapprox(x_val, opt_x, atol = TOL)
-#     end
-#     return
-# end
+    JuMP.@variable(m, v, Bin)
+    JuMP.@variable(m, w[1:2], Int)
+    JuMP.@constraint(m, vcat(1, v, w .- 1.5) in Hypatia.EpiPerSquareCone{Float64}(4))
+    JuMP.@objective(m, Min, v)
+    JuMP.optimize!(m)
+    @test JuMP.termination_status(m) == MOI.OPTIMAL
+    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+    @test isapprox(JuMP.objective_value(m), 1, atol = TOL)
+    @test isapprox(JuMP.objective_bound(m), 1, atol = TOL)
+    @test isapprox(JuMP.value(v), 1, atol = TOL)
+
+    JuMP.unset_integer.(w)
+    JuMP.@objective(m, Min, v + sum(w) - 1)
+    JuMP.optimize!(m)
+    @test JuMP.termination_status(m) == MOI.OPTIMAL
+    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+    @test isapprox(JuMP.objective_value(m), 1, atol = TOL)
+    @test isapprox(JuMP.objective_bound(m), 1, atol = TOL)
+    @test isapprox(JuMP.value.(w), [0.5, 0.5], atol = 10TOL)
+    return
+end
