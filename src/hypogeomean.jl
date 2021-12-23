@@ -57,9 +57,10 @@ function MOIPajarito.Cones.get_sep_cuts(cache::HypoGeoMeanCache, oa_model::JuMP.
         return AE[]
     end
 
-    # gradient cut is (-1, -ws_geom / d ./ w)
-    c1 = ws_geom / -d
-    r = [c1 / max(w_i, 1e-7) for w_i in ws]
+    # gradient cut is (-1, geom(w) / d ./ w)
+    w_pos = max.(ws, 1e-7)
+    c1 = geomean(w_pos) / cache.d
+    r = c1 ./ w_pos
     return _get_cuts(r, cache, oa_model)
 end
 

@@ -1,5 +1,5 @@
 #=
-real symmetric or complex Hermitian positive semidefinite matrix (svec scaled triangle)
+real symmetric or complex Hermitian positive semidefinite matrices (svec scaled triangle)
 W ⪰ 0
 self-dual
 =#
@@ -103,9 +103,9 @@ end
 
 function MOIPajarito.Cones.get_sep_cuts(cache::PosSemidefTriCache, oa_model::JuMP.Model)
     # check s ∉ K
-    sW = cache.W_temp
-    svec_to_smat!(sW, cache.s, rt2)
-    F = eigen!(Hermitian(sW, :U), -Inf, -1e-7)
+    Ws = cache.W_temp
+    svec_to_smat!(Ws, cache.s, rt2)
+    F = eigen!(Hermitian(Ws, :U), -Inf, -1e-7)
     isempty(F.values) && return AE[]
     return _get_cuts(F.vectors, cache, oa_model)
 end

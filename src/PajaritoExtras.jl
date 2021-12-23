@@ -23,8 +23,9 @@ import MOIPajarito.Cones: ConeCache, clean_array!, dot_expr
 include("possemideftri.jl")
 include("epinormeucl.jl")
 include("epipersquare.jl")
-include("hypogeomean.jl")
 include("epinormspectral.jl")
+include("hypogeomean.jl")
+include("hyporootdettri.jl")
 
 # supported cones for outer approximation
 const OACone = Union{
@@ -33,6 +34,7 @@ const OACone = Union{
     Hypatia.EpiPerSquareCone{Float64},
     Hypatia.EpiNormSpectralCone{Float64, <:RealOrComplex},
     Hypatia.HypoGeoMeanCone{Float64},
+    Hypatia.HypoRootdetTriCone{Float64, <:RealOrComplex},
 }
 
 # cone must be supported by both Pajarito and the conic solver
@@ -55,7 +57,7 @@ function svec_idx(::Type{ComplexF64}, row::Int, col::Int)
 end
 
 function geomean(w::AbstractVector{Float64})
-    any(<=(eps()), w) && return eps()
+    any(<(eps()), w) && return NaN
     return exp(sum(log, w) / length(w))
 end
 

@@ -127,53 +127,6 @@ function epinormeucl2(opt)
     return
 end
 
-function hypogeomean1(opt)
-    TOL = 1e-4
-    m = JuMP.Model(opt)
-
-    JuMP.@variable(m, u)
-    JuMP.@variable(m, w[1:3], Int)
-    JuMP.@constraint(m, vcat(u, w) in Hypatia.HypoGeoMeanCone{Float64}(4))
-    JuMP.@objective(m, Max, u)
-    w_max = [1.1, 2.3, 3.5]
-    JuMP.@constraint(m, w .<= w_max)
-    JuMP.optimize!(m)
-    @test JuMP.termination_status(m) == MOI.OPTIMAL
-    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-    opt_obj = PajaritoExtras.geomean(Float64.(1:3))
-    @test isapprox(JuMP.objective_value(m), opt_obj, atol = TOL)
-    @test isapprox(JuMP.objective_bound(m), opt_obj, atol = TOL)
-    @test isapprox(JuMP.value(u), opt_obj, atol = TOL)
-    @test isapprox(JuMP.value.(w), 1:3, atol = TOL)
-
-    JuMP.unset_integer.(w)
-    JuMP.optimize!(m)
-    @test JuMP.termination_status(m) == MOI.OPTIMAL
-    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-    opt_obj = PajaritoExtras.geomean(w_max)
-    @test isapprox(JuMP.objective_value(m), opt_obj, atol = TOL)
-    @test isapprox(JuMP.objective_bound(m), opt_obj, atol = TOL)
-    @test isapprox(JuMP.value.(w), w_max, atol = TOL)
-    return
-end
-
-function hypogeomean2(opt)
-    TOL = 1e-4
-    m = JuMP.Model(opt)
-    JuMP.@variable(m, x, Bin)
-    JuMP.@variable(m, y[1:3], Int)
-    JuMP.@constraint(m, vcat(0.5 * x, y) in Hypatia.HypoGeoMeanCone{Float64}(4))
-    JuMP.@objective(m, Max, 5x - sum(y))
-    JuMP.optimize!(m)
-    @test JuMP.termination_status(m) == MOI.OPTIMAL
-    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-    @test isapprox(JuMP.objective_value(m), 2, atol = TOL)
-    @test isapprox(JuMP.objective_bound(m), 2, atol = TOL)
-    @test isapprox(JuMP.value(x), 1, atol = TOL)
-    @test isapprox(JuMP.value.(y), ones(3), atol = TOL)
-    return
-end
-
 function epipersquare1(opt)
     TOL = 1e-4
     m = JuMP.Model(opt)
@@ -238,4 +191,133 @@ function epinormspectral1(opt)
         @test isapprox(JuMP.value.(x), vec, atol = TOL)
     end
     return
+end
+
+function epinormspectral2(opt)
+    TOL = 1e-4
+    d1 = d2 = 2
+    for is_complex in (false, true)
+        R = (is_complex ? ComplexF64 : Float64)
+        dim = vec_length(R, d1 * d2)
+        m = JuMP.Model(opt)
+
+        x = JuMP.@variable(m, [1:dim], Bin)
+        K = Hypatia.EpiNormSpectralCone{Float64, R}(d1, d2)
+        JuMP.@constraint(m, vcat(1, x) in K)
+        JuMP.@objective(m, Max, sum(x))
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        @test isapprox(JuMP.objective_value(m), d1, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), d1, atol = TOL)
+        @test isapprox(sum(JuMP.value.(x)), d1, atol = TOL)
+    end
+    return
+end
+
+function hypogeomean1(opt)
+    TOL = 1e-4
+    m = JuMP.Model(opt)
+
+    JuMP.@variable(m, u)
+    JuMP.@variable(m, w[1:3], Int)
+    JuMP.@constraint(m, vcat(u, w) in Hypatia.HypoGeoMeanCone{Float64}(4))
+    JuMP.@objective(m, Max, u)
+    w_max = [1.1, 2.3, 3.5]
+    JuMP.@constraint(m, w .<= w_max)
+    JuMP.optimize!(m)
+    @test JuMP.termination_status(m) == MOI.OPTIMAL
+    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+    opt_obj = PajaritoExtras.geomean(Float64.(1:3))
+    @test isapprox(JuMP.objective_value(m), opt_obj, atol = TOL)
+    @test isapprox(JuMP.objective_bound(m), opt_obj, atol = TOL)
+    @test isapprox(JuMP.value(u), opt_obj, atol = TOL)
+    @test isapprox(JuMP.value.(w), 1:3, atol = TOL)
+
+    JuMP.unset_integer.(w)
+    JuMP.optimize!(m)
+    @test JuMP.termination_status(m) == MOI.OPTIMAL
+    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+    opt_obj = PajaritoExtras.geomean(w_max)
+    @test isapprox(JuMP.objective_value(m), opt_obj, atol = TOL)
+    @test isapprox(JuMP.objective_bound(m), opt_obj, atol = TOL)
+    @test isapprox(JuMP.value.(w), w_max, atol = TOL)
+    return
+end
+
+function hypogeomean2(opt)
+    TOL = 1e-4
+    m = JuMP.Model(opt)
+    JuMP.@variable(m, x, Bin)
+    JuMP.@variable(m, y[1:3], Int)
+    JuMP.@constraint(m, vcat(0.5 * x, y) in Hypatia.HypoGeoMeanCone{Float64}(4))
+    JuMP.@objective(m, Max, 5x - sum(y))
+    JuMP.optimize!(m)
+    @test JuMP.termination_status(m) == MOI.OPTIMAL
+    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+    @test isapprox(JuMP.objective_value(m), 2, atol = TOL)
+    @test isapprox(JuMP.objective_bound(m), 2, atol = TOL)
+    @test isapprox(JuMP.value(x), 1, atol = TOL)
+    @test isapprox(JuMP.value.(y), ones(3), atol = TOL)
+    return
+end
+
+function hyporootdettri1(opt)
+    TOL = 1e-4
+    # for d in (2, 3), is_complex in (false, true)
+    for d in (2), is_complex in (true)
+        R = (is_complex ? ComplexF64 : Float64)
+        w_dim = svec_length(R, d)
+        m = JuMP.Model(opt)
+
+        w = JuMP.@variable(m, [1:w_dim], Bin)
+        K = Hypatia.HypoRootdetTriCone{Float64, R}(1 + w_dim)
+        JuMP.@constraint(m, vcat(1, w) in K)
+        JuMP.@objective(m, Max, sum(w))
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        @test isapprox(JuMP.objective_value(m), d, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), d, atol = TOL)
+        w_val = JuMP.value.(w)
+        w_mat = Hermitian(smat(R, w_val), :U)
+        @test isapprox(w_mat, I, atol = TOL)
+
+        JuMP.@constraint(m, sum(w) <= d - 1)
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.INFEASIBLE
+        @test JuMP.primal_status(m) == MOI.NO_SOLUTION
+    end
+    return
+end
+
+function hyporootdettri2(opt)
+    TOL = 1e-4
+    (m, x, y, Q, opt_x, opt_Q) = _setup_expdesign(opt)
+    K = Hypatia.HypoRootdetTriCone{Float64, Float64}(4)
+    JuMP.@constraint(m, vcat(y, svec(Q)) in K)
+    opt_val = sqrt(det(opt_Q))
+    JuMP.optimize!(m)
+    @test JuMP.termination_status(m) == MOI.OPTIMAL
+    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+    @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
+    @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
+    @test isapprox(JuMP.value.(x), opt_x, atol = TOL)
+    return
+end
+
+function _setup_expdesign(opt)
+    m = JuMP.Model(opt)
+    JuMP.@variable(m, x[1:4], Int)
+    JuMP.@constraint(m, x[1:2] .>= 1) # avoids ill-posedness
+    JuMP.@constraint(m, x[3:4] .>= 0)
+    JuMP.@constraint(m, sum(x) <= 8)
+    JuMP.@variable(m, y)
+    JuMP.@objective(m, Max, y)
+
+    V = [1 1 -0.2 -0.5; 1 -1 0.5 -0.2]
+    Q = V * diagm(x) * V'
+    opt_x = [4, 4, 0, 0]
+    opt_Q = Symmetric(V * Diagonal(opt_x) * V')
+    return (m, x, y, Q, opt_x, opt_Q)
 end

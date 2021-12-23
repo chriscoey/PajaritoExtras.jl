@@ -21,20 +21,22 @@ inst_all = String[
     # "epinormeucl2",
     # "epipersquare1",
     # "epipersquare2",
+    # "epinormspectral1",
+    # "epinormspectral2",
     # "hypogeomean1",
     # "hypogeomean2",
-    "epinormspectral1",
-    # "expdesign",
+    "hyporootdettri1",
+    "hyporootdettri2",
 ]
 
 # instances to test with use_extended_form = false
 inst_noextend = String[
-    # "epinormeucl1",
-    # "epinormeucl2",
-    # "epipersquare1",
-    # "epipersquare2",
-    # "hypogeomean1",
-    # "hypogeomean2",
+# "epinormeucl1",
+# "epinormeucl2",
+# "epipersquare1",
+# "epipersquare2",
+# "hypogeomean1",
+# "hypogeomean2",
 ]
 
 function runtests(oa_solver, conic_solver)
