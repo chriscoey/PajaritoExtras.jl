@@ -95,37 +95,17 @@ function MOIPajarito.Cones.get_subp_cuts(
     # strengthened cuts from eigendecomposition are λᵢ * rᵢ * rᵢ'
     R = cache.W_temp
     svec_to_smat!(R, z, rt2)
-    F = eigen!(Hermitian(R, :U), 1e-8, Inf) # TODO tune
+    F = eigen(Hermitian(R, :U), 1e-8, Inf) # TODO tune
     isempty(F.values) && return AE[]
     R_eig = F.vectors * Diagonal(sqrt.(F.values))
-    return _get_cuts(R_eig, cache, oa_model)
+    return _get_psd_cuts(R_eig, cache, oa_model)
 end
 
 function MOIPajarito.Cones.get_sep_cuts(cache::PosSemidefTriCache, oa_model::JuMP.Model)
     # check s ∉ K
     Ws = cache.W_temp
     svec_to_smat!(Ws, cache.s, rt2)
-    F = eigen!(Hermitian(Ws, :U), -Inf, -1e-7)
+    F = eigen(Hermitian(Ws, :U), -Inf, -1e-7)
     isempty(F.values) && return AE[]
-    return _get_cuts(F.vectors, cache, oa_model)
-end
-
-function _get_cuts(
-    R_eig::Matrix{C},
-    cache::PosSemidefTriCache{C},
-    oa_model::JuMP.Model,
-) where {C}
-    # cuts from eigendecomposition are rᵢ * rᵢ'
-    cuts = AE[]
-    R_vec_i = cache.w_temp
-    R_i = cache.W_temp
-    for i in 1:size(R_eig, 2)
-        @views r_i = R_eig[:, i]
-        mul!(R_i, r_i, r_i')
-        clean_array!(R_i) && continue
-        smat_to_svec!(R_vec_i, R_i, rt2)
-        cut = dot_expr(R_vec_i, cache.oa_s, oa_model)
-        push!(cuts, cut)
-    end
-    return cuts
+    return _get_psd_cuts(F.vectors, cache, oa_model)
 end

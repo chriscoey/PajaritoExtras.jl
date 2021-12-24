@@ -46,6 +46,34 @@ function MOI.supports_constraint(
     return MOI.supports_constraint(MOIPajarito.get_conic_opt(opt), F, S)
 end
 
+# caches for cones needing PSD cuts
+const PSDDomainCache{C <: RealOrComplex} = Union{
+    PosSemidefTriCache{C},
+    HypoRootdetTriCache{C},
+    # EpiPerSepSpectralCache{C},
+}
+
+# eigenvector cuts for a PSD constraint W ⪰ 0
+function _get_psd_cuts(
+    R_eig::Matrix{C},
+    cache::PSDDomainCache{C},
+    oa_model::JuMP.Model,
+) where {C}
+    cuts = AE[]
+    R_vec_i = cache.w_temp
+    R_i = cache.W_temp
+    for i in 1:size(R_eig, 2)
+        @views r_i = R_eig[:, i]
+        # cuts from eigendecomposition are rᵢ * rᵢ'
+        mul!(R_i, r_i, r_i')
+        clean_array!(R_i) && continue
+        smat_to_svec!(R_vec_i, R_i, rt2)
+        cut = dot_expr(R_vec_i, cache.oa_s, oa_model)
+        push!(cuts, cut)
+    end
+    return cuts
+end
+
 # TODO move to Hypatia array utilities?
 svec_idx(::Type{Float64}, row::Int, col::Int) = Hypatia.Cones.svec_idx(row, col)
 
@@ -56,8 +84,9 @@ function svec_idx(::Type{ComplexF64}, row::Int, col::Int)
     return (row - 1) * row + col
 end
 
-function geomean(w::AbstractVector{Float64})
-    any(<(eps()), w) && return NaN
+function geomean(w::AbstractVector{Float64}; min_val::Float64 = 1e-12)
+    w = max.(w, min_val)
+    any(<=(eps()), w) && return 0.0
     return exp(sum(log, w) / length(w))
 end
 

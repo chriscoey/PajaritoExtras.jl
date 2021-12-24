@@ -2,6 +2,7 @@
 hypograph of root-determinant of real symmetric or complex Hermitian
 positive semidefinite matrices (svec scaled triangle)
 (u, w) : W ⪰ 0, u ≤ rtdet(W)
+where rtdet(W) = (∏ᵢ λᵢ(W))^(1/d)
 
 dual cone is
 (u, w) : u ≤ 0, W ⪰ 0, u ≥ -d * rtdet(W)
@@ -56,16 +57,27 @@ function MOIPajarito.Cones.get_subp_cuts(
     cache::HypoRootdetTriCache,
     oa_model::JuMP.Model,
 )
+    p = z[1]
     R = cache.W_temp
     @views svec_to_smat!(R, z[2:end], rt2)
-    F = eigen!(Hermitian(R, :U))
-    cuts = _get_cuts(F.values, F.vectors, cache, oa_model)
-    # return AE[]
+    F = eigen(Hermitian(R, :U))
+    V = F.vectors
+    ω = F.values
+    @assert all(>(-1e-7), ω)
+    @assert geomean(ω) - p > -1e-7
 
-    # if z[1] > -1e-7
-    #     # add eigenvector cuts
-    #     append!(cuts, ...)
-    # end
+    cuts = AE[]
+    if p > -1e-7
+        # add eigenvector cuts
+        num_pos = count(>(1e-7), ω)
+        @views V_neg = V[:, 1:num_pos] * Diagonal(sqrt.(ω[1:num_pos]))
+        cuts = _get_psd_cuts(V_neg, cache, oa_model)
+    end
+
+    # add rootdet cut
+    ω_pos = max.(ω, 1e-7)
+    cut = _get_rootdet_cut(ω_pos, V, cache, oa_model)
+    push!(cuts, cut)
     return cuts
 end
 
@@ -74,26 +86,30 @@ function MOIPajarito.Cones.get_sep_cuts(cache::HypoRootdetTriCache, oa_model::Ju
     us = cache.s[1]
     Ws = cache.W_temp
     @views svec_to_smat!(Ws, cache.s[2:end], rt2)
-    F = eigen!(Hermitian(Ws, :U))
+    F = eigen(Hermitian(Ws, :U))
+    V = F.vectors
     ω = F.values
-    us < 1e-7 && all(>(-1e-7), ω) && return AE[]
-    Ws_geom = geomean(ω)
-    Ws_geom - us > -1e-7 && return AE[]
+    num_neg = count(<(-1e-7), ω)
+    iszero(num_neg) && us < 1e-7 && return AE[]
+    @assert issorted(ω)
 
+    cuts = AE[]
+    if !iszero(num_neg)
+        # add eigenvector cuts
+        V_neg = V[:, 1:num_neg]
+        cuts = _get_psd_cuts(V_neg, cache, oa_model)
+    end
+
+    geomean(ω) - us > -1e-7 && return AE[]
     # gradient cut is (-1, V * Diagonal(geom(ω) / d ./ ω) * V')
     ω_pos = max.(ω, 1e-7)
     rω = (geomean(ω_pos) / cache.d) ./ ω_pos
-    cuts = _get_cuts(rω, F.vectors, cache, oa_model)
-
-    # if isnan(Ws_geom)
-    #     # add eigenvector cuts
-    #     # TODO refac with other cones? need to pass in w variables
-    #     append!(cuts, _get_psd_cuts(F.vectors, cache, oa_model))
-    # end
+    cut = _get_rootdet_cut(rω, V, cache, oa_model)
+    push!(cuts, cut)
     return cuts
 end
 
-function _get_cuts(
+function _get_rootdet_cut(
     rω::Vector{Float64},
     V::Matrix{C},
     cache::HypoRootdetTriCache{C},
@@ -105,6 +121,5 @@ function _get_cuts(
     r = smat_to_svec!(cache.w_temp, R, rt2)
     u = cache.oa_s[1]
     @views w = cache.oa_s[2:end]
-    cut = JuMP.@expression(oa_model, p * u + JuMP.dot(r, w))
-    return [cut]
+    return JuMP.@expression(oa_model, p * u + JuMP.dot(r, w))
 end

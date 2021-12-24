@@ -1,12 +1,13 @@
 #=
 hypograph of geometric mean
-(u, w) : wᵢ ≥ 0, u ≤ (∏ᵢ wᵢ)^(1/d)
+(u, w) : wᵢ ≥ 0, u ≤ geom(w)
+where geom(w) = (∏ᵢ wᵢ)^(1/d)
 
-dual cone
-(u, w) : u ≤ 0, wᵢ ≥ 0, u ≥ -d (∏ᵢ wᵢ)^(1/d)
+dual cone is
+(u, w) : u ≤ 0, wᵢ ≥ 0, u ≥ -d * geom(w)
 
 extended formulation
-NOTE slightly different to EF in solver paper
+NOTE slightly different to EF in Hypatia solver paper
 ∃ θ ≥ u, ∃ λ, Σᵢ λᵢ ≥ 0, (λᵢ, θ, wᵢ) ∈ HypoPerLog
 i.e. θ ≥ 0, wᵢ ≥ 0, λᵢ ≤ θ log(wᵢ / θ)
 dual of HypoPerLog is (p, q, r) : p ≤ 0, r ≥ 0, q ≥ p * (log(-r / p) + 1)
@@ -51,9 +52,9 @@ function MOIPajarito.Cones.get_sep_cuts(cache::HypoGeoMeanCache, oa_model::JuMP.
     s = cache.s
     us = s[1]
     @views ws = s[2:end]
-    ws_geom = geomean(ws)
+    @assert all(>(-1e-7), ws)
     # check s ∉ K
-    if ws_geom - us > -1e-7 # TODO option
+    if us < 1e-7 || geomean(ws) - us > -1e-7
         return AE[]
     end
 
@@ -132,7 +133,6 @@ function MOIPajarito.Cones.add_init_cuts(
     cache::HypoGeoMeanCache{Extended},
     oa_model::JuMP.Model,
 )
-    u = cache.oa_s[1]
     @views w = cache.oa_s[2:end]
     d = cache.d
     θ = cache.θ
