@@ -7,7 +7,7 @@ dual cone is
 (u, v, w) : u ≥ 0, W ∈ dom(h⋆), v ≥ u * h⋆(W / u)
 =#
 
-import Hypatia.Cones: VectorCSqr, SepSpectralFun, h_val, h_conj_dom_pos, h_conj
+import Hypatia.Cones: VectorCSqr, SepSpectralFun, h_val, h_conj_dom_pos, h_conj, h_der1
 
 include("vector.jl")
 # include("matrix.jl")
@@ -35,6 +35,8 @@ function per_sepspec(f::Function, h::SepSpectralFun, v::Float64, w::AbstractVect
     end
     return v * f(w / v, h)
 end
+
+h_grad(w::Vector{Float64}, h::SepSpectralFun) = h_der1(similar(w), w, h)
 
 import Hypatia.Cones: NegLogSSF, NegEntropySSF, NegSqrtSSF, NegPower01SSF, Power12SSF
 

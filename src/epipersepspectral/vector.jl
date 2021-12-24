@@ -21,8 +21,9 @@ function MOIPajarito.Cones.get_subp_cuts(
     cache::VectorEpiPerSepSpectralCache,
     oa_model::JuMP.Model,
 )
-    return _get_cuts(z[1], z[3:end], cache, oa_model)
-    # cut = dot_expr(z, cache.oa_s, oa_model)
+    @show z
+return _get_cuts(z[1], z[3:end], cache, oa_model)
+    cut = dot_expr(z, cache.oa_s, oa_model)
     return [cut]
 end
 
@@ -30,25 +31,26 @@ function MOIPajarito.Cones.get_sep_cuts(
     cache::VectorEpiPerSepSpectralCache,
     oa_model::JuMP.Model,
 )
+return AE[]
+
     s = cache.s
-    @show s
-    return AE[]
+    us = s[1]
+    vs = s[2]
+    ws = s[3:end]
+    @assert vs > -1e-7
+    @assert all(>(-1e-7), ws)
+    # check s ∉ K
+    if (vs < 1e-7 && us > -1e-7) || us - per_sepspec(h_val, cache.h, vs, ws) > -1e-7
+        return AE[]
+    end
 
-    # us = s[1]
-    # vs = s[2]
-    # @views ws = s[3:end]
-    # @assert vs > -1e-7
-    # @assert all(>(-1e-7), ws)
-    # # check s ∉ K
-    # if (vs < 1e-7 && us > -1e-7) || us - per_sepspec(vs, ws) > -1e-7
-    #     return AE[]
-    # end
-
-    # # gradient cut is (-1, .....)
-    # w_pos = max.(ws, 1e-7)
-    # c1 = geomean(w_pos) / cache.d
-    # r = c1 ./ w_pos
-    # return _get_cuts(r, cache, oa_model)
+    # gradient cut is (1, h⋆(r), r) at r = -h'(ws / vs)
+    v_pos = max(vs, 1e-7)
+    w_pos = max.(ws, 1e-7)
+    p = 1.0
+    r = h_grad(w_pos / v_pos, cache.h)
+    r .*= -1
+    return _get_cuts(p, r, cache, oa_model)
 end
 
 # unextended formulation
@@ -69,11 +71,11 @@ function MOIPajarito.Cones.add_init_cuts(
     end)
     # cuts using values of p = 1 and r = r₀ e
     r_vals = init_r_vals(h)
-    for r0 in r_vals
-        r = fill(r0, d)
-        q = h_conj(r, h)
-        JuMP.@constraint(oa_model, u + q * v + JuMP.dot(r, w) >= 0)
-    end
+    # for r0 in r_vals
+    #     r = fill(r0, d)
+    #     q = h_conj(r, h)
+    #     JuMP.@constraint(oa_model, u + q * v + JuMP.dot(r, w) >= 0)
+    # end
     return 1 + d + length(r_vals)
 end
 
@@ -84,12 +86,15 @@ function _get_cuts(
     oa_model::JuMP.Model,
 )
     # strengthened cut is (p, p * h⋆(r / p), r)
-    q = per_sepspec(h_conj, cache.h, p, r)
     @assert p > 1e-12
+    q = per_sepspec(h_conj, cache.h, p, r)
+    @show p
+    @show q
+    @show r
+    println()
     if h_conj_dom_pos(cache.h)
         @assert all(>(1e-12), r)
     end
-    @assert q ≈ p * h_conj(r / p, cache.h)
     z = vcat(p, q, r)
     cut = dot_expr(z, cache.oa_s, oa_model)
     return [cut]

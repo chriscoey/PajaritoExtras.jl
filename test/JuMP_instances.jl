@@ -307,10 +307,10 @@ end
 
 # for epipersepspectral instances
 sep_spectral_funs = [
-    Hypatia.Cones.NegLogSSF(),
+    # Hypatia.Cones.NegLogSSF(),
     Hypatia.Cones.NegEntropySSF(),
-    Hypatia.Cones.NegSqrtSSF(),
-    Hypatia.Cones.NegPower01SSF(3 // 10),
+    # Hypatia.Cones.NegSqrtSSF(),
+    # Hypatia.Cones.NegPower01SSF(3 // 10),
     Hypatia.Cones.Power12SSF(1.5),
 ]
 
@@ -331,12 +331,44 @@ function epipersepspectral1(opt)
         @test JuMP.termination_status(m) == MOI.OPTIMAL
         @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
         w_sol = JuMP.value.(w)
-        opt_val = Hypatia.Cones.h_val(max.(w_sol, 1e-7), h_fun)
+        opt_val = Hypatia.Cones.h_val(max.(w_sol, 1e-9), h_fun)
         @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
         @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
         @test isapprox(JuMP.value(u), opt_val, atol = TOL)
         @test isapprox(w_sol, round.(w_sol), atol = TOL)
-        println()
+    end
+    return
+end
+
+function epipersepspectral2(opt)
+    TOL = 1e-4
+    for h_fun in sep_spectral_funs
+        Q = Hypatia.Cones.VectorCSqr{Float64}
+        w = [0.0, 1.3]
+        m = JuMP.Model(opt)
+
+        JuMP.@variable(m, x[1:2], Bin)
+        JuMP.@constraint(m, sum(x) == 1)
+        JuMP.@variable(m, u[1:2])
+        JuMP.@objective(m, Min, sum(u))
+        for i in 1:2
+            K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 2, false)
+            JuMP.@constraint(m, vcat(u[i], x[i], w .+ i) in K)
+        end
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        x_sol = JuMP.value.(x)
+        round_x_sol = round.(x_sol)
+        @test isapprox(x_sol, round_x_sol, atol = TOL)
+        @test round_x_sol in ([0.0, 1.0], [1.0, 0.0])
+        i = findfirst(Bool.(round_x_sol))
+        u_sol = JuMP.value.(u)
+        opt_val = Hypatia.Cones.h_val(w .+ i, h_fun)
+        @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
+        @test isapprox(u_sol[i], opt_val, atol = TOL)
+        @test isapprox(sum(u_sol), opt_val, atol = TOL)
     end
     return
 end
