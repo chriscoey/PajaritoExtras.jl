@@ -26,6 +26,7 @@ include("epipersquare.jl")
 include("epinormspectral.jl")
 include("hypogeomean.jl")
 include("hyporootdettri.jl")
+include("epipersepspectral/epipersepspectral.jl")
 
 # supported cones for outer approximation
 const OACone = Union{
@@ -35,6 +36,7 @@ const OACone = Union{
     Hypatia.EpiNormSpectralCone{Float64, <:RealOrComplex},
     Hypatia.HypoGeoMeanCone{Float64},
     Hypatia.HypoRootdetTriCone{Float64, <:RealOrComplex},
+    Hypatia.EpiPerSepSpectralCone{Float64},
 }
 
 # cone must be supported by both Pajarito and the conic solver

@@ -33,7 +33,7 @@ function MOIPajarito.Cones.create_cache(
     return cache
 end
 
-persquare(v::Float64, w::AbstractVector{Float64}) = sum(w_i / 2v * w_i for w_i in w)
+per_square(v::Float64, w::AbstractVector{Float64}) = sum(w_i / 2v * w_i for w_i in w)
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{Float64},
@@ -48,7 +48,7 @@ function MOIPajarito.Cones.get_sep_cuts(cache::EpiPerSquareCache, oa_model::JuMP
     us = s[1]
     vs = s[2]
     @views ws = s[3:end]
-    rhs = persquare(vs, ws)
+    rhs = per_square(vs, ws)
     # check s ∉ K
     if us - rhs > -1e-7 # TODO option
         return AE[]
@@ -88,7 +88,7 @@ function _get_cuts(
 )
     clean_array!(r) && return AE[]
     # strengthened cut is (‖r‖² / 2q, q, r)
-    p = persquare(q, r)
+    p = per_square(q, r)
     u = cache.oa_s[1]
     v = cache.oa_s[2]
     @views w = cache.oa_s[3:end]
@@ -107,7 +107,7 @@ function MOIPajarito.Cones.extend_start(
     u_start = s_start[1]
     v_start = s_start[2]
     w_start = s_start[3:end]
-    @assert u_start - persquare(v_start, w_start) >= -1e-7 # TODO
+    @assert u_start - per_square(v_start, w_start) >= -1e-7 # TODO
     if max(u_start, v_start) < 1e-8
         return zeros(cache.d)
     end
@@ -152,7 +152,7 @@ function _get_cuts(
     oa_model::JuMP.Model,
 )
     clean_array!(r) && return AE[]
-    p = persquare(q, r)
+    p = per_square(q, r)
     v = cache.oa_s[2]
     @views w = cache.oa_s[3:end]
     λ = cache.λ
