@@ -73,7 +73,10 @@ function MOIPajarito.Cones.get_subp_cuts(
     return cuts
 end
 
-function MOIPajarito.Cones.get_sep_cuts(cache::MatrixEpiPerSepSpectralCache, oa_model::JuMP.Model)
+function MOIPajarito.Cones.get_sep_cuts(
+    cache::MatrixEpiPerSepSpectralCache,
+    oa_model::JuMP.Model,
+)
     # check s ∉ K
     us = cache.s[1]
     Ws = cache.W_temp

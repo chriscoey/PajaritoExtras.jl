@@ -15,28 +15,30 @@ import Hypatia.Cones: vec_length, svec_length, vec_copyto!
 
 # all instances
 inst_all = String[
-    "possemideftri1",
-    "possemideftri2",
-    "epinormeucl1",
-    "epinormeucl2",
-    "epipersquare1",
-    "epipersquare2",
-    "epinormspectral1",
-    "epinormspectral2",
-    "hypogeomean1",
-    "hypogeomean2",
-    "hyporootdettri1",
-    "hyporootdettri2",
+    # "possemideftri1",
+    # "possemideftri2",
+    # "epinormeucl1",
+    # "epinormeucl2",
+    # "epipersquare1",
+    # "epipersquare2",
+    # "epinormspectral1",
+    # "epinormspectral2",
+    # "hypogeomean1",
+    # "hypogeomean2",
+    # "hyporootdettri1",
+    # "hyporootdettri2",
+    # "epipersepspectral1",
 ]
 
 # instances to test with use_extended_form = false
 inst_noextend = String[
-    "epinormeucl1",
-    "epinormeucl2",
-    "epipersquare1",
-    "epipersquare2",
-    "hypogeomean1",
-    "hypogeomean2",
+    # "epinormeucl1",
+    # "epinormeucl2",
+    # "epipersquare1",
+    # "epipersquare2",
+    # "hypogeomean1",
+    # "hypogeomean2",
+    "epipersepspectral1",
 ]
 
 function runtests(oa_solver, conic_solver)

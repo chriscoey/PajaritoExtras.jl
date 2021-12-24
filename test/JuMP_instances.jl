@@ -264,8 +264,7 @@ end
 
 function hyporootdettri1(opt)
     TOL = 1e-4
-    # for d in (2, 3), is_complex in (false, true)
-    for d in (2), is_complex in (true)
+    for d in (2, 3), is_complex in (false, true)
         R = (is_complex ? ComplexF64 : Float64)
         w_dim = svec_length(R, d)
         m = JuMP.Model(opt)
@@ -303,6 +302,42 @@ function hyporootdettri2(opt)
     @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
     @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
     @test isapprox(JuMP.value.(x), opt_x, atol = TOL)
+    return
+end
+
+# for epipersepspectral instances
+sep_spectral_funs = [
+    Hypatia.Cones.NegLogSSF(),
+    Hypatia.Cones.NegEntropySSF(),
+    Hypatia.Cones.NegSqrtSSF(),
+    Hypatia.Cones.NegPower01SSF(3 // 10),
+    Hypatia.Cones.Power12SSF(1.5),
+]
+
+function epipersepspectral1(opt)
+    TOL = 1e-4
+    for h_fun in sep_spectral_funs
+        Q = Hypatia.Cones.VectorCSqr{Float64}
+        K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 3, false)
+        m = JuMP.Model(opt)
+
+        JuMP.@variable(m, u)
+        JuMP.@variable(m, w[1:3], Int)
+        JuMP.@constraint(m, w .<= [3.2, 5.5, 6.9])
+        JuMP.@constraint(m, sum(w) == 8)
+        JuMP.@objective(m, Min, u)
+        JuMP.@constraint(m, vcat(u, 1, w) in K)
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        w_sol = JuMP.value.(w)
+        opt_val = Hypatia.Cones.h_val(max.(w_sol, 1e-7), h_fun)
+        @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.value(u), opt_val, atol = TOL)
+        @test isapprox(w_sol, round.(w_sol), atol = TOL)
+        println()
+    end
     return
 end
 

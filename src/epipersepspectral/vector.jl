@@ -11,57 +11,45 @@ mutable struct VectorEpiPerSepSpectralCache{E <: Extender} <: ConeCache
     VectorEpiPerSepSpectralCache{E}() where {E <: Extender} = new{E}()
 end
 
-function create_sepspectral_cache(Q::Type{<:Cones.ConeOfSquares{T}}, d::Int, extend::Bool)
+function create_sepspectral_cache(::Type{VectorCSqr{Float64}}, d::Int, extend::Bool)
     E = extender(extend, d)
     return VectorEpiPerSepSpectralCache{E}()
 end
-
-# function per_sepspec(f::SepSpectralFun, v::Float64, w::AbstractVector{Float64})
-#     @assert v >= 0.0
-#     @assert all(>=(0.0), w)
-#     v < eps() && return 0.0
-#     return v * h_val(w / v, h)
-# end
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{Float64},
     cache::VectorEpiPerSepSpectralCache,
     oa_model::JuMP.Model,
 )
-    return _get_cuts(z[2], z[3:end], cache, oa_model)
+    return _get_cuts(z[1], z[3:end], cache, oa_model)
+    # cut = dot_expr(z, cache.oa_s, oa_model)
+    return [cut]
 end
 
-# function MOIPajarito.Cones.get_sep_cuts(cache::VectorEpiPerSepSpectralCache, oa_model::JuMP.Model)
-#     s = cache.s
-#     us = s[1]
-#     vs = s[2]
-#     @views ws = s[3:end]
-#     @assert vs > -1e-7
-#     @assert all(>(-1e-7), ws)
-#     # check s ∉ K
-#     if (vs < 1e-7 && us > -1e-7) || us - per_sepspec(vs, ws) > -1e-7
-#         return AE[]
-#     end
+function MOIPajarito.Cones.get_sep_cuts(
+    cache::VectorEpiPerSepSpectralCache,
+    oa_model::JuMP.Model,
+)
+    s = cache.s
+    @show s
+    return AE[]
 
-#     # gradient cut is (-1, .....)
-#     w_pos = max.(ws, 1e-7)
-#     c1 = geomean(w_pos) / cache.d
-#     r = c1 ./ w_pos
-#     return _get_cuts(r, cache, oa_model)
-# end
+    # us = s[1]
+    # vs = s[2]
+    # @views ws = s[3:end]
+    # @assert vs > -1e-7
+    # @assert all(>(-1e-7), ws)
+    # # check s ∉ K
+    # if (vs < 1e-7 && us > -1e-7) || us - per_sepspec(vs, ws) > -1e-7
+    #     return AE[]
+    # end
 
-# TODO delete
-# function is_dual_feas(cone::EpiPerSepSpectral{VectorCSqr{T}}) where T
-#     u = cone.dual_point[1]
-#     (u < eps(T)) && return false
-#     @views w = cone.dual_point[3:end]
-
-#     h_conj_dom_pos(cone.h) && any(<(eps(T)), w) && return false
-#     uiw = cone.cache.w1
-#     @. uiw = w / u
-#     return (cone.dual_point[2] - u * h_conj(uiw, cone.h) > eps(T))
-# end
-
+    # # gradient cut is (-1, .....)
+    # w_pos = max.(ws, 1e-7)
+    # c1 = geomean(w_pos) / cache.d
+    # r = c1 ./ w_pos
+    # return _get_cuts(r, cache, oa_model)
+end
 
 # unextended formulation
 
@@ -73,41 +61,39 @@ function MOIPajarito.Cones.add_init_cuts(
     v = cache.oa_s[2]
     @views w = cache.oa_s[3:end] # TODO cache?
     d = cache.d
+    h = cache.h
     # variable bounds v ≥ 0, wᵢ ≥ 0
     JuMP.@constraints(oa_model, begin
         v >= 0
         [i in 1:d], w[i] >= 0
     end)
-    # cuts using values of p and r = e
-    p_vals = [1e-3, 1.0, 10]
-    for p in p_vals
-        q = h_conj(fill(inv(p), d), cache.h)
-        JuMP.@constraint(oa_model, p * u + q * v + sum(w) >= 0)
+    # cuts using values of p = 1 and r = r₀ e
+    r_vals = init_r_vals(h)
+    for r0 in r_vals
+        r = fill(r0, d)
+        q = h_conj(r, h)
+        JuMP.@constraint(oa_model, u + q * v + JuMP.dot(r, w) >= 0)
     end
-    h_conj_dom_pos(cache.h) && return 1 + d + length(p_vals)
-    # dual W domain is free, so add cuts at r = -e
-    for p in p_vals
-        q = h_conj(fill(-inv(p), d), cache.h)
-        JuMP.@constraint(oa_model, p * u + q * v - sum(w) >= 0)
-    end
-    return 1 + d + 2 * length(p_vals)
+    return 1 + d + length(r_vals)
 end
 
 function _get_cuts(
+    p::Float64,
     r::Vector{Float64},
     cache::VectorEpiPerSepSpectralCache{Unextended},
     oa_model::JuMP.Model,
 )
-    # # strengthened cut is (-d * geom(r), r)
-    # clean_array!(r) && return AE[]
-    # p = -cache.d * geomean(r)
-    # u = cache.oa_s[1]
-    # @views w = cache.oa_s[3:end]
-    # cut = JuMP.@expression(oa_model, p * u + JuMP.dot(r, w))
-    # return [cut]
+    # strengthened cut is (p, p * h⋆(r / p), r)
+    q = per_sepspec(h_conj, cache.h, p, r)
+    @assert p > 1e-12
+    if h_conj_dom_pos(cache.h)
+        @assert all(>(1e-12), r)
+    end
+    @assert q ≈ p * h_conj(r / p, cache.h)
+    z = vcat(p, q, r)
+    cut = dot_expr(z, cache.oa_s, oa_model)
+    return [cut]
 end
-
-
 
 # # extended formulation
 
