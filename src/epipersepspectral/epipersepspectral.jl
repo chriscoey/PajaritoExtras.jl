@@ -7,10 +7,11 @@ dual cone is
 (u, v, w) : u ≥ 0, W ∈ dom(h⋆), v ≥ u * h⋆(W / u)
 =#
 
-import Hypatia.Cones: VectorCSqr, SepSpectralFun, h_val, h_conj_dom_pos, h_conj, h_der1
+import Hypatia.Cones: VectorCSqr, MatrixCSqr, SepSpectralFun
+import Hypatia.Cones: h_val, h_conj_dom_pos, h_conj, h_der1
 
 include("vector.jl")
-# include("matrix.jl")
+include("matrix.jl")
 
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},

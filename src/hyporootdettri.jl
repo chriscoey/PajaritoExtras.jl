@@ -76,7 +76,7 @@ function MOIPajarito.Cones.get_subp_cuts(
 
     # add rootdet cut
     ω_pos = max.(ω, 1e-7)
-    cut = _get_rootdet_cut(ω_pos, V, cache, oa_model)
+    cut = _get_cut(ω_pos, V, cache, oa_model)
     push!(cuts, cut)
     return cuts
 end
@@ -104,12 +104,12 @@ function MOIPajarito.Cones.get_sep_cuts(cache::HypoRootdetTriCache, oa_model::Ju
     # gradient cut is (-1, V * Diagonal(geom(ω) / d ./ ω) * V')
     ω_pos = max.(ω, 1e-7)
     rω = (geomean(ω_pos) / cache.d) ./ ω_pos
-    cut = _get_rootdet_cut(rω, V, cache, oa_model)
+    cut = _get_cut(rω, V, cache, oa_model)
     push!(cuts, cut)
     return cuts
 end
 
-function _get_rootdet_cut(
+function _get_cut(
     rω::Vector{Float64},
     V::Matrix{C},
     cache::HypoRootdetTriCache{C},

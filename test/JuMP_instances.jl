@@ -292,10 +292,13 @@ end
 
 function hyporootdettri2(opt)
     TOL = 1e-4
-    (m, x, y, Q, opt_x, opt_Q) = _setup_expdesign(opt)
-    K = Hypatia.HypoRootdetTriCone{Float64, Float64}(4)
-    JuMP.@constraint(m, vcat(y, svec(Q)) in K)
+    (m, x, Q, opt_x, opt_Q) = _setup_expdesign(opt)
     opt_val = sqrt(det(opt_Q))
+    K = Hypatia.HypoRootdetTriCone{Float64, Float64}(4)
+
+    JuMP.@variable(m, y)
+    JuMP.@objective(m, Max, y)
+    JuMP.@constraint(m, vcat(y, svec(Q)) in K)
     JuMP.optimize!(m)
     @test JuMP.termination_status(m) == MOI.OPTIMAL
     @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
@@ -305,7 +308,7 @@ function hyporootdettri2(opt)
     return
 end
 
-function epipersepspectral1(opt)
+function epipersepspectral_vector1(opt)
     TOL = 1e-4
     sep_spectral_funs = [
         Hypatia.Cones.NegLogSSF(),
@@ -338,7 +341,7 @@ function epipersepspectral1(opt)
     return
 end
 
-function epipersepspectral2(opt)
+function epipersepspectral_vector2(opt)
     TOL = 1e-4
     # only functions for which the perspective is zero when the perspective variable is zero
     sep_spectral_funs = [
@@ -377,18 +380,43 @@ function epipersepspectral2(opt)
     return
 end
 
+function epipersepspectral_matrix1(opt)
+    TOL = 1e-4
+    # only functions that are decreasing
+    sep_spectral_funs = [
+        Hypatia.Cones.NegLogSSF(),
+        Hypatia.Cones.NegSqrtSSF(),
+        Hypatia.Cones.NegPower01SSF(3 // 10),
+    ]
+    for h_fun in sep_spectral_funs
+        Q = Hypatia.Cones.MatrixCSqr{Float64, Float64}
+        K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 2, false)
+        (m, x, Q, opt_x, opt_Q) = _setup_expdesign(opt)
+        opt_val = Hypatia.Cones.h_val(eigvals(Symmetric(opt_Q, :U)), h_fun)
+
+        JuMP.@variable(m, y)
+        JuMP.@objective(m, Min, y)
+        JuMP.@constraint(m, vcat(y, 1, svec(Q)) in K)
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.value.(x), opt_x, atol = TOL)
+    end
+    return
+end
+
 function _setup_expdesign(opt)
     m = JuMP.Model(opt)
     JuMP.@variable(m, x[1:4], Int)
-    JuMP.@constraint(m, x[1:2] .>= 1) # avoids ill-posedness
+    JuMP.@constraint(m, x[1:2] .>= 0.5) # avoids ill-posedness
     JuMP.@constraint(m, x[3:4] .>= 0)
-    JuMP.@constraint(m, sum(x) <= 8)
-    JuMP.@variable(m, y)
-    JuMP.@objective(m, Max, y)
+    JuMP.@constraint(m, sum(x) <= 8.5)
 
     V = [1 1 -0.2 -0.5; 1 -1 0.5 -0.2]
     Q = V * diagm(x) * V'
     opt_x = [4, 4, 0, 0]
     opt_Q = Symmetric(V * Diagonal(opt_x) * V')
-    return (m, x, y, Q, opt_x, opt_Q)
+    return (m, x, Q, opt_x, opt_Q)
 end
