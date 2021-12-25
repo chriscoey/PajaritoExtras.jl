@@ -49,15 +49,13 @@ function MOI.supports_constraint(
 end
 
 # caches for cones needing PSD cuts
-const PSDDomainCache{C <: RealOrComplex} = Union{
-    PosSemidefTriCache{C},
-    HypoRootdetTriCache{C},
-    # EpiPerSepSpectralCache{C},
-}
+const PSDDomainCache{C <: RealOrComplex} =
+    Union{PosSemidefTriCache{C}, HypoRootdetTriCache{C}, MatrixEpiPerSepSpectralCache{C}}
 
 # eigenvector cuts for a PSD constraint W ⪰ 0
 function _get_psd_cuts(
     R_eig::Matrix{C},
+    oa_w::AbstractVector{AE},
     cache::PSDDomainCache{C},
     oa_model::JuMP.Model,
 ) where {C}
@@ -70,7 +68,7 @@ function _get_psd_cuts(
         mul!(R_i, r_i, r_i')
         clean_array!(R_i) && continue
         smat_to_svec!(R_vec_i, R_i, rt2)
-        cut = dot_expr(R_vec_i, cache.oa_s, oa_model)
+        cut = dot_expr(R_vec_i, oa_w, oa_model)
         push!(cuts, cut)
     end
     return cuts

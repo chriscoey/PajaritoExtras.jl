@@ -382,6 +382,47 @@ end
 
 function epipersepspectral_matrix1(opt)
     TOL = 1e-4
+    sep_spectral_funs = [
+        Hypatia.Cones.NegLogSSF(),
+        Hypatia.Cones.NegEntropySSF(),
+        Hypatia.Cones.NegSqrtSSF(),
+        Hypatia.Cones.NegPower01SSF(3 // 10),
+        Hypatia.Cones.Power12SSF(1.5),
+    ]
+    for h_fun in sep_spectral_funs, is_complex in (false,)#true)
+        R = (is_complex ? ComplexF64 : Float64)
+        Q = Hypatia.Cones.MatrixCSqr{Float64, R}
+        K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 3, false)
+        w_dim = svec_length(R, 3)
+        vec_diag = svec(Matrix{R}(Diagonal([1.2, 2.5, 0.9])))
+        m = JuMP.Model(opt)
+
+        JuMP.@variable(m, u)
+        JuMP.@variable(m, w[1:w_dim])
+        W_diag = [w[svec_idx(R, i, i)] for i in 1:3]
+        JuMP.set_integer.(W_diag)
+        JuMP.@constraint(m, sum(W_diag) == 8)
+        JuMP.@constraint(m, sum(w) >= 9)
+        JuMP.@objective(m, Min, u)
+        K_vec = w - vec_diag
+        JuMP.@constraint(m, vcat(u, 1, K_vec) in K)
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        diag_sol = JuMP.value.(W_diag)
+        @test isapprox(diag_sol, round.(diag_sol), atol = TOL)
+        ω = eigvals(Hermitian(smat(R, JuMP.value.(K_vec)), :U))
+        @test minimum(ω) > TOL
+        opt_val = Hypatia.Cones.h_val(max.(ω, 1e-9), h_fun)
+        @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.value(u), opt_val, atol = TOL)
+    end
+    return
+end
+
+function epipersepspectral_matrix2(opt)
+    TOL = 1e-4
     # only functions that are decreasing
     sep_spectral_funs = [
         Hypatia.Cones.NegLogSSF(),

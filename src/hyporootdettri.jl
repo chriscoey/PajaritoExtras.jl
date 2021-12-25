@@ -71,7 +71,8 @@ function MOIPajarito.Cones.get_subp_cuts(
         # add eigenvector cuts
         num_pos = count(>(1e-7), ω)
         @views V_neg = V[:, 1:num_pos] * Diagonal(sqrt.(ω[1:num_pos]))
-        cuts = _get_psd_cuts(V_neg, cache, oa_model)
+        @views w = cache.oa_s[2:end]
+        cuts = _get_psd_cuts(V_neg, w, cache, oa_model)
     end
 
     # add rootdet cut
@@ -97,7 +98,8 @@ function MOIPajarito.Cones.get_sep_cuts(cache::HypoRootdetTriCache, oa_model::Ju
     if !iszero(num_neg)
         # add eigenvector cuts
         V_neg = V[:, 1:num_neg]
-        cuts = _get_psd_cuts(V_neg, cache, oa_model)
+        @views w = cache.oa_s[2:end]
+        cuts = _get_psd_cuts(V_neg, w, cache, oa_model)
     end
 
     geomean(ω) - us > -1e-7 && return AE[]

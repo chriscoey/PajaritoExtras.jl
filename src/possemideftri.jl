@@ -98,7 +98,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     F = eigen(Hermitian(R, :U), 1e-8, Inf) # TODO tune
     isempty(F.values) && return AE[]
     R_eig = F.vectors * Diagonal(sqrt.(F.values))
-    return _get_psd_cuts(R_eig, cache, oa_model)
+    return _get_psd_cuts(R_eig, cache.oa_s, cache, oa_model)
 end
 
 function MOIPajarito.Cones.get_sep_cuts(cache::PosSemidefTriCache, oa_model::JuMP.Model)
@@ -107,5 +107,5 @@ function MOIPajarito.Cones.get_sep_cuts(cache::PosSemidefTriCache, oa_model::JuM
     svec_to_smat!(Ws, cache.s, rt2)
     F = eigen(Hermitian(Ws, :U), -Inf, -1e-7)
     isempty(F.values) && return AE[]
-    return _get_psd_cuts(F.vectors, cache, oa_model)
+    return _get_psd_cuts(F.vectors, cache.oa_s, cache, oa_model)
 end

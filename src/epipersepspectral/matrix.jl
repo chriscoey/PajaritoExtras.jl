@@ -64,15 +64,16 @@ function MOIPajarito.Cones.get_subp_cuts(
 
     cuts = AE[]
     if max(abs(z[2])) < 1e-7
-        # add eigenvector cuts TODO decide when to add
+        # TODO decide when to add
+        # add eigenvector cuts
         num_pos = count(>(1e-7), ω)
         @views V_neg = V[:, 1:num_pos] * Diagonal(sqrt.(ω[1:num_pos]))
-        cuts = _get_psd_cuts(V_neg, cache, oa_model)
+        @views w = cache.oa_s[3:end]
+        cuts = _get_psd_cuts(V_neg, w, cache, oa_model)
     end
 
     # add epigraph cut
-    ω_pos = max.(ω, 1e-7)
-    cut = _get_cut(z[1], ω_pos, V, cache, oa_model)
+    cut = _get_cut(z[1], ω, V, cache, oa_model)
     push!(cuts, cut)
     return cuts
 end
@@ -81,32 +82,33 @@ function MOIPajarito.Cones.get_sep_cuts(
     cache::MatrixEpiPerSepSpectralCache,
     oa_model::JuMP.Model,
 )
-    return AE[]
-    # # check s ∉ K
-    # us = cache.s[1]
-    # Ws = cache.W_temp
-    # @views svec_to_smat!(Ws, cache.s[3:end], rt2)
-    # F = eigen(Hermitian(Ws, :U))
-    # V = F.vectors
-    # ω = F.values
-    # num_neg = count(<(-1e-7), ω)
-    # iszero(num_neg) && us < 1e-7 && return AE[]
-    # @assert issorted(ω)
+    # check s ∉ K
+    Ws = cache.W_temp
+    @views svec_to_smat!(Ws, cache.s[3:end], rt2)
+    F = eigen(Hermitian(Ws, :U))
+    V = F.vectors
+    ω = F.values
+    num_neg = count(<(-1e-7), ω)
+    @assert issorted(ω)
 
-    # cuts = AE[]
-    # if !iszero(num_neg)
-    #     # add eigenvector cuts
-    #     V_neg = V[:, 1:num_neg]
-    #     cuts = _get_psd_cuts(V_neg, cache, oa_model)
-    # end
+    cuts = AE[]
+    if !iszero(num_neg)
+        # add eigenvector cuts
+        V_neg = V[:, 1:num_neg]
+        @views w = cache.oa_s[3:end]
+        cuts = _get_psd_cuts(V_neg, w, cache, oa_model)
+    end
 
-    # geomean(ω) - us > -1e-7 && return AE[]
-    # # gradient cut is (-1, V * Diagonal(geom(ω) / d ./ ω) * V')
-    # ω_pos = max.(ω, 1e-7)
-    # rω = (geomean(ω_pos) / cache.d) ./ ω_pos
-    # cut = _get_cut(rω, V, cache, oa_model)
-    # push!(cuts, cut)
-    # return cuts
+    us = cache.s[1]
+    v_pos = max(cache.s[2], 1e-7)
+    ω_pos = max.(ω, 1e-7)
+    us - per_sepspec(h_val, cache.h, v_pos, ω_pos) > -1e-7 && return AE[]
+
+    # gradient cut is (1, h⋆(rω), V * Diagonal(rω) * V') at rω = -h'(ω / vs)
+    rω = -h_grad(ω_pos / v_pos, cache.h)
+    cut = _get_cut(1.0, rω, V, cache, oa_model)
+    push!(cuts, cut)
+    return cuts
 end
 
 function _get_cut(
