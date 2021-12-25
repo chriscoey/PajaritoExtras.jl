@@ -15,31 +15,31 @@ import Hypatia.Cones: vec_length, svec_length, vec_copyto!
 
 # all instances
 inst_all = String[
-    # "possemideftri1",
-    # "possemideftri2",
-    # "epinormeucl1",
-    # "epinormeucl2",
-    # "epipersquare1",
-    # "epipersquare2",
-    # "epinormspectral1",
-    # "epinormspectral2",
-    # "hypogeomean1",
-    # "hypogeomean2",
-    # "hyporootdettri1",
-    # "hyporootdettri2",
-    # "epipersepspectral1",
-    # "epipersepspectral2",
+    "possemideftri1",
+    "possemideftri2",
+    "epinormeucl1",
+    "epinormeucl2",
+    "epipersquare1",
+    "epipersquare2",
+    "epinormspectral1",
+    "epinormspectral2",
+    "hypogeomean1",
+    "hypogeomean2",
+    "hyporootdettri1",
+    "hyporootdettri2",
+    "epipersepspectral1",
+    "epipersepspectral2",
 ]
 
 # instances to test with use_extended_form = false
 inst_noextend = String[
-    # "epinormeucl1",
-    # "epinormeucl2",
-    # "epipersquare1",
-    # "epipersquare2",
-    # "hypogeomean1",
-    # "hypogeomean2",
-    # "epipersepspectral1",
+    "epinormeucl1",
+    "epinormeucl2",
+    "epipersquare1",
+    "epipersquare2",
+    "hypogeomean1",
+    "hypogeomean2",
+    "epipersepspectral1",
     "epipersepspectral2",
 ]
 
@@ -50,12 +50,12 @@ function runtests(oa_solver, conic_solver)
         @info "iterative, not extended"
         run_jump_tests(inst_noextend, false, true, oa_solver, conic_solver)
     end
-    # @testset "one tree" begin
-    #     @info "one tree, all"
-    #     run_jump_tests(inst_all, true, false, oa_solver, conic_solver)
-    #     @info "one tree, not extended"
-    #     run_jump_tests(inst_noextend, false, false, oa_solver, conic_solver)
-    # end
+    @testset "one tree" begin
+        @info "one tree, all"
+        run_jump_tests(inst_all, true, false, oa_solver, conic_solver)
+        @info "one tree, not extended"
+        run_jump_tests(inst_noextend, false, false, oa_solver, conic_solver)
+    end
     return
 end
 

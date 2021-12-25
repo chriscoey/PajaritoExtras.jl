@@ -13,12 +13,12 @@ const VR = JuMP.VariableRef
 const AE = JuMP.AffExpr
 
 import Hypatia
-import Hypatia.Cones:
-    vec_length, vec_copyto!, svec_length, svec_side, smat_to_svec!, svec_to_smat!
+import Hypatia.Cones: vec_length, vec_copyto!, svec_length, svec_side
+import Hypatia.Cones: smat_to_svec!, svec_to_smat!
 
 import MOIPajarito
 import MOIPajarito.Cones: Extender, Unextended, Extended, extender
-import MOIPajarito.Cones: ConeCache, clean_array!, dot_expr
+import MOIPajarito.Cones: ConeCache, clean_array!, dot_expr, add
 
 include("possemideftri.jl")
 include("epinormeucl.jl")

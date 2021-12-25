@@ -1,4 +1,6 @@
-# real symmetric or complex Hermitian (svec scaled triangle) domain 𝕊ᵈ₊
+#=
+real symmetric or complex Hermitian (svec scaled triangle) domain 𝕊ᵈ₊
+=#
 
 mutable struct MatrixEpiPerSepSpectralCache{C <: RealOrComplex} <: ConeCache
     cone::Hypatia.EpiPerSepSpectralCone{Float64}

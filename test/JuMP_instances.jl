@@ -305,17 +305,15 @@ function hyporootdettri2(opt)
     return
 end
 
-# for epipersepspectral instances
-sep_spectral_funs = [
-    # Hypatia.Cones.NegLogSSF(),
-    Hypatia.Cones.NegEntropySSF(),
-    # Hypatia.Cones.NegSqrtSSF(),
-    # Hypatia.Cones.NegPower01SSF(3 // 10),
-    Hypatia.Cones.Power12SSF(1.5),
-]
-
 function epipersepspectral1(opt)
     TOL = 1e-4
+    sep_spectral_funs = [
+        Hypatia.Cones.NegLogSSF(),
+        Hypatia.Cones.NegEntropySSF(),
+        Hypatia.Cones.NegSqrtSSF(),
+        Hypatia.Cones.NegPower01SSF(3 // 10),
+        Hypatia.Cones.Power12SSF(1.5),
+    ]
     for h_fun in sep_spectral_funs
         Q = Hypatia.Cones.VectorCSqr{Float64}
         K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 3, false)
@@ -342,9 +340,15 @@ end
 
 function epipersepspectral2(opt)
     TOL = 1e-4
+    # only functions for which the perspective is zero when the perspective variable is zero
+    sep_spectral_funs = [
+        Hypatia.Cones.NegLogSSF(),
+        Hypatia.Cones.NegSqrtSSF(),
+        Hypatia.Cones.NegPower01SSF(3 // 10),
+    ]
     for h_fun in sep_spectral_funs
         Q = Hypatia.Cones.VectorCSqr{Float64}
-        w = [0.0, 1.3]
+        w = [0.5, 2.3]
         m = JuMP.Model(opt)
 
         JuMP.@variable(m, x[1:2], Bin)
