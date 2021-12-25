@@ -76,7 +76,7 @@ function run_jump_tests(
         "conic_solver" => conic_solver,
         "use_extended_form" => use_extended_form,
         "use_iterative_method" => use_iterative_method,
-        # "debug_cuts" => use_iterative_method,
+        "debug_cuts" => use_iterative_method,
         "iteration_limit" => 30,
         # "time_limit" => 120.0,
     )
