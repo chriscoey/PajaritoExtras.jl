@@ -18,7 +18,7 @@ import Hypatia.Cones: smat_to_svec!, svec_to_smat!
 
 import MOIPajarito
 import MOIPajarito.Cones: Extender, Unextended, Extended, extender
-import MOIPajarito.Cones: ConeCache, clean_array!, dot_expr, add
+import MOIPajarito.Cones: ConeCache, clean_array!, dot_expr
 
 include("possemideftri.jl")
 include("epinorminf.jl")

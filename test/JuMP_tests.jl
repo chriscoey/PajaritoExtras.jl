@@ -19,6 +19,8 @@ inst_all = String[
     "possemideftri2",
     "epinorminf1",
     "epinorminf2",
+    "dual_epinorminf1",
+    "dual_epinorminf2",
     "epinormeucl1",
     "epinormeucl2",
     "epipersquare1",
@@ -29,22 +31,24 @@ inst_all = String[
     "hypogeomean2",
     "hyporootdettri1",
     "hyporootdettri2",
-    "epipersepspectral_vector1",
-    "epipersepspectral_vector2",
-    "epipersepspectral_matrix1",
-    "epipersepspectral_matrix2",
+    "vector_epipersepspectral1",
+    "vector_epipersepspectral2",
+    "matrix_epipersepspectral1",
+    "matrix_epipersepspectral2",
 ]
 
 # instances to test with extended formulations option off
 inst_noextend = String[
+    "dual_epinorminf1",
+    "dual_epinorminf2",
     "epinormeucl1",
     "epinormeucl2",
     "epipersquare1",
     "epipersquare2",
     "hypogeomean1",
     "hypogeomean2",
-    "epipersepspectral_vector1",
-    "epipersepspectral_vector2",
+    "vector_epipersepspectral1",
+    "vector_epipersepspectral2",
 ]
 
 function runtests(oa_solver, conic_solver)
