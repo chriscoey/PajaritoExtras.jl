@@ -12,6 +12,7 @@ real case (polyhedral): λᵢ ≥ Wᵢ, λᵢ ≥ -Wᵢ
 complex case: (λᵢ, re(Wᵢ), im(Wᵢ)) in EpiNormEucl
 =#
 
+# primal cone
 mutable struct EpiNormInfCache{C <: RealOrComplex} <: ConeCache
     cone::Hypatia.EpiNormInfCone{Float64, C}
     oa_s::Vector{AE}
@@ -22,6 +23,7 @@ mutable struct EpiNormInfCache{C <: RealOrComplex} <: ConeCache
     EpiNormInfCache{C}() where {C <: RealOrComplex} = new{C}()
 end
 
+# dual cone
 mutable struct DualEpiNormInfCache{C <: RealOrComplex, E <: Extender} <: ConeCache
     cone::Hypatia.EpiNormInfCone{Float64, C}
     oa_s::Vector{AE}
@@ -49,13 +51,14 @@ function MOIPajarito.Cones.create_cache(
         EpiNormInfCache{C}()
     end
     cache.cone = cone
-    # cache.is_complex = is_complex
     cache.oa_s = oa_s
     cache.d = d
     cache.w_temp = zeros(Float64, dim - 1)
     cache.W_temp = zeros(C, d)
     return cache
 end
+
+# primal cone functions
 
 function MOIPajarito.Cones.add_init_cuts(
     cache::EpiNormInfCache{Float64},
@@ -79,16 +82,16 @@ function MOIPajarito.Cones.add_init_cuts(
     @views w = cache.oa_s[2:end]
     d = cache.d
     # cuts on (u, re(Wᵢ), im(Wᵢ)) are (rt2, ±1, ±1) ∈ EpiNormEucl
-    # for i in 1:d
-    #     re_w = w[2i - 1]
-    #     im_w = w[2i]
-    #     JuMP.@constraints(oa_model, begin
-    #         rt2 * u - re_w - im_w >= 0
-    #         rt2 * u - re_w + im_w >= 0
-    #         rt2 * u + re_w - im_w >= 0
-    #         rt2 * u + re_w + im_w >= 0
-    #     end)
-    # end
+    for i in 1:d
+        re_w = w[2i - 1]
+        im_w = w[2i]
+        JuMP.@constraints(oa_model, begin
+            rt2 * u - re_w - im_w >= 0
+            rt2 * u - re_w + im_w >= 0
+            rt2 * u + re_w - im_w >= 0
+            rt2 * u + re_w + im_w >= 0
+        end)
+    end
     return 4d
 end
 
@@ -157,122 +160,94 @@ function _get_cut(
     return JuMP.@expression(oa_model, abs(R_i) * u + real(R_i) * re_w + imag(R_i) * im_w)
 end
 
-# function MOIPajarito.Cones.add_init_cuts(
-#     cache::DualEpiNormInfCache{Float64, Unextended},
-#     oa_model::JuMP.Model,
-# )
-#     u = cache.oa_s[1]
-#     @views w = cache.oa_s[2:end]
-#     # polyhedral but needs exponentially many constraints
-#     JuMP.@constraints(oa_model, begin
-#         # u .>= w
-#         # u .>= -w
-#     end)
-#     # return 2d
-# end
+# dual cone functions
 
-# function MOIPajarito.Cones.add_init_cuts(
-#     cache::DualEpiNormInfCache{ComplexF64, Unextended},
-#     oa_model::JuMP.Model,
-# )
-#     u = cache.oa_s[1]
-#     @views w = cache.oa_s[2:end]
-#     d = cache.d
-#     # cuts on (u, re(Wᵢ), im(Wᵢ)) are (rt2, ±1, ±1) ∈ EpiNormEucl
-#     for i in 1:d
-#         re_w = w[2i - 1]
-#         im_w = w[2i]
-#         JuMP.@constraints(oa_model, begin
-#             # rt2 * u - re_w - im_w >= 0
-#             # rt2 * u - re_w + im_w >= 0
-#             # rt2 * u + re_w - im_w >= 0
-#             # rt2 * u + re_w + im_w >= 0
-#         end)
-#     end
-#     return 4d
-# end
+function MOIPajarito.Cones.get_subp_cuts(
+    z::Vector{Float64},
+    cache::DualEpiNormInfCache{C, Unextended},
+    oa_model::JuMP.Model,
+) where {C}
+    return _get_cuts(z[2:end], cache, oa_model)
+end
 
-# mutable struct EpiNormInfCache{E <: Extender} <: ConeCache
-#     cone::Hypatia.EpiNormInfCone{Float64}
-#     oa_s::Vector{AE}
-#     s::Vector{Float64}
-#     d::Int
-#     λ::Vector{VR}
-#     EpiNormInfCache{E}() where {E <: Extender} = new{E}()
-# end
+function MOIPajarito.Cones.get_sep_cuts(
+    cache::DualEpiNormInfCache{C, Unextended},
+    oa_model::JuMP.Model,
+) where {C}
+    s = cache.s
+    us = s[1]
+    @views ws = s[2:end]
+    @assert all(>(-1e-7), ws)
+    # check s ∉ K
+    if us < 1e-7 || geomean(ws) - us > -1e-7
+        return AE[]
+    end
 
-# function MOIPajarito.Cones.create_cache(
-#     oa_s::Vector{AE},
-#     cone::Hypatia.EpiNormInfCone{Float64},
-#     extend::Bool,
-# )
-#     @assert !cone.use_dual # TODO
-#     dim = MOI.dimension(cone)
-#     @assert dim == length(oa_s)
-#     d = dim - 1
-#     E = extender(extend, d)
-#     cache = EpiNormInfCache{E}()
-#     cache.cone = cone
-#     cache.oa_s = oa_s
-#     cache.d = d
-#     return cache
-# end
+    # gradient cut is (-1, geom(w) / d ./ w)
+    w_pos = max.(ws, 1e-7)
+    c1 = geomean(w_pos) / cache.d
+    r = c1 ./ w_pos
+    return _get_cuts(r, cache, oa_model)
+end
 
-# function MOIPajarito.Cones.get_subp_cuts(
-#     z::Vector{Float64},
-#     cache::EpiNormInfCache,
-#     oa_model::JuMP.Model,
-# )
-#     return _get_cuts(z[2:end], cache, oa_model)
-# end
+# unextended formulation
 
-# function MOIPajarito.Cones.get_sep_cuts(cache::EpiNormInfCache, oa_model::JuMP.Model)
-#     s = cache.s
-#     us = s[1]
-#     @views ws = s[2:end]
-#     @assert all(>(-1e-7), ws)
-#     # check s ∉ K
-#     if us < 1e-7 || geomean(ws) - us > -1e-7
-#         return AE[]
-#     end
+function MOIPajarito.Cones.add_init_cuts(
+    cache::DualEpiNormInfCache{Float64, Unextended},
+    oa_model::JuMP.Model,
+)
+    u = cache.oa_s[1]
+    @views w = cache.oa_s[2:end]
+    # polyhedral but needs exponentially many constraints
+    JuMP.@constraints(oa_model, begin
 
-#     # gradient cut is (-1, geom(w) / d ./ w)
-#     w_pos = max.(ws, 1e-7)
-#     c1 = geomean(w_pos) / cache.d
-#     r = c1 ./ w_pos
-#     return _get_cuts(r, cache, oa_model)
-# end
+    end)
+    # return ...
+end
 
-# # unextended formulation
+function MOIPajarito.Cones.add_init_cuts(
+    cache::DualEpiNormInfCache{ComplexF64, Unextended},
+    oa_model::JuMP.Model,
+)
+    u = cache.oa_s[1]
+    @views w = cache.oa_s[2:end]
+    d = cache.d
+    # cuts on (u, re(Wᵢ), im(Wᵢ)) are (rt2, ±1, ±1) ∈ EpiNormEucl
+    for i in 1:d
+        re_w = w[2i - 1]
+        im_w = w[2i]
+        JuMP.@constraints(oa_model, begin
+            # rt2 * u - re_w - im_w >= 0
+            # rt2 * u - re_w + im_w >= 0
+            # rt2 * u + re_w - im_w >= 0
+            # rt2 * u + re_w + im_w >= 0
+        end)
+    end
+    return ...
+end
 
-# function MOIPajarito.Cones.add_init_cuts(
-#     cache::EpiNormInfCache{Unextended},
-#     oa_model::JuMP.Model,
-# )
-#     u = cache.oa_s[1]
-#     @views w = cache.oa_s[2:end] # TODO cache?
-#     d = cache.d
-#     # variable bounds wᵢ ≥ 0 and cut (-d, e)
-#     JuMP.@constraints(oa_model, begin
-#         [i in 1:d], w[i] >= 0
-#         -d * u + sum(w) >= 0
-#     end)
-#     return d + 1
-# end
+function _get_cuts(
+    r::Vector{Float64},
+    cache::DualEpiNormInfCache{Float64, Unextended},
+    oa_model::JuMP.Model,
+)
+    # strengthened cut is
 
-# function _get_cuts(
-#     r::Vector{Float64},
-#     cache::EpiNormInfCache{Unextended},
-#     oa_model::JuMP.Model,
-# )
-#     # strengthened cut is (-d * geom(r), r)
-#     clean_array!(r) && return AE[]
-#     p = -cache.d * geomean(r)
-#     u = cache.oa_s[1]
-#     @views w = cache.oa_s[2:end]
-#     cut = JuMP.@expression(oa_model, p * u + JuMP.dot(r, w))
-#     return [cut]
-# end
+    return [cut]
+end
+
+function _get_cuts(
+    r::Vector{Float64},
+    cache::DualEpiNormInfCache{ComplexF64, Unextended},
+    oa_model::JuMP.Model,
+)
+    # strengthened cut is
+
+    return [cut]
+end
+
+
+
 
 # # extended formulation
 
