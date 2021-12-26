@@ -103,6 +103,30 @@ function epinorminf1(opt)
     return
 end
 
+function epinorminf2(opt)
+    TOL = 1e-4
+    for is_complex in (false, true)
+        R = (is_complex ? ComplexF64 : Float64)
+        dim = vec_length(R, 2)
+        m = JuMP.Model(opt)
+
+        JuMP.@variable(m, w[1:dim], Int)
+        K = Hypatia.EpiNormInfCone{Float64, R}(1 + dim)
+        aff = [i * w[i] for i in eachindex(w)]
+        JuMP.@constraint(m, vcat(10.5, aff) in K)
+        JuMP.@objective(m, Min, sum(w))
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        w_opt = JuMP.value.(w)
+        @test isapprox(JuMP.objective_value(m), sum(w_opt), atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), sum(w_opt), atol = TOL)
+        aff_opt = vec_copyto!(zeros(R, 2), JuMP.value.(aff))
+        @test norm(aff_opt, Inf) <= 10.5 + TOL
+    end
+    return
+end
+
 function epinormeucl1(opt)
     TOL = 1e-4
     m = JuMP.Model(opt)

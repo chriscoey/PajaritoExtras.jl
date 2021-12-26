@@ -64,10 +64,10 @@ function MOIPajarito.Cones.add_init_cuts(
     u = cache.oa_s[1]
     @views w = cache.oa_s[2:end]
     # polyhedral (no OA)
-    # JuMP.@constraints(oa_model, begin
-    #     u .>= w
-    #     u .>= -w
-    # end)
+    JuMP.@constraints(oa_model, begin
+        u .>= w
+        u .>= -w
+    end)
     return 2 * cache.d
 end
 
@@ -110,8 +110,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     @views vec_copyto!(R, z[2:end])
     cuts = AE[]
     for (i, R_i) in enumerate(R)
-        abs_i = abs(R_i)
-        abs_i < 1e-7 && continue
+        abs(R_i) < 1e-7 && continue
         cut = _get_cut(R_i, i, cache, oa_model)
         push!(cuts, cut)
     end
@@ -139,7 +138,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     for (i, Ws_i) in enumerate(Ws)
         abs_i = abs(Ws_i)
         abs_i < 1e-7 && continue
-        R_i = Ws_i / -abs(Ws_i)
+        R_i = Ws_i / -abs_i
         cut = _get_cut(R_i, i, cache, oa_model)
         push!(cuts, cut)
     end
@@ -155,7 +154,7 @@ function _get_cut(
     u = cache.oa_s[1]
     re_w = cache.oa_s[2i]
     im_w = cache.oa_s[2i + 1]
-    return JuMP.@expression(oa_model, u + real(R_i) * re_w + imag(R_i) * im_w)
+    return JuMP.@expression(oa_model, abs(R_i) * u + real(R_i) * re_w + imag(R_i) * im_w)
 end
 
 # function MOIPajarito.Cones.add_init_cuts(
