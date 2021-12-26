@@ -71,6 +71,38 @@ function possemideftri2(opt)
     return
 end
 
+function epinorminf1(opt)
+    TOL = 1e-4
+    for is_complex in (false, true)
+        R = (is_complex ? ComplexF64 : Float64)
+        u_fix = (is_complex ? rt2 : 1.0) * 0.4
+        w_fix = (is_complex ? [0.3, 0.3, 0.7, 0.7, 1.2, 1.2] : [0.3, 0.7, 1.2])
+        w_opt = round.(w_fix)
+        dim = vec_length(R, 3)
+        m = JuMP.Model(opt)
+
+        JuMP.@variable(m, w[1:dim], Bin)
+        K = Hypatia.EpiNormInfCone{Float64, R}(1 + dim)
+        c1 = JuMP.@constraint(m, vcat(u_fix, w .- 0.5) in K)
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.INFEASIBLE
+        @test JuMP.primal_status(m) == MOI.NO_SOLUTION
+
+        JuMP.@objective(m, Min, 1 + sum(w))
+        JuMP.delete(m, c1)
+        K = Hypatia.EpiNormInfCone{Float64, R}(1 + dim)
+        JuMP.@constraint(m, vcat(u_fix, w - w_fix) in K)
+        JuMP.set_start_value.(w, w_opt)
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        @test isapprox(JuMP.objective_value(m), 1 + sum(w_opt), atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), 1 + sum(w_opt), atol = TOL)
+        @test isapprox(JuMP.value.(w), w_opt, atol = TOL)
+    end
+    return
+end
+
 function epinormeucl1(opt)
     TOL = 1e-4
     m = JuMP.Model(opt)

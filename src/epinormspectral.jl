@@ -77,17 +77,17 @@ end
 
 function MOIPajarito.Cones.get_sep_cuts(cache::EpiNormSpectralCache, oa_model::JuMP.Model)
     # check s ∉ K
-    # NOTE only need to compute singular values larger than su, but not possible with LAPACK
-    su = cache.s[1]
-    sW = cache.W_temp
-    @views vec_copyto!(sW, cache.s[2:end])
-    F = svd!(sW, full = false)
+    # NOTE only need to compute singular values larger than us, but not possible with LAPACK
+    us = cache.s[1]
+    Ws = cache.W_temp
+    @views vec_copyto!(Ws, cache.s[2:end])
+    F = svd!(Ws, full = false)
     σ = F.S
     @assert issorted(σ, rev = true)
-    if σ[1] <= 1e-7 || su - σ[1] >= -1e-7
+    if σ[1] <= 1e-7 || us - σ[1] >= -1e-7
         return AE[]
     end
-    σ_viol = ones(count(>(su + 1e-7), σ))
+    σ_viol = ones(count(>(us + 1e-7), σ))
     return _get_cuts(σ_viol, F.U, F.Vt, cache, oa_model)
 end
 

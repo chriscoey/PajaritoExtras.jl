@@ -21,6 +21,7 @@ import MOIPajarito.Cones: Extender, Unextended, Extended, extender
 import MOIPajarito.Cones: ConeCache, clean_array!, dot_expr, add
 
 include("possemideftri.jl")
+include("epinorminf.jl")
 include("epinormeucl.jl")
 include("epipersquare.jl")
 include("epinormspectral.jl")
@@ -31,6 +32,7 @@ include("epipersepspectral/epipersepspectral.jl")
 # supported cones for outer approximation
 const OACone = Union{
     Hypatia.PosSemidefTriCone{Float64, <:RealOrComplex},
+    Hypatia.EpiNormInfCone{Float64, <:RealOrComplex},
     Hypatia.EpiNormEuclCone{Float64},
     Hypatia.EpiPerSquareCone{Float64},
     Hypatia.EpiNormSpectralCone{Float64, <:RealOrComplex},
