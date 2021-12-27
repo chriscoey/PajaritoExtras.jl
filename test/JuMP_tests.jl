@@ -12,6 +12,7 @@ import PajaritoExtras
 import PajaritoExtras: svec_idx
 import Hypatia
 import Hypatia.Cones: vec_length, svec_length, vec_copyto!
+import Hypatia.PolyUtils
 
 # all instances
 inst_all = String[
@@ -35,6 +36,8 @@ inst_all = String[
     "vector_epipersepspectral2",
     "matrix_epipersepspectral1",
     "matrix_epipersepspectral2",
+    "wsosinterpnonnegative1",
+    "wsosinterpnonnegative2",
 ]
 
 # instances to test with extended formulations option off

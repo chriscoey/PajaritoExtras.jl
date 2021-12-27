@@ -573,3 +573,49 @@ function _setup_expdesign(opt)
     opt_Q = Symmetric(V * Diagonal(opt_x) * V')
     return (m, x, Q, opt_x, opt_Q)
 end
+
+function wsosinterpnonnegative1(opt)
+    TOL = 1e-4
+    f = ((x, y) -> x^4 + x^2 * y^2 + 4 * y^2 + 4)
+    (U, pts, Ps) =
+        PolyUtils.interpolate(PolyUtils.BoxDomain{Float64}(-zeros(2), ones(2)), 2)
+    K = Hypatia.WSOSInterpNonnegativeCone{Float64, Float64}(U, Ps)
+    m = JuMP.Model(opt)
+
+    JuMP.@variable(m, y)
+    JuMP.@objective(m, Max, y)
+    JuMP.@constraint(m, [f(pts[i, :]...) - y for i in 1:U] in K)
+    JuMP.optimize!(m)
+    @test JuMP.termination_status(m) == MOI.OPTIMAL
+    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+    @test isapprox(JuMP.objective_value(m), 4, atol = TOL)
+    @test isapprox(JuMP.objective_bound(m), 4, atol = TOL)
+    @test isapprox(JuMP.value(y), 4, atol = TOL)
+
+    # error("test int - maybe different f/gs")
+    return
+end
+
+function wsosinterpnonnegative2(opt)
+    # complex case
+    TOL = 1e-4
+    f = (z -> 1 + sum(abs2, z))
+    gs = [z -> 1 - sum(abs2, z)]
+    (points, Ps) = PolyUtils.interpolate(ComplexF64, 1, 2, gs, [1])
+    U = length(points)
+    K = Hypatia.WSOSInterpNonnegativeCone{Float64, ComplexF64}(U, Ps)
+    m = JuMP.Model(opt)
+
+    JuMP.@variable(m, y)
+    JuMP.@objective(m, Max, y)
+    JuMP.@constraint(m, f.(points) .- y in K)
+    JuMP.optimize!(m)
+    @test JuMP.termination_status(m) == MOI.OPTIMAL
+    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+    @test isapprox(JuMP.objective_value(m), 1, atol = TOL)
+    @test isapprox(JuMP.objective_bound(m), 1, atol = TOL)
+    @test isapprox(JuMP.value(y), 1, atol = TOL)
+
+    # error("test int - maybe different f/gs")
+    return
+end
