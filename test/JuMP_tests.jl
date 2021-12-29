@@ -28,6 +28,8 @@ inst_all = String[
     "epipersquare2",
     "epinormspectral1",
     "epinormspectral2",
+    "dual_epinormspectral1",
+    "dual_epinormspectral2",
     "hypogeomean1",
     "hypogeomean2",
     "hyporootdettri1",

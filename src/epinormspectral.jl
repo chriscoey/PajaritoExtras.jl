@@ -12,14 +12,14 @@ subdifferential characterized by e.g.
 G.A. Watson, "Characterization of the Subdifferential of Some Matrix Norms"
 =#
 
-mutable struct EpiNormSpectralCache{C <: RealOrComplex, D <: PrimalOrDual} <: ConeCache
+mutable struct EpiNormSpectralCache{D <: PrimalOrDual, C <: RealOrComplex} <: ConeCache
     oa_s::Vector{AE}
     s::Vector{Float64}
     d1::Int
     d2::Int
     w_temp::Vector{Float64}
     W_temp::Matrix{C}
-    EpiNormSpectralCache{C, D}() where {C <: RealOrComplex, D <: PrimalOrDual} = new{C, D}()
+    EpiNormSpectralCache{D, C}() where {D <: PrimalOrDual, C <: RealOrComplex} = new{D, C}()
 end
 
 function MOIPajarito.Cones.create_cache(
@@ -28,7 +28,7 @@ function MOIPajarito.Cones.create_cache(
     ::Bool,
 ) where {C <: RealOrComplex}
     D = primal_or_dual(cone.use_dual)
-    cache = EpiNormSpectralCache{C, D}()
+    cache = EpiNormSpectralCache{D, C}()
     cache.oa_s = oa_s
     d1 = cache.d1 = cone.d1
     d2 = cache.d2 = cone.d2
@@ -39,10 +39,12 @@ function MOIPajarito.Cones.create_cache(
     return cache
 end
 
-function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiNormSpectralCache{C},
-    oa_model::JuMP.Model,
-) where {C}
+function get_svd(sz::Vector{Float64}, cache::EpiNormSpectralCache)
+    @views W = vec_copyto!(cache.W_temp, sz[2:end])
+    return svd(W, full = false)
+end
+
+function MOIPajarito.Cones.add_init_cuts(cache::EpiNormSpectralCache, oa_model::JuMP.Model)
     # TODO use simple bounds to derive init cuts:
     # frob / rtd1 <= spec
     # opinf / rtd2 <= spec
@@ -55,59 +57,85 @@ function MOIPajarito.Cones.add_init_cuts(
     return 1
 end
 
+# primal cone functions
+
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{Float64},
-    cache::EpiNormSpectralCache,
+    cache::EpiNormSpectralCache{Primal},
     oa_model::JuMP.Model,
 )
-    # strengthened cuts from SVD are σᵢ * Uᵢ * Vᵢ', ∀ i : σᵢ = σ₁
-    p = z[1]
-    R = cache.W_temp
-    @views vec_copyto!(R, z[2:end])
-    F = svd!(R, full = false)
-    σ = F.S
-    @assert issorted(σ, rev = true)
-    σ[1] <= 1e-7 && return AE[]
-    @assert p - σ[1] >= -1e-7
-    return _get_cuts(σ, F.U, F.Vt, cache, oa_model)
-end
-
-function MOIPajarito.Cones.get_sep_cuts(cache::EpiNormSpectralCache, oa_model::JuMP.Model)
-    # check s ∉ K
-    # NOTE only need to compute singular values larger than us, but not possible with LAPACK
-    us = cache.s[1]
-    Ws = cache.W_temp
-    @views vec_copyto!(Ws, cache.s[2:end])
-    F = svd!(Ws, full = false)
-    σ = F.S
-    @assert issorted(σ, rev = true)
-    if σ[1] <= 1e-7 || us - σ[1] >= -1e-7
-        return AE[]
-    end
-    σ_viol = ones(count(>(us + 1e-7), σ))
-    return _get_cuts(σ_viol, F.U, F.Vt, cache, oa_model)
-end
-
-function _get_cuts(
-    σ::Vector{Float64},
-    U::Matrix{C},
-    Vt::Matrix{C},
-    cache::EpiNormSpectralCache{C},
-    oa_model::JuMP.Model,
-) where {C}
-    # cuts from svd are (σᵢ, σᵢ * Uᵢ * Vtᵢ)
-    u = cache.oa_s[1]
-    w = cache.oa_s[2:end] # TODO cache
+    F = get_svd(z, cache)
     cuts = AE[]
-    R_vec_i = cache.w_temp
-    R_i = cache.W_temp
-    for (i, σ_i) in enumerate(σ)
-        σ_i < 1e-9 && continue
-        @views mul!(R_i, U[:, i], transpose(Vt[i, :]), σ_i, false)
-        clean_array!(R_i) && continue
-        vec_copyto!(R_vec_i, R_i) # TODO maybe reinterpret
-        cut = JuMP.@expression(oa_model, σ_i * u + JuMP.dot(R_vec_i, w))
+    for (i, σ_i) in enumerate(F.S)
+        σ_i < 1e-7 && break
+        cut = _get_cut(σ_i, i, F.U, F.Vt, cache, oa_model)
         push!(cuts, cut)
     end
     return cuts
+end
+
+function MOIPajarito.Cones.get_sep_cuts(
+    cache::EpiNormSpectralCache{Primal},
+    oa_model::JuMP.Model,
+)
+    # decomposed gradient cut is (1, -Uᵢ * Vtᵢ)
+    us = cache.s[1]
+    F = get_svd(cache.s, cache)
+    cuts = AE[]
+    for (i, σ_i) in enumerate(F.S)
+        if σ_i < 1e-7 || us - σ_i > -1e-7
+            break
+        end
+        cut = _get_cut(one(T), i, F.U, F.Vt, cache, oa_model)
+        push!(cuts, cut)
+    end
+    return cuts
+end
+
+function _get_cut(
+    σ_i::Float64,
+    i::Int,
+    U::Matrix{C},
+    Vt::Matrix{C},
+    cache::EpiNormSpectralCache{Primal, C},
+    oa_model::JuMP.Model,
+) where {C}
+    u = cache.oa_s[1]
+    w = cache.oa_s[2:end] # TODO cache
+    R_i = cache.W_temp
+    @views mul!(R_i, U[:, i], transpose(Vt[i, :]), σ_i, false)
+    R_vec_i = vec_copyto!(cache.w_temp, R_i) # TODO maybe reinterpret
+    return JuMP.@expression(oa_model, σ_i * u + JuMP.dot(R_vec_i, w))
+end
+
+# dual cone functions
+
+function MOIPajarito.Cones.get_subp_cuts(
+    z::Vector{Float64},
+    cache::EpiNormSpectralCache{Dual},
+    oa_model::JuMP.Model,
+)
+    # strengthened cut is (‖R‖∞, R)
+    # TODO extreme ray decomposition?
+    F = get_svd(z, cache)
+    p = F.S[1]
+    p < 1e-7 && return AE[]
+    z2 = vcat(p, z[2:end])
+    cut = dot_expr(z2, cache.oa_s, oa_model)
+    return [cut]
+end
+
+function MOIPajarito.Cones.get_sep_cuts(
+    cache::EpiNormSpectralCache{Dual},
+    oa_model::JuMP.Model,
+)
+    # gradient cut is (1, -∑ᵢ Uᵢ * Vtᵢ)
+    # TODO incorrect, check math
+    F = get_svd(cache.s, cache)
+    (cache.s[1] - sum(F.S) > -1e-7) && return AE[]
+    R = -F.U * F.Vt
+    R_vec = vec_copyto!(cache.w_temp, R) # TODO maybe reinterpret
+    z2 = vcat(1, R_vec)
+    cut = dot_expr(z2, cache.oa_s, oa_model)
+    return [cut]
 end

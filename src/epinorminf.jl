@@ -122,19 +122,15 @@ function MOIPajarito.Cones.get_sep_cuts(
     cache::EpiNormInfCache{ComplexF64},
     oa_model::JuMP.Model,
 )
+    # decomposed gradient cut on (u, Wᵢ) is (1, -Wsᵢ / ‖Wsᵢ‖)
     us = cache.s[1]
-    Ws = cache.W_temp
-    @views vec_copyto!(Ws, cache.s[2:end])
-    # check s ∉ K
-    if us - norm(Ws, Inf) > -1e-7
-        return AE[]
-    end
-
+    @views Ws = vec_copyto!(cache.W_temp, cache.s[2:end])
     cuts = AE[]
     for (i, Ws_i) in enumerate(Ws)
-        # decomposed gradient cut on (u, Wᵢ) is (1, -Wsᵢ / ‖Wsᵢ‖)
         abs_i = abs(Ws_i)
-        abs_i < 1e-7 && continue
+        if abs_i < 1e-7 || us - abs_i > -1e-7
+            continue
+        end
         R_i = Ws_i / -abs_i
         cut = _get_cut(R_i, i, cache, oa_model)
         push!(cuts, cut)
@@ -176,6 +172,7 @@ function MOIPajarito.Cones.get_sep_cuts(cache::DualEpiNormInfCache, oa_model::Ju
     end
 
     # gradient cut is (1, (-Wsᵢ / ‖Wsᵢ‖)ᵢ)
+    # TODO incorrect, check math
     R = [-Ws_i / abs(Ws_i) for Ws_i in Ws]
     return _get_cuts(R, cache, oa_model)
 end
