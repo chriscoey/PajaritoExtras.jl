@@ -14,7 +14,6 @@ dual of HypoPerLog is (p, q, r) : p ≤ 0, r ≥ 0, q ≥ p * (log(-r / p) + 1)
 =#
 
 mutable struct HypoGeoMeanCache{E <: Extender} <: ConeCache
-    cone::Hypatia.HypoGeoMeanCone{Float64}
     oa_s::Vector{AE}
     s::Vector{Float64}
     d::Int
@@ -34,7 +33,6 @@ function MOIPajarito.Cones.create_cache(
     d = dim - 1
     E = extender(extend, d)
     cache = HypoGeoMeanCache{E}()
-    cache.cone = cone
     cache.oa_s = oa_s
     cache.d = d
     return cache

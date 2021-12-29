@@ -3,8 +3,6 @@ real symmetric or complex Hermitian (svec scaled triangle) domain 𝕊ᵈ₊
 =#
 
 mutable struct MatrixEpiPerSepSpectralCache{C <: RealOrComplex} <: ConeCache
-    cone::Hypatia.EpiPerSepSpectralCone{Float64}
-    is_complex::Bool
     oa_s::Vector{AE}
     s::Vector{Float64}
     h::SepSpectralFun
@@ -20,7 +18,6 @@ function create_sepspectral_cache(
     ::Bool,
 ) where {C <: RealOrComplex}
     cache = MatrixEpiPerSepSpectralCache{C}()
-    cache.is_complex = (C == ComplexF64)
     cache.w_temp = zeros(Float64, svec_length(C, d))
     cache.W_temp = zeros(C, d, d)
     return cache

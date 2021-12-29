@@ -10,8 +10,6 @@ w : Pₗ' Diagonal(w) Pₗ ⪰ 0 ∀ l
 =#
 
 mutable struct WSOSInterpNonnegativeCache{C <: RealOrComplex} <: ConeCache
-    cone::Hypatia.WSOSInterpNonnegativeCone{Float64, C}
-    is_complex::Bool
     Ps::Vector{Matrix{C}}
     d::Int
     oa_s::Vector{AE}
@@ -26,8 +24,6 @@ function MOIPajarito.Cones.create_cache(
 ) where {C <: RealOrComplex}
     cache = WSOSInterpNonnegativeCache{C}()
     @assert !cone.use_dual # TODO
-    cache.cone = cone
-    cache.is_complex = (C == ComplexF64)
     cache.oa_s = oa_s
     cache.Ps = cone.Ps
     d = cache.d = MOI.dimension(cone)

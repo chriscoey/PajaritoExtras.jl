@@ -9,7 +9,6 @@ i.e. λᵢ ≥ 0, 2 λᵢ v ≥ wᵢ²
 =#
 
 mutable struct EpiPerSquareCache{E <: Extender} <: ConeCache
-    cone::Hypatia.EpiPerSquareCone{Float64}
     oa_s::Vector{AE}
     s::Vector{Float64}
     d::Int
@@ -27,7 +26,6 @@ function MOIPajarito.Cones.create_cache(
     d = dim - 2
     E = extender(extend, d)
     cache = EpiPerSquareCache{E}()
-    cache.cone = cone
     cache.oa_s = oa_s
     cache.d = d
     return cache

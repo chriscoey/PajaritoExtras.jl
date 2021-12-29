@@ -5,8 +5,6 @@ self-dual
 =#
 
 mutable struct PosSemidefTriCache{C <: RealOrComplex} <: ConeCache
-    cone::Hypatia.PosSemidefTriCone{Float64, C}
-    is_complex::Bool
     oa_s::Vector{AE}
     s::Vector{Float64}
     d::Int
@@ -21,8 +19,6 @@ function MOIPajarito.Cones.create_cache(
     ::Bool,
 ) where {C <: RealOrComplex}
     cache = PosSemidefTriCache{C}()
-    cache.cone = cone
-    cache.is_complex = (C == ComplexF64)
     cache.oa_s = oa_s
     dim = MOI.dimension(cone)
     d = cache.d = svec_side(C, dim)
@@ -44,7 +40,7 @@ function MOIPajarito.Cones.add_init_cuts(
     for j in 1:d, i in 1:(j - 1)
         _add_init_cuts(i, j, cache, oa_model)
     end
-    return (cache.is_complex ? 2d^2 - d : d^2)
+    return (C == ComplexF64 ? 2d^2 - d : d^2)
 end
 
 # real: cuts on (w_ii, w_jj, w_ij) are (1, 1, ±rt2), ∀i != j

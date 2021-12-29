@@ -9,7 +9,6 @@ i.e. λᵢ ≥ 0, 2 u λᵢ ≥ wᵢ²
 =#
 
 mutable struct EpiNormEuclCache{E <: Extender} <: ConeCache
-    cone::Hypatia.EpiNormEuclCone{Float64}
     oa_s::Vector{AE}
     s::Vector{Float64}
     d::Int
@@ -27,7 +26,6 @@ function MOIPajarito.Cones.create_cache(
     d = dim - 1
     E = extender(extend, d)
     cache = EpiNormEuclCache{E}()
-    cache.cone = cone
     cache.oa_s = oa_s
     cache.d = d
     return cache

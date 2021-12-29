@@ -21,7 +21,6 @@ function MOIPajarito.Cones.create_cache(
     @assert !cone.use_dual # TODO
     @assert MOI.dimension(cone) == length(oa_s)
     cache = create_sepspectral_cache(cone.Q, cone.d, extend)
-    cache.cone = cone
     cache.oa_s = oa_s
     cache.d = cone.d
     cache.h = cone.h

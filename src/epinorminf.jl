@@ -14,7 +14,6 @@ complex case: (λᵢ, re(Wᵢ), im(Wᵢ)) in EpiNormEucl
 
 # primal cone
 mutable struct EpiNormInfCache{C <: RealOrComplex} <: ConeCache
-    cone::Hypatia.EpiNormInfCone{Float64, C}
     oa_s::Vector{AE}
     s::Vector{Float64}
     d::Int
@@ -24,7 +23,6 @@ end
 
 # dual cone
 mutable struct DualEpiNormInfCache{C <: RealOrComplex, E <: Extender} <: ConeCache
-    cone::Hypatia.EpiNormInfCone{Float64, C}
     oa_s::Vector{AE}
     s::Vector{Float64}
     d::Int
@@ -48,7 +46,6 @@ function MOIPajarito.Cones.create_cache(
     else
         EpiNormInfCache{C}()
     end
-    cache.cone = cone
     cache.oa_s = oa_s
     cache.d = d
     cache.W_temp = zeros(C, d)

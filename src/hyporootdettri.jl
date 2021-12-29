@@ -9,8 +9,6 @@ dual cone is
 =#
 
 mutable struct HypoRootdetTriCache{C <: RealOrComplex} <: ConeCache
-    cone::Hypatia.HypoRootdetTriCone{Float64, C}
-    is_complex::Bool
     oa_s::Vector{AE}
     s::Vector{Float64}
     d::Int
@@ -25,8 +23,6 @@ function MOIPajarito.Cones.create_cache(
     ::Bool,
 ) where {C <: RealOrComplex}
     cache = HypoRootdetTriCache{C}()
-    cache.cone = cone
-    cache.is_complex = (C == ComplexF64)
     cache.oa_s = oa_s
     dim = MOI.dimension(cone)
     d = cache.d = svec_side(C, dim - 1)

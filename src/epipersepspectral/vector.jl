@@ -6,7 +6,6 @@ extended formulation
 =#
 
 mutable struct VectorEpiPerSepSpectralCache{E <: Extender} <: ConeCache
-    cone::Hypatia.EpiPerSepSpectralCone{Float64}
     oa_s::Vector{AE}
     s::Vector{Float64}
     h::SepSpectralFun

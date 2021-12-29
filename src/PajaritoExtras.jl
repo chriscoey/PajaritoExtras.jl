@@ -1,10 +1,6 @@
 
 module PajaritoExtras
 
-const RealOrComplex = Union{Float64, ComplexF64}
-const rt2 = sqrt(2.0)
-const irt2 = inv(rt2)
-
 using LinearAlgebra
 
 import JuMP
@@ -19,6 +15,16 @@ import Hypatia.Cones: smat_to_svec!, svec_to_smat!
 import MOIPajarito
 import MOIPajarito.Cones: Extender, Unextended, Extended, extender
 import MOIPajarito.Cones: ConeCache, clean_array!, dot_expr
+
+const RealOrComplex = Union{Float64, ComplexF64}
+
+abstract type PrimalOrDual end
+struct Primal <: PrimalOrDual end
+struct Dual <: PrimalOrDual end
+primal_or_dual(use_dual::Bool) = (use_dual ? Dual : Primal)
+
+const rt2 = sqrt(2.0)
+const irt2 = inv(rt2)
 
 include("possemideftri.jl")
 include("epinorminf.jl")

@@ -12,16 +12,14 @@ subdifferential characterized by e.g.
 G.A. Watson, "Characterization of the Subdifferential of Some Matrix Norms"
 =#
 
-mutable struct EpiNormSpectralCache{C <: RealOrComplex} <: ConeCache
-    cone::Hypatia.EpiNormSpectralCone{Float64, C}
-    is_complex::Bool
+mutable struct EpiNormSpectralCache{C <: RealOrComplex, D <: PrimalOrDual} <: ConeCache
     oa_s::Vector{AE}
     s::Vector{Float64}
     d1::Int
     d2::Int
     w_temp::Vector{Float64}
     W_temp::Matrix{C}
-    EpiNormSpectralCache{C}() where {C <: RealOrComplex} = new{C}()
+    EpiNormSpectralCache{C, D}() where {C <: RealOrComplex, D <: PrimalOrDual} = new{C, D}()
 end
 
 function MOIPajarito.Cones.create_cache(
@@ -29,10 +27,8 @@ function MOIPajarito.Cones.create_cache(
     cone::Hypatia.EpiNormSpectralCone{Float64, C},
     ::Bool,
 ) where {C <: RealOrComplex}
-    @assert !cone.use_dual # TODO separate cache type DualEpiNormSpectralCache?
-    cache = EpiNormSpectralCache{C}()
-    cache.cone = cone
-    cache.is_complex = (C == ComplexF64)
+    D = primal_or_dual(cone.use_dual)
+    cache = EpiNormSpectralCache{C, D}()
     cache.oa_s = oa_s
     d1 = cache.d1 = cone.d1
     d2 = cache.d2 = cone.d2
@@ -47,13 +43,14 @@ function MOIPajarito.Cones.add_init_cuts(
     cache::EpiNormSpectralCache{C},
     oa_model::JuMP.Model,
 ) where {C}
-    # TODO use simple bounds to derive init cuts: (could even add a SOC cut if supported, for the frob bound)
+    # TODO use simple bounds to derive init cuts:
     # frob / rtd1 <= spec
     # opinf / rtd2 <= spec
     # op1 / rtd1 <= spec
-    u = cache.oa_s[1]
-    # w = cache.oa_s[2:end] # TODO cache
+    # and
+    # frob <= nuc
     # u ≥ 0
+    u = cache.oa_s[1]
     JuMP.@constraint(oa_model, u >= 0)
     return 1
 end
@@ -108,7 +105,7 @@ function _get_cuts(
         σ_i < 1e-9 && continue
         @views mul!(R_i, U[:, i], transpose(Vt[i, :]), σ_i, false)
         clean_array!(R_i) && continue
-        vec_copyto!(R_vec_i, R_i)
+        vec_copyto!(R_vec_i, R_i) # TODO maybe reinterpret
         cut = JuMP.@expression(oa_model, σ_i * u + JuMP.dot(R_vec_i, w))
         push!(cuts, cut)
     end
