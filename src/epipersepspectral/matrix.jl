@@ -31,28 +31,27 @@ function create_sepspectral_cache(
     return cache
 end
 
-# primal cone functions
-
 function MOIPajarito.Cones.add_init_cuts(
-    cache::MatrixEpiPerSepSpectralCache{Primal, C},
+    cache::MatrixEpiPerSepSpectralCache{D, C},
     oa_model::JuMP.Model,
-) where {C}
-    v = cache.oa_s[2]
-    @views w = cache.oa_s[3:end]
+) where {D, C}
+    h = cache.h
     d = cache.d
-    # variable bounds v ≥ 0, Wᵢᵢ ≥ 0
+    (u, v) = cache.oa_s[epi_per_idxs(D)]
+    @views w = cache.oa_s[3:end]
     W_diag = [w[svec_idx(C, i, i)] for i in 1:d]
-    JuMP.@constraints(oa_model, begin
-        v >= 0
-        W_diag .>= 0
-    end)
+
+    # variable bounds
+    JuMP.@constraint(oa_model, v >= 0)
+    if dom_pos(D, h)
+        JuMP.@constraint(oa_model, W_diag .>= 0)
+    end
 
     # cuts using values of p = 1 and R = r₀ I
-    u = cache.oa_s[1]
-    r_vals = init_r_vals(cache.h)
+    r_vals = init_r_vals(D, h)
     for r0 in r_vals
         R_diag = fill(r0, d)
-        q = per_sepspec(h_conj, cache.h, 1.0, R_diag)
+        q = per_sepspec(sepspec_dual(D), h, 1.0, R_diag)
         JuMP.@constraint(oa_model, u + q * v + JuMP.dot(R_diag, W_diag) >= 0)
     end
     return 1 + d + length(r_vals)
@@ -60,9 +59,10 @@ end
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{Float64},
-    cache::MatrixEpiPerSepSpectralCache{Primal},
+    cache::MatrixEpiPerSepSpectralCache{D},
     oa_model::JuMP.Model,
-)
+) where {D}
+    (p, q) = cache.oa_s[epi_per_idxs(D)]
     R = cache.W_temp
     @views svec_to_smat!(R, z[3:end], rt2)
     F = eigen(Hermitian(R, :U))
@@ -70,7 +70,10 @@ function MOIPajarito.Cones.get_subp_cuts(
     ω = F.values
 
     cuts = AE[]
-    if max(abs(z[2])) < 1e-7
+    if abs(q) < 1e-7
+        # TODO only if domain for this part is pos
+
+
         # TODO decide when to add
         # add eigenvector cuts
         num_pos = count(>(1e-7), ω)
@@ -80,7 +83,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     end
 
     # add epigraph cut
-    cut = _get_cut(z[1], ω, V, cache, oa_model)
+    cut = _get_cut(p, ω, V, cache, oa_model)
     push!(cuts, cut)
     return cuts
 end
@@ -95,6 +98,10 @@ function MOIPajarito.Cones.get_sep_cuts(
     F = eigen(Hermitian(Ws, :U))
     V = F.vectors
     ω = F.values
+
+
+
+    # TODO only if domain for this part is pos
     num_neg = count(<(-1e-7), ω)
     @assert issorted(ω)
 
@@ -106,8 +113,11 @@ function MOIPajarito.Cones.get_sep_cuts(
         cuts = _get_psd_cuts(V_neg, w, cache, oa_model)
     end
 
-    us = cache.s[1]
-    v_pos = max(cache.s[2], 1e-7)
+    (us, vs) = cache.s[epi_per_idxs(D)]
+    v_pos = max(vs, 1e-7)
+
+
+    # TODO only if domain for this part is pos
     ω_pos = max.(ω, 1e-7)
     us - per_sepspec(h_val, cache.h, v_pos, ω_pos) > -1e-7 && return AE[]
 

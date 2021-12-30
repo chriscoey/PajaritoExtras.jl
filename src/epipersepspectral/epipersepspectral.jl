@@ -37,6 +37,15 @@ end
 
 h_grad(w::Vector{Float64}, h::SepSpectralFun) = h_der1(similar(w), w, h)
 
+epi_per_idxs(::Type{Primal}) = [1, 2]
+epi_per_idxs(::Type{Dual}) = [2, 1]
+
+dom_pos(::Type{Primal}, ::SepSpectralFun) = true
+dom_pos(::Type{Dual}, h::SepSpectralFun) = h_conj_dom_pos(h)
+
+sepspec_dual(::Type{Primal}) = h_conj
+sepspec_dual(::Type{Dual}) = h_val
+
 import Hypatia.Cones: NegLogSSF, NegEntropySSF, NegSqrtSSF, NegPower01SSF, Power12SSF
 
 # r values for initial cuts
