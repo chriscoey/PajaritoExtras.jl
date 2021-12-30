@@ -4,25 +4,25 @@ W ⪰ 0
 self-dual
 =#
 
-mutable struct PosSemidefTri{C <: RealComp} <: Cone
+mutable struct PosSemidefTri{C <: RealCompF} <: Cone
     oa_s::Vector{AE}
-    s::Vector{Float64}
+    s::Vector{RealF}
     d::Int
-    w_temp::Vector{Float64}
+    w_temp::Vector{RealF}
     W_temp::Matrix{C}
-    PosSemidefTri{C}() where {C <: RealComp} = new{C}()
+    PosSemidefTri{C}() where {C <: RealCompF} = new{C}()
 end
 
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
-    cone::Hypatia.PosSemidefTriCone{Float64, C},
+    cone::Hypatia.PosSemidefTriCone{RealF, C},
     ::Bool,
-) where {C <: RealComp}
+) where {C <: RealCompF}
     cache = PosSemidefTri{C}()
     cache.oa_s = oa_s
     dim = MOI.dimension(cone)
     d = cache.d = svec_side(C, dim)
-    cache.w_temp = zeros(Float64, dim)
+    cache.w_temp = zeros(RealF, dim)
     cache.W_temp = zeros(C, d, d)
     return cache
 end
@@ -40,15 +40,15 @@ function MOIPajarito.Cones.add_init_cuts(
     for j in 1:d, i in 1:(j - 1)
         _add_init_cuts(i, j, cache, oa_model)
     end
-    return (C == ComplexF64 ? 2d^2 - d : d^2)
+    return (C == CompF ? 2d^2 - d : d^2)
 end
 
 # real: cuts on (w_ii, w_jj, w_ij) are (1, 1, ±rt2), ∀i != j
-function _add_init_cuts(i::Int, j::Int, cache::PosSemidefTri{Float64}, oa_model::JuMP.Model)
+function _add_init_cuts(i::Int, j::Int, cache::PosSemidefTri{RealF}, oa_model::JuMP.Model)
     w = cache.oa_s
-    w_ii = w[svec_idx(Float64, i, i)]
-    w_jj = w[svec_idx(Float64, j, j)]
-    w_ij = w[svec_idx(Float64, i, j)]
+    w_ii = w[svec_idx(RealF, i, i)]
+    w_jj = w[svec_idx(RealF, j, j)]
+    w_ij = w[svec_idx(RealF, i, j)]
     JuMP.@constraints(oa_model, begin
         w_ii + w_jj + rt2 * w_ij >= 0
         w_ii + w_jj - rt2 * w_ij >= 0
@@ -57,16 +57,11 @@ function _add_init_cuts(i::Int, j::Int, cache::PosSemidefTri{Float64}, oa_model:
 end
 
 # complex: cuts on smat (w_ii, w_jj, wr_ij, wi_ij) are (1, 1, ±1, ±1), ∀i != j
-function _add_init_cuts(
-    i::Int,
-    j::Int,
-    cache::PosSemidefTri{ComplexF64},
-    oa_model::JuMP.Model,
-)
+function _add_init_cuts(i::Int, j::Int, cache::PosSemidefTri{CompF}, oa_model::JuMP.Model)
     w = cache.oa_s
-    w_ii = w[svec_idx(ComplexF64, i, i)]
-    w_jj = w[svec_idx(ComplexF64, j, j)]
-    ij_idx = svec_idx(ComplexF64, i, j)
+    w_ii = w[svec_idx(CompF, i, i)]
+    w_jj = w[svec_idx(CompF, j, j)]
+    ij_idx = svec_idx(CompF, i, j)
     wr_ij = w[ij_idx]
     wi_ij = w[ij_idx + 1]
     JuMP.@constraints(oa_model, begin
@@ -79,7 +74,7 @@ function _add_init_cuts(
 end
 
 function MOIPajarito.Cones.get_subp_cuts(
-    z::Vector{Float64},
+    z::Vector{RealF},
     cache::PosSemidefTri,
     oa_model::JuMP.Model,
 )

@@ -7,7 +7,7 @@ extended formulation
 
 mutable struct VectorEpiPerSepSpectral{D <: PrimDual, E <: NatExt} <: Cone
     oa_s::Vector{AE}
-    s::Vector{Float64}
+    s::Vector{RealF}
     h::SepSpectralFun
     d::Int
     λ::Vector{VR}
@@ -17,7 +17,7 @@ mutable struct VectorEpiPerSepSpectral{D <: PrimDual, E <: NatExt} <: Cone
 end
 
 function create_sepspectral_cache(
-    ::Type{VectorCSqr{Float64}},
+    ::Type{VectorCSqr{RealF}},
     use_dual::Bool,
     d::Int,
     extend::Bool,
@@ -55,7 +55,7 @@ function MOIPajarito.Cones.add_init_cuts(
 end
 
 function MOIPajarito.Cones.get_subp_cuts(
-    z::Vector{Float64},
+    z::Vector{RealF},
     cache::VectorEpiPerSepSpectral{Primal},
     oa_model::JuMP.Model,
 )
@@ -87,8 +87,8 @@ end
 # primal unextended formulation
 
 function _get_cuts(
-    p::Float64,
-    r::Vector{Float64},
+    p::RealF,
+    r::Vector{RealF},
     cache::VectorEpiPerSepSpectral{Primal, Nat},
     oa_model::JuMP.Model,
 )
@@ -111,7 +111,7 @@ end
 
 function MOIPajarito.Cones.extend_start(
     cache::VectorEpiPerSepSpectral{Primal, Ext},
-    s_start::Vector{Float64},
+    s_start::Vector{RealF},
 )
     v_start = s_start[2]
     w_start = s_start[3:end]
@@ -131,8 +131,8 @@ function MOIPajarito.Cones.setup_auxiliary(
 end
 
 function _get_cuts(
-    p::Float64,
-    r::Vector{Float64},
+    p::RealF,
+    r::Vector{RealF},
     cache::VectorEpiPerSepSpectral{Primal, Ext},
     oa_model::JuMP.Model,
 )

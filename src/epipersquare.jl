@@ -10,7 +10,7 @@ i.e. λᵢ ≥ 0, 2 λᵢ v ≥ wᵢ²
 
 mutable struct EpiPerSquare{E <: NatExt} <: Cone
     oa_s::Vector{AE}
-    s::Vector{Float64}
+    s::Vector{RealF}
     d::Int
     λ::Vector{VR}
     EpiPerSquare{E}() where {E <: NatExt} = new{E}()
@@ -18,7 +18,7 @@ end
 
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
-    cone::Hypatia.EpiPerSquareCone{Float64},
+    cone::Hypatia.EpiPerSquareCone{RealF},
     extend::Bool,
 )
     dim = MOI.dimension(cone)
@@ -31,10 +31,10 @@ function MOIPajarito.Cones.create_cache(
     return cache
 end
 
-per_square(v::Float64, w::AbstractVector{Float64}) = sum(w_i / 2v * w_i for w_i in w)
+per_square(v::RealF, w::AbstractVector{RealF}) = sum(w_i / 2v * w_i for w_i in w)
 
 function MOIPajarito.Cones.get_subp_cuts(
-    z::Vector{Float64},
+    z::Vector{RealF},
     cache::EpiPerSquare,
     oa_model::JuMP.Model,
 )
@@ -76,8 +76,8 @@ function MOIPajarito.Cones.add_init_cuts(cache::EpiPerSquare{Nat}, oa_model::JuM
 end
 
 function _get_cuts(
-    q::Float64,
-    r::Vector{Float64},
+    q::RealF,
+    r::Vector{RealF},
     cache::EpiPerSquare{Nat},
     oa_model::JuMP.Model,
 )
@@ -95,7 +95,7 @@ end
 
 MOIPajarito.Cones.num_ext_variables(cache::EpiPerSquare{Ext}) = cache.d
 
-function MOIPajarito.Cones.extend_start(cache::EpiPerSquare{Ext}, s_start::Vector{Float64})
+function MOIPajarito.Cones.extend_start(cache::EpiPerSquare{Ext}, s_start::Vector{RealF})
     u_start = s_start[1]
     v_start = s_start[2]
     w_start = s_start[3:end]
@@ -132,8 +132,8 @@ function MOIPajarito.Cones.add_init_cuts(cache::EpiPerSquare{Ext}, oa_model::JuM
 end
 
 function _get_cuts(
-    q::Float64,
-    r::Vector{Float64},
+    q::RealF,
+    r::Vector{RealF},
     cache::EpiPerSquare{Ext},
     oa_model::JuMP.Model,
 )

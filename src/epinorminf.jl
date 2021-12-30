@@ -12,25 +12,25 @@ real case (polyhedral): λᵢ ≥ Wᵢ, λᵢ ≥ -Wᵢ
 complex case: (λᵢ, re(Wᵢ), im(Wᵢ)) in EpiNormEucl
 =#
 
-mutable struct EpiNormInf{D <: PrimDual, C <: RealComp, E <: NatExt} <: Cone
+mutable struct EpiNormInf{D <: PrimDual, C <: RealCompF, E <: NatExt} <: Cone
     oa_s::Vector{AE}
-    s::Vector{Float64}
+    s::Vector{RealF}
     d::Int
     λ::Vector{VR}
     W_temp::Vector{C}
-    function EpiNormInf{D, C, E}() where {D <: PrimDual, C <: RealComp, E <: NatExt}
+    function EpiNormInf{D, C, E}() where {D <: PrimDual, C <: RealCompF, E <: NatExt}
         return new{D, C, E}()
     end
 end
 
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
-    cone::Hypatia.EpiNormInfCone{Float64, C},
+    cone::Hypatia.EpiNormInfCone{RealF, C},
     extend::Bool,
-) where {C <: RealComp}
+) where {C <: RealCompF}
     dim = MOI.dimension(cone)
     @assert dim == length(oa_s)
-    d = (C == ComplexF64 ? div(dim - 1, 2) : dim - 1)
+    d = (C == CompF ? div(dim - 1, 2) : dim - 1)
     E = (cone.use_dual ? extender(extend, d) : Nat)
     D = primal_or_dual(cone.use_dual)
     cache = EpiNormInf{D, C, E}()
@@ -43,7 +43,7 @@ end
 # primal cone functions
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiNormInf{Primal, Float64},
+    cache::EpiNormInf{Primal, RealF},
     oa_model::JuMP.Model,
 )
     u = cache.oa_s[1]
@@ -57,7 +57,7 @@ function MOIPajarito.Cones.add_init_cuts(
 end
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiNormInf{Primal, ComplexF64},
+    cache::EpiNormInf{Primal, CompF},
     oa_model::JuMP.Model,
 )
     u = cache.oa_s[1]
@@ -78,16 +78,16 @@ function MOIPajarito.Cones.add_init_cuts(
 end
 
 function MOIPajarito.Cones.get_subp_cuts(
-    ::Vector{Float64},
-    ::EpiNormInf{Primal, Float64},
+    ::Vector{RealF},
+    ::EpiNormInf{Primal, RealF},
     ::JuMP.Model,
 )
     return AE[]
 end
 
 function MOIPajarito.Cones.get_subp_cuts(
-    z::Vector{Float64},
-    cache::EpiNormInf{Primal, ComplexF64},
+    z::Vector{RealF},
+    cache::EpiNormInf{Primal, CompF},
     oa_model::JuMP.Model,
 )
     # strengthened cut on (u, re(Wᵢ), im(Wᵢ)) is (‖Rᵢ‖, re(Rᵢ), im(Rᵢ))
@@ -102,12 +102,12 @@ function MOIPajarito.Cones.get_subp_cuts(
     return cuts
 end
 
-function MOIPajarito.Cones.get_sep_cuts(::EpiNormInf{Primal, Float64}, ::JuMP.Model)
+function MOIPajarito.Cones.get_sep_cuts(::EpiNormInf{Primal, RealF}, ::JuMP.Model)
     return AE[]
 end
 
 function MOIPajarito.Cones.get_sep_cuts(
-    cache::EpiNormInf{Primal, ComplexF64},
+    cache::EpiNormInf{Primal, CompF},
     oa_model::JuMP.Model,
 )
     # decomposed gradient cut on (u, Wᵢ) is (1, -Wsᵢ / ‖Wsᵢ‖)
@@ -127,9 +127,9 @@ function MOIPajarito.Cones.get_sep_cuts(
 end
 
 function _get_cut(
-    R_i::ComplexF64,
+    R_i::CompF,
     i::Int,
-    cache::EpiNormInf{Primal, ComplexF64},
+    cache::EpiNormInf{Primal, CompF},
     oa_model::JuMP.Model,
 )
     u = cache.oa_s[1]
@@ -141,7 +141,7 @@ end
 # dual cone functions
 
 function MOIPajarito.Cones.get_subp_cuts(
-    z::Vector{Float64},
+    z::Vector{RealF},
     cache::EpiNormInf{Dual},
     oa_model::JuMP.Model,
 )
@@ -168,7 +168,7 @@ end
 # unextended formulation
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiNormInf{Dual, Float64, Nat},
+    cache::EpiNormInf{Dual, RealF, Nat},
     oa_model::JuMP.Model,
 )
     u = cache.oa_s[1]
@@ -183,7 +183,7 @@ function MOIPajarito.Cones.add_init_cuts(
 end
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiNormInf{Dual, ComplexF64, Nat},
+    cache::EpiNormInf{Dual, CompF, Nat},
     oa_model::JuMP.Model,
 )
     u = cache.oa_s[1]
@@ -207,7 +207,7 @@ function _get_cuts(
     # strengthened cut on (u, W) is (‖R‖∞, R)
     # TODO extreme ray decomposition?
     p = norm(R, Inf)
-    r = reinterpret(Float64, R)
+    r = reinterpret(RealF, R)
     u = cache.oa_s[1]
     @views w = cache.oa_s[2:end]
     cut = JuMP.@expression(oa_model, p * u + JuMP.dot(r, w))
@@ -216,13 +216,13 @@ end
 
 # extended formulation
 
-function MOIPajarito.Cones.num_ext_variables(cache::EpiNormInf{Dual, <:RealComp, Ext})
+function MOIPajarito.Cones.num_ext_variables(cache::EpiNormInf{Dual, <:RealCompF, Ext})
     return cache.d
 end
 
 function MOIPajarito.Cones.extend_start(
     cache::EpiNormInf{Dual, C, Ext},
-    s_start::Vector{Float64},
+    s_start::Vector{RealF},
 ) where {C}
     s_start[1] < 1e-7 && return zeros(cache.d)
     w_start = s_start[2:end]
@@ -231,7 +231,7 @@ function MOIPajarito.Cones.extend_start(
 end
 
 function MOIPajarito.Cones.setup_auxiliary(
-    cache::EpiNormInf{Dual, <:RealComp, Ext},
+    cache::EpiNormInf{Dual, <:RealCompF, Ext},
     oa_model::JuMP.Model,
 )
     @assert cache.d >= 2
@@ -242,7 +242,7 @@ function MOIPajarito.Cones.setup_auxiliary(
 end
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiNormInf{Dual, Float64, Ext},
+    cache::EpiNormInf{Dual, RealF, Ext},
     oa_model::JuMP.Model,
 )
     @views w = cache.oa_s[2:end]
@@ -257,7 +257,7 @@ function MOIPajarito.Cones.add_init_cuts(
 end
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiNormInf{Dual, ComplexF64, Ext},
+    cache::EpiNormInf{Dual, CompF, Ext},
     oa_model::JuMP.Model,
 )
     @views w = cache.oa_s[2:end]
@@ -279,20 +279,20 @@ function MOIPajarito.Cones.add_init_cuts(
 end
 
 function MOIPajarito.Cones.get_subp_cuts(
-    ::Vector{Float64},
-    ::EpiNormInf{Dual, Float64, Ext},
+    ::Vector{RealF},
+    ::EpiNormInf{Dual, RealF, Ext},
     ::JuMP.Model,
 )
     return AE[]
 end
 
-function MOIPajarito.Cones.get_sep_cuts(::EpiNormInf{Dual, Float64, Ext}, ::JuMP.Model)
+function MOIPajarito.Cones.get_sep_cuts(::EpiNormInf{Dual, RealF, Ext}, ::JuMP.Model)
     return AE[]
 end
 
 function _get_cuts(
-    R::Vector{ComplexF64},
-    cache::EpiNormInf{Dual, ComplexF64, Ext},
+    R::Vector{CompF},
+    cache::EpiNormInf{Dual, CompF, Ext},
     oa_model::JuMP.Model,
 )
     cuts = AE[]
@@ -306,9 +306,9 @@ function _get_cuts(
 end
 
 function _get_cut(
-    R_i::ComplexF64,
+    R_i::CompF,
     i::Int,
-    cache::EpiNormInf{Dual, ComplexF64, Ext},
+    cache::EpiNormInf{Dual, CompF, Ext},
     oa_model::JuMP.Model,
 )
     λ_i = cache.λ[i]

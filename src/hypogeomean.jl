@@ -15,7 +15,7 @@ dual of HypoPerLog is (p, q, r) : p ≤ 0, r ≥ 0, q ≥ p * (log(-r / p) + 1)
 
 mutable struct HypoGeoMean{E <: NatExt} <: Cone
     oa_s::Vector{AE}
-    s::Vector{Float64}
+    s::Vector{RealF}
     d::Int
     θ::VR
     λ::Vector{VR}
@@ -24,7 +24,7 @@ end
 
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
-    cone::Hypatia.HypoGeoMeanCone{Float64},
+    cone::Hypatia.HypoGeoMeanCone{RealF},
     extend::Bool,
 )
     @assert !cone.use_dual # TODO
@@ -39,7 +39,7 @@ function MOIPajarito.Cones.create_cache(
 end
 
 function MOIPajarito.Cones.get_subp_cuts(
-    z::Vector{Float64},
+    z::Vector{RealF},
     cache::HypoGeoMean,
     oa_model::JuMP.Model,
 )
@@ -77,7 +77,7 @@ function MOIPajarito.Cones.add_init_cuts(cache::HypoGeoMean{Nat}, oa_model::JuMP
     return d + 1
 end
 
-function _get_cuts(r::Vector{Float64}, cache::HypoGeoMean{Nat}, oa_model::JuMP.Model)
+function _get_cuts(r::Vector{RealF}, cache::HypoGeoMean{Nat}, oa_model::JuMP.Model)
     # strengthened cut is (-d * geom(r), r)
     clean_array!(r) && return AE[]
     p = -cache.d * geomean(r)
@@ -91,7 +91,7 @@ end
 
 MOIPajarito.Cones.num_ext_variables(cache::HypoGeoMean{Ext}) = 1 + cache.d
 
-function MOIPajarito.Cones.extend_start(cache::HypoGeoMean{Ext}, s_start::Vector{Float64})
+function MOIPajarito.Cones.extend_start(cache::HypoGeoMean{Ext}, s_start::Vector{RealF})
     u_start = s_start[1]
     w_start = s_start[2:end]
     w_geom = geomean(w_start)
@@ -129,7 +129,7 @@ function MOIPajarito.Cones.add_init_cuts(cache::HypoGeoMean{Ext}, oa_model::JuMP
     return 2d
 end
 
-function _get_cuts(r::Vector{Float64}, cache::HypoGeoMean{Ext}, oa_model::JuMP.Model)
+function _get_cuts(r::Vector{RealF}, cache::HypoGeoMean{Ext}, oa_model::JuMP.Model)
     clean_array!(r) && return AE[]
     p = -geomean(r)
     @views w = cache.oa_s[2:end]

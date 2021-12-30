@@ -12,21 +12,21 @@ subdifferential characterized by e.g.
 G.A. Watson, "Characterization of the Subdifferential of Some Matrix Norms"
 =#
 
-mutable struct EpiNormSpectral{D <: PrimDual, C <: RealComp} <: Cone
+mutable struct EpiNormSpectral{D <: PrimDual, C <: RealCompF} <: Cone
     oa_s::Vector{AE}
-    s::Vector{Float64}
+    s::Vector{RealF}
     d1::Int
     d2::Int
-    w_temp::Vector{Float64}
+    w_temp::Vector{RealF}
     W_temp::Matrix{C}
-    EpiNormSpectral{D, C}() where {D <: PrimDual, C <: RealComp} = new{D, C}()
+    EpiNormSpectral{D, C}() where {D <: PrimDual, C <: RealCompF} = new{D, C}()
 end
 
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
-    cone::Hypatia.EpiNormSpectralCone{Float64, C},
+    cone::Hypatia.EpiNormSpectralCone{RealF, C},
     ::Bool,
-) where {C <: RealComp}
+) where {C <: RealCompF}
     D = primal_or_dual(cone.use_dual)
     cache = EpiNormSpectral{D, C}()
     cache.oa_s = oa_s
@@ -34,12 +34,12 @@ function MOIPajarito.Cones.create_cache(
     d2 = cache.d2 = cone.d2
     dim = MOI.dimension(cone)
     @assert dim == 1 + vec_length(C, d1 * d2)
-    cache.w_temp = zeros(Float64, dim - 1)
+    cache.w_temp = zeros(RealF, dim - 1)
     cache.W_temp = zeros(C, d1, d2)
     return cache
 end
 
-function get_svd(sz::Vector{Float64}, cache::EpiNormSpectral)
+function get_svd(sz::Vector{RealF}, cache::EpiNormSpectral)
     @views W = vec_copyto!(cache.W_temp, sz[2:end])
     return svd(W, full = false)
 end
@@ -60,7 +60,7 @@ end
 # primal cone functions
 
 function MOIPajarito.Cones.get_subp_cuts(
-    z::Vector{Float64},
+    z::Vector{RealF},
     cache::EpiNormSpectral{Primal},
     oa_model::JuMP.Model,
 )
@@ -93,7 +93,7 @@ function MOIPajarito.Cones.get_sep_cuts(
 end
 
 function _get_cut(
-    σ_i::Float64,
+    σ_i::RealF,
     i::Int,
     U::Matrix{C},
     Vt::Matrix{C},
@@ -111,7 +111,7 @@ end
 # dual cone functions
 
 function MOIPajarito.Cones.get_subp_cuts(
-    z::Vector{Float64},
+    z::Vector{RealF},
     cache::EpiNormSpectral{Dual},
     oa_model::JuMP.Model,
 )

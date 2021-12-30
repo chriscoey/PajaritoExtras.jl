@@ -9,19 +9,19 @@ dual cone
 w : Pₗ' Diagonal(w) Pₗ ⪰ 0 ∀ l
 =#
 
-mutable struct WSOSInterpNonnegative{C <: RealComp} <: Cone
+mutable struct WSOSInterpNonnegative{C <: RealCompF} <: Cone
     Ps::Vector{Matrix{C}}
     d::Int
     oa_s::Vector{AE}
-    s::Vector{Float64}
-    WSOSInterpNonnegative{C}() where {C <: RealComp} = new{C}()
+    s::Vector{RealF}
+    WSOSInterpNonnegative{C}() where {C <: RealCompF} = new{C}()
 end
 
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
-    cone::Hypatia.WSOSInterpNonnegativeCone{Float64, C},
+    cone::Hypatia.WSOSInterpNonnegativeCone{RealF, C},
     ::Bool,
-) where {C <: RealComp}
+) where {C <: RealCompF}
     cache = WSOSInterpNonnegative{C}()
     @assert !cone.use_dual # TODO
     cache.oa_s = oa_s
@@ -39,7 +39,7 @@ function MOIPajarito.Cones.add_init_cuts(cache::WSOSInterpNonnegative, oa_model:
 end
 
 function MOIPajarito.Cones.get_subp_cuts(
-    z::Vector{Float64},
+    z::Vector{RealF},
     cache::WSOSInterpNonnegative,
     oa_model::JuMP.Model,
 )

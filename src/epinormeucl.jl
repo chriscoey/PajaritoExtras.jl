@@ -10,7 +10,7 @@ i.e. λᵢ ≥ 0, 2 u λᵢ ≥ wᵢ²
 
 mutable struct EpiNormEucl{E <: NatExt} <: Cone
     oa_s::Vector{AE}
-    s::Vector{Float64}
+    s::Vector{RealF}
     d::Int
     λ::Vector{VR}
     EpiNormEucl{E}() where {E <: NatExt} = new{E}()
@@ -18,7 +18,7 @@ end
 
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
-    cone::Hypatia.EpiNormEuclCone{Float64},
+    cone::Hypatia.EpiNormEuclCone{RealF},
     extend::Bool,
 )
     dim = MOI.dimension(cone)
@@ -32,7 +32,7 @@ function MOIPajarito.Cones.create_cache(
 end
 
 function MOIPajarito.Cones.get_subp_cuts(
-    z::Vector{Float64},
+    z::Vector{RealF},
     cache::EpiNormEucl,
     oa_model::JuMP.Model,
 )
@@ -69,7 +69,7 @@ function MOIPajarito.Cones.add_init_cuts(cache::EpiNormEucl{Nat}, oa_model::JuMP
     return 1 + 2d
 end
 
-function _get_cuts(r::Vector{Float64}, cache::EpiNormEucl{Nat}, oa_model::JuMP.Model)
+function _get_cuts(r::Vector{RealF}, cache::EpiNormEucl{Nat}, oa_model::JuMP.Model)
     # strengthened cut is (‖r‖, r)
     clean_array!(r) && return AE[]
     p = LinearAlgebra.norm(r)
@@ -83,7 +83,7 @@ end
 
 MOIPajarito.Cones.num_ext_variables(cache::EpiNormEucl{Ext}) = cache.d
 
-function MOIPajarito.Cones.extend_start(cache::EpiNormEucl{Ext}, s_start::Vector{Float64})
+function MOIPajarito.Cones.extend_start(cache::EpiNormEucl{Ext}, s_start::Vector{RealF})
     u_start = s_start[1]
     w_start = s_start[2:end]
     @assert u_start - LinearAlgebra.norm(w_start) >= -1e-7 # TODO
@@ -116,7 +116,7 @@ function MOIPajarito.Cones.add_init_cuts(cache::EpiNormEucl{Ext}, oa_model::JuMP
     return 1 + 2d
 end
 
-function _get_cuts(r::Vector{Float64}, cache::EpiNormEucl{Ext}, oa_model::JuMP.Model)
+function _get_cuts(r::Vector{RealF}, cache::EpiNormEucl{Ext}, oa_model::JuMP.Model)
     clean_array!(r) && return AE[]
     p = LinearAlgebra.norm(r)
     u = cache.oa_s[1]

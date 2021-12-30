@@ -2,27 +2,27 @@
 real symmetric or complex Hermitian (svec scaled triangle) domain 𝕊ᵈ₊
 =#
 
-mutable struct MatrixEpiPerSepSpectral{D <: PrimDual, C <: RealComp} <: Cone
+mutable struct MatrixEpiPerSepSpectral{D <: PrimDual, C <: RealCompF} <: Cone
     oa_s::Vector{AE}
-    s::Vector{Float64}
+    s::Vector{RealF}
     h::SepSpectralFun
     d::Int
-    w_temp::Vector{Float64}
+    w_temp::Vector{RealF}
     W_temp::Matrix{C}
-    function MatrixEpiPerSepSpectral{D, C}() where {D <: PrimDual, C <: RealComp}
+    function MatrixEpiPerSepSpectral{D, C}() where {D <: PrimDual, C <: RealCompF}
         return new{D, C}()
     end
 end
 
 function create_sepspectral_cache(
-    ::Type{MatrixCSqr{Float64, C}},
+    ::Type{MatrixCSqr{RealF, C}},
     use_dual::Bool,
     d::Int,
     ::Bool,
-) where {C <: RealComp}
+) where {C <: RealCompF}
     D = primal_or_dual(use_dual)
     cache = MatrixEpiPerSepSpectral{D, C}()
-    cache.w_temp = zeros(Float64, svec_length(C, d))
+    cache.w_temp = zeros(RealF, svec_length(C, d))
     cache.W_temp = zeros(C, d, d)
     return cache
 end
@@ -54,7 +54,7 @@ function MOIPajarito.Cones.add_init_cuts(
 end
 
 function MOIPajarito.Cones.get_subp_cuts(
-    z::Vector{Float64},
+    z::Vector{RealF},
     cache::MatrixEpiPerSepSpectral{D},
     oa_model::JuMP.Model,
 ) where {D}
@@ -121,8 +121,8 @@ function MOIPajarito.Cones.get_sep_cuts(
 end
 
 function _get_cut(
-    p::Float64,
-    rω::Vector{Float64},
+    p::RealF,
+    rω::Vector{RealF},
     V::Matrix{C},
     cache::MatrixEpiPerSepSpectral{Primal, C},
     oa_model::JuMP.Model,

@@ -15,7 +15,7 @@ include("matrix.jl")
 
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
-    cone::Hypatia.EpiPerSepSpectralCone{Float64},
+    cone::Hypatia.EpiPerSepSpectralCone{RealF},
     extend::Bool,
 )
     @assert !cone.use_dual # TODO
@@ -27,7 +27,7 @@ function MOIPajarito.Cones.create_cache(
     return cache
 end
 
-function per_sepspec(f::Function, h::SepSpectralFun, v::Float64, w::AbstractVector{Float64})
+function per_sepspec(f::Function, h::SepSpectralFun, v::RealF, w::AbstractVector{RealF})
     v < 1e-12 && return 0.0
     if v == 1
         return f(w, h)
@@ -35,7 +35,7 @@ function per_sepspec(f::Function, h::SepSpectralFun, v::Float64, w::AbstractVect
     return v * f(w / v, h)
 end
 
-h_grad(w::Vector{Float64}, h::SepSpectralFun) = h_der1(similar(w), w, h)
+h_grad(w::Vector{RealF}, h::SepSpectralFun) = h_der1(similar(w), w, h)
 
 epi_per_idxs(::Type{Primal}) = [1, 2]
 epi_per_idxs(::Type{Dual}) = [2, 1]

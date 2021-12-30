@@ -16,7 +16,9 @@ import MOIPajarito
 import MOIPajarito.Cones: NatExt, Nat, Ext, extender
 import MOIPajarito.Cones: Cone, clean_array!, dot_expr
 
-const RealComp = Union{Float64, ComplexF64}
+const RealF = Float64
+const CompF = ComplexF64
+const RealCompF = Union{RealF, CompF}
 
 abstract type PrimDual end
 struct Primal <: PrimDual end
@@ -38,21 +40,21 @@ include("wsosinterpnonnegative.jl")
 
 # supported cones for outer approximation
 const OACone = Union{
-    Hypatia.PosSemidefTriCone{Float64, <:RealComp},
-    Hypatia.EpiNormEuclCone{Float64},
-    Hypatia.EpiPerSquareCone{Float64},
-    Hypatia.EpiNormInfCone{Float64, <:RealComp},
-    Hypatia.EpiNormSpectralCone{Float64, <:RealComp},
-    Hypatia.HypoGeoMeanCone{Float64},
-    Hypatia.HypoRootdetTriCone{Float64, <:RealComp},
-    Hypatia.EpiPerSepSpectralCone{Float64},
-    Hypatia.WSOSInterpNonnegativeCone{Float64, <:RealComp},
+    Hypatia.PosSemidefTriCone{RealF, <:RealCompF},
+    Hypatia.EpiNormEuclCone{RealF},
+    Hypatia.EpiPerSquareCone{RealF},
+    Hypatia.EpiNormInfCone{RealF, <:RealCompF},
+    Hypatia.EpiNormSpectralCone{RealF, <:RealCompF},
+    Hypatia.HypoGeoMeanCone{RealF},
+    Hypatia.HypoRootdetTriCone{RealF, <:RealCompF},
+    Hypatia.EpiPerSepSpectralCone{RealF},
+    Hypatia.WSOSInterpNonnegativeCone{RealF, <:RealCompF},
 }
 
 # cone must be supported by both Pajarito and the conic solver
 function MOI.supports_constraint(
     opt::MOIPajarito.Optimizer,
-    F::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{Float64}}},
+    F::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{RealF}}},
     S::Type{<:OACone},
 )
     return MOI.supports_constraint(MOIPajarito.get_conic_opt(opt), F, S)
@@ -81,16 +83,16 @@ function _get_psd_cuts(
 end
 
 # TODO move to Hypatia array utilities?
-svec_idx(::Type{Float64}, row::Int, col::Int) = Hypatia.Cones.svec_idx(row, col)
+svec_idx(::Type{RealF}, row::Int, col::Int) = Hypatia.Cones.svec_idx(row, col)
 
-function svec_idx(::Type{ComplexF64}, row::Int, col::Int)
+function svec_idx(::Type{CompF}, row::Int, col::Int)
     if row < col
         (row, col) = (col, row)
     end
     return (row - 1) * row + col
 end
 
-function geomean(w::AbstractVector{Float64}; min_val::Float64 = 1e-12)
+function geomean(w::AbstractVector{RealF}; min_val::RealF = 1e-12)
     w = max.(w, min_val)
     any(<=(eps()), w) && return 0.0
     return exp(sum(log, w) / length(w))
