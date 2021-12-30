@@ -10,7 +10,6 @@ i.e. λᵢ ≥ 0, 2 u λᵢ ≥ wᵢ²
 
 mutable struct EpiNormEucl{E <: NatExt} <: Cone
     oa_s::Vector{AE}
-    s::Vector{RealF}
     d::Int
     λ::Vector{VR}
     EpiNormEucl{E}() where {E <: NatExt} = new{E}()
@@ -24,7 +23,7 @@ function MOIPajarito.Cones.create_cache(
     dim = MOI.dimension(cone)
     @assert dim == length(oa_s)
     d = dim - 1
-    E = extender(extend, d)
+    E = nat_or_ext(extend, d)
     cache = EpiNormEucl{E}()
     cache.oa_s = oa_s
     cache.d = d
@@ -39,12 +38,14 @@ function MOIPajarito.Cones.get_subp_cuts(
     return _get_cuts(z[2:end], cache, oa_model)
 end
 
-function MOIPajarito.Cones.get_sep_cuts(cache::EpiNormEucl, oa_model::JuMP.Model)
-    s = cache.s
+function MOIPajarito.Cones.get_sep_cuts(
+    s::Vector{RealF},
+    cache::EpiNormEucl,
+    oa_model::JuMP.Model,
+)
     us = s[1]
     @views ws = s[2:end]
     ws_norm = LinearAlgebra.norm(ws)
-    # check s ∉ K
     if us - ws_norm > -1e-7 # TODO option
         return AE[]
     end

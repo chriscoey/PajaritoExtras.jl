@@ -7,7 +7,6 @@ extended formulation
 
 mutable struct VectorEpiPerSepSpectral{D <: PrimDual, E <: NatExt} <: Cone
     oa_s::Vector{AE}
-    s::Vector{RealF}
     h::SepSpectralFun
     d::Int
     λ::Vector{VR}
@@ -23,7 +22,7 @@ function create_sepspectral_cache(
     extend::Bool,
 )
     D = primal_or_dual(use_dual)
-    E = extender(extend, d)
+    E = nat_or_ext(extend, d)
     return VectorEpiPerSepSpectral{D, E}()
 end
 
@@ -63,16 +62,15 @@ function MOIPajarito.Cones.get_subp_cuts(
 end
 
 function MOIPajarito.Cones.get_sep_cuts(
+    s::Vector{RealF},
     cache::VectorEpiPerSepSpectral{Primal},
     oa_model::JuMP.Model,
 )
-    s = cache.s
     us = s[1]
     vs = s[2]
     ws = s[3:end]
     @assert vs > -1e-7
     @assert all(>(-1e-7), ws)
-    # check s ∉ K
     if (vs < 1e-7 && us > -1e-7) || us - per_sepspec(h_val, cache.h, vs, ws) > -1e-7
         return AE[]
     end

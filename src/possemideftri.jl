@@ -6,7 +6,6 @@ self-dual
 
 mutable struct PosSemidefTri{C <: RealCompF} <: Cone
     oa_s::Vector{AE}
-    s::Vector{RealF}
     d::Int
     w_temp::Vector{RealF}
     W_temp::Matrix{C}
@@ -87,10 +86,13 @@ function MOIPajarito.Cones.get_subp_cuts(
     return _get_psd_cuts(R_eig, cache.oa_s, cache, oa_model)
 end
 
-function MOIPajarito.Cones.get_sep_cuts(cache::PosSemidefTri, oa_model::JuMP.Model)
-    # check s ∉ K
+function MOIPajarito.Cones.get_sep_cuts(
+    s::Vector{RealF},
+    cache::PosSemidefTri,
+    oa_model::JuMP.Model,
+)
     Ws = cache.W_temp
-    svec_to_smat!(Ws, cache.s, rt2)
+    svec_to_smat!(Ws, s, rt2)
     F = eigen(Hermitian(Ws, :U), -Inf, -1e-7)
     isempty(F.values) && return AE[]
     return _get_psd_cuts(F.vectors, cache.oa_s, cache, oa_model)

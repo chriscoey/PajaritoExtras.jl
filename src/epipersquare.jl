@@ -10,7 +10,6 @@ i.e. λᵢ ≥ 0, 2 λᵢ v ≥ wᵢ²
 
 mutable struct EpiPerSquare{E <: NatExt} <: Cone
     oa_s::Vector{AE}
-    s::Vector{RealF}
     d::Int
     λ::Vector{VR}
     EpiPerSquare{E}() where {E <: NatExt} = new{E}()
@@ -24,7 +23,7 @@ function MOIPajarito.Cones.create_cache(
     dim = MOI.dimension(cone)
     @assert dim == length(oa_s)
     d = dim - 2
-    E = extender(extend, d)
+    E = nat_or_ext(extend, d)
     cache = EpiPerSquare{E}()
     cache.oa_s = oa_s
     cache.d = d
@@ -41,13 +40,15 @@ function MOIPajarito.Cones.get_subp_cuts(
     return _get_cuts(z[2], z[3:end], cache, oa_model)
 end
 
-function MOIPajarito.Cones.get_sep_cuts(cache::EpiPerSquare, oa_model::JuMP.Model)
-    s = cache.s
+function MOIPajarito.Cones.get_sep_cuts(
+    s::Vector{RealF},
+    cache::EpiPerSquare,
+    oa_model::JuMP.Model,
+)
     us = s[1]
     vs = s[2]
     @views ws = s[3:end]
     rhs = per_square(vs, ws)
-    # check s ∉ K
     if us - rhs > -1e-7 # TODO option
         return AE[]
     end

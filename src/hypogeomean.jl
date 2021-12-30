@@ -15,7 +15,6 @@ dual of HypoPerLog is (p, q, r) : p ≤ 0, r ≥ 0, q ≥ p * (log(-r / p) + 1)
 
 mutable struct HypoGeoMean{E <: NatExt} <: Cone
     oa_s::Vector{AE}
-    s::Vector{RealF}
     d::Int
     θ::VR
     λ::Vector{VR}
@@ -31,7 +30,7 @@ function MOIPajarito.Cones.create_cache(
     dim = MOI.dimension(cone)
     @assert dim == length(oa_s)
     d = dim - 1
-    E = extender(extend, d)
+    E = nat_or_ext(extend, d)
     cache = HypoGeoMean{E}()
     cache.oa_s = oa_s
     cache.d = d
@@ -46,12 +45,14 @@ function MOIPajarito.Cones.get_subp_cuts(
     return _get_cuts(z[2:end], cache, oa_model)
 end
 
-function MOIPajarito.Cones.get_sep_cuts(cache::HypoGeoMean, oa_model::JuMP.Model)
-    s = cache.s
+function MOIPajarito.Cones.get_sep_cuts(
+    s::Vector{RealF},
+    cache::HypoGeoMean,
+    oa_model::JuMP.Model,
+)
     us = s[1]
     @views ws = s[2:end]
     @assert all(>(-1e-7), ws)
-    # check s ∉ K
     if us < 1e-7 || geomean(ws) - us > -1e-7
         return AE[]
     end

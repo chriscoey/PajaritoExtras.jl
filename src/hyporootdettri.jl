@@ -10,7 +10,6 @@ dual cone is
 
 mutable struct HypoRootdetTri{C <: RealCompF} <: Cone
     oa_s::Vector{AE}
-    s::Vector{RealF}
     d::Int
     w_temp::Vector{RealF}
     W_temp::Matrix{C}
@@ -78,11 +77,14 @@ function MOIPajarito.Cones.get_subp_cuts(
     return cuts
 end
 
-function MOIPajarito.Cones.get_sep_cuts(cache::HypoRootdetTri, oa_model::JuMP.Model)
-    # check s ∉ K
-    us = cache.s[1]
+function MOIPajarito.Cones.get_sep_cuts(
+    s::Vector{RealF},
+    cache::HypoRootdetTri,
+    oa_model::JuMP.Model,
+)
+    us = s[1]
     Ws = cache.W_temp
-    @views svec_to_smat!(Ws, cache.s[2:end], rt2)
+    @views svec_to_smat!(Ws, s[2:end], rt2)
     F = eigen(Hermitian(Ws, :U))
     V = F.vectors
     ω = F.values

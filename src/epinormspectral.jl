@@ -14,7 +14,6 @@ G.A. Watson, "Characterization of the Subdifferential of Some Matrix Norms"
 
 mutable struct EpiNormSpectral{D <: PrimDual, C <: RealCompF} <: Cone
     oa_s::Vector{AE}
-    s::Vector{RealF}
     d1::Int
     d2::Int
     w_temp::Vector{RealF}
@@ -75,12 +74,13 @@ function MOIPajarito.Cones.get_subp_cuts(
 end
 
 function MOIPajarito.Cones.get_sep_cuts(
+    s::Vector{RealF},
     cache::EpiNormSpectral{Primal},
     oa_model::JuMP.Model,
 )
     # decomposed gradient cut is (1, -Uᵢ * Vtᵢ)
-    us = cache.s[1]
-    F = get_svd(cache.s, cache)
+    us = s[1]
+    F = get_svd(s, cache)
     cuts = AE[]
     for (i, σ_i) in enumerate(F.S)
         if σ_i < 1e-7 || us - σ_i > -1e-7
@@ -125,11 +125,15 @@ function MOIPajarito.Cones.get_subp_cuts(
     return [cut]
 end
 
-function MOIPajarito.Cones.get_sep_cuts(cache::EpiNormSpectral{Dual}, oa_model::JuMP.Model)
+function MOIPajarito.Cones.get_sep_cuts(
+    s::Vector{RealF},
+    cache::EpiNormSpectral{Dual},
+    oa_model::JuMP.Model,
+)
     # gradient cut is (1, -∑ᵢ Uᵢ * Vtᵢ)
     # TODO check math
-    F = get_svd(cache.s, cache)
-    (cache.s[1] - sum(F.S) > -1e-7) && return AE[]
+    F = get_svd(s, cache)
+    (s[1] - sum(F.S) > -1e-7) && return AE[]
     R = -F.U * F.Vt
     R_vec = vec_copyto!(cache.w_temp, R) # TODO maybe reinterpret
     z2 = vcat(1, R_vec)

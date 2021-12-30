@@ -14,7 +14,6 @@ complex case: (λᵢ, re(Wᵢ), im(Wᵢ)) in EpiNormEucl
 
 mutable struct EpiNormInf{D <: PrimDual, C <: RealCompF, E <: NatExt} <: Cone
     oa_s::Vector{AE}
-    s::Vector{RealF}
     d::Int
     λ::Vector{VR}
     W_temp::Vector{C}
@@ -31,7 +30,7 @@ function MOIPajarito.Cones.create_cache(
     dim = MOI.dimension(cone)
     @assert dim == length(oa_s)
     d = (C == CompF ? div(dim - 1, 2) : dim - 1)
-    E = (cone.use_dual ? extender(extend, d) : Nat)
+    E = (cone.use_dual ? nat_or_ext(extend, d) : Nat)
     D = primal_or_dual(cone.use_dual)
     cache = EpiNormInf{D, C, E}()
     cache.oa_s = oa_s
@@ -102,17 +101,22 @@ function MOIPajarito.Cones.get_subp_cuts(
     return cuts
 end
 
-function MOIPajarito.Cones.get_sep_cuts(::EpiNormInf{Primal, RealF}, ::JuMP.Model)
+function MOIPajarito.Cones.get_sep_cuts(
+    ::Vector{RealF},
+    ::EpiNormInf{Primal, RealF},
+    ::JuMP.Model,
+)
     return AE[]
 end
 
 function MOIPajarito.Cones.get_sep_cuts(
+    s::Vector{RealF},
     cache::EpiNormInf{Primal, CompF},
     oa_model::JuMP.Model,
 )
     # decomposed gradient cut on (u, Wᵢ) is (1, -Wsᵢ / ‖Wsᵢ‖)
-    us = cache.s[1]
-    @views Ws = vec_copyto!(cache.W_temp, cache.s[2:end])
+    us = s[1]
+    @views Ws = vec_copyto!(cache.W_temp, s[2:end])
     cuts = AE[]
     for (i, Ws_i) in enumerate(Ws)
         abs_i = abs(Ws_i)
@@ -150,11 +154,14 @@ function MOIPajarito.Cones.get_subp_cuts(
     return _get_cuts(R, cache, oa_model)
 end
 
-function MOIPajarito.Cones.get_sep_cuts(cache::EpiNormInf{Dual}, oa_model::JuMP.Model)
-    us = cache.s[1]
+function MOIPajarito.Cones.get_sep_cuts(
+    s::Vector{RealF},
+    cache::EpiNormInf{Dual},
+    oa_model::JuMP.Model,
+)
+    us = s[1]
     Ws = cache.W_temp
-    @views vec_copyto!(Ws, cache.s[2:end])
-    # check s ∉ K
+    @views vec_copyto!(Ws, s[2:end])
     if us - norm(Ws, 1) > -1e-7
         return AE[]
     end
@@ -286,7 +293,11 @@ function MOIPajarito.Cones.get_subp_cuts(
     return AE[]
 end
 
-function MOIPajarito.Cones.get_sep_cuts(::EpiNormInf{Dual, RealF, Ext}, ::JuMP.Model)
+function MOIPajarito.Cones.get_sep_cuts(
+    ::Vector{RealF},
+    ::EpiNormInf{Dual, RealF, Ext},
+    ::JuMP.Model,
+)
     return AE[]
 end
 

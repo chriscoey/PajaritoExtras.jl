@@ -13,7 +13,7 @@ import Hypatia.Cones: vec_length, vec_copyto!, svec_length, svec_side
 import Hypatia.Cones: smat_to_svec!, svec_to_smat!
 
 import MOIPajarito
-import MOIPajarito.Cones: NatExt, Nat, Ext, extender
+import MOIPajarito.Cones: NatExt, Nat, Ext, nat_or_ext
 import MOIPajarito.Cones: Cone, clean_array!, dot_expr
 
 const RealF = Float64

@@ -10,10 +10,9 @@ w : Pₗ' Diagonal(w) Pₗ ⪰ 0 ∀ l
 =#
 
 mutable struct WSOSInterpNonnegative{C <: RealCompF} <: Cone
+    oa_s::Vector{AE}
     Ps::Vector{Matrix{C}}
     d::Int
-    oa_s::Vector{AE}
-    s::Vector{RealF}
     WSOSInterpNonnegative{C}() where {C <: RealCompF} = new{C}()
 end
 
@@ -48,8 +47,11 @@ function MOIPajarito.Cones.get_subp_cuts(
     return [cut]
 end
 
-function MOIPajarito.Cones.get_sep_cuts(::WSOSInterpNonnegative, ::JuMP.Model)
-    # check s ∉ K
+function MOIPajarito.Cones.get_sep_cuts(
+    ::Vector{RealF},
+    ::WSOSInterpNonnegative,
+    ::JuMP.Model,
+)
     # TODO don't know a fast separation oracle
     @warn("no separation oracle implemented for WSOSInterpNonnegative", maxlog = 1)
     return AE[]

@@ -4,7 +4,6 @@ real symmetric or complex Hermitian (svec scaled triangle) domain 𝕊ᵈ₊
 
 mutable struct MatrixEpiPerSepSpectral{D <: PrimDual, C <: RealCompF} <: Cone
     oa_s::Vector{AE}
-    s::Vector{RealF}
     h::SepSpectralFun
     d::Int
     w_temp::Vector{RealF}
@@ -84,12 +83,12 @@ function MOIPajarito.Cones.get_subp_cuts(
 end
 
 function MOIPajarito.Cones.get_sep_cuts(
+    s::Vector{RealF},
     cache::MatrixEpiPerSepSpectral{Primal},
     oa_model::JuMP.Model,
 )
-    # check s ∉ K
     Ws = cache.W_temp
-    @views svec_to_smat!(Ws, cache.s[3:end], rt2)
+    @views svec_to_smat!(Ws, s[3:end], rt2)
     F = eigen(Hermitian(Ws, :U))
     V = F.vectors
     ω = F.values
@@ -106,7 +105,7 @@ function MOIPajarito.Cones.get_sep_cuts(
         cuts = _get_psd_cuts(V_neg, w, cache, oa_model)
     end
 
-    (us, vs) = cache.s[epi_per_idxs(D)]
+    (us, vs) = s[epi_per_idxs(D)]
     v_pos = max(vs, 1e-7)
 
     # TODO only if domain for this part is pos
