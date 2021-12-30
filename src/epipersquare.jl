@@ -8,12 +8,12 @@ extended formulation
 i.e. λᵢ ≥ 0, 2 λᵢ v ≥ wᵢ²
 =#
 
-mutable struct EpiPerSquareCache{E <: Extender} <: ConeCache
+mutable struct EpiPerSquare{E <: NatExt} <: Cone
     oa_s::Vector{AE}
     s::Vector{Float64}
     d::Int
     λ::Vector{VR}
-    EpiPerSquareCache{E}() where {E <: Extender} = new{E}()
+    EpiPerSquare{E}() where {E <: NatExt} = new{E}()
 end
 
 function MOIPajarito.Cones.create_cache(
@@ -25,7 +25,7 @@ function MOIPajarito.Cones.create_cache(
     @assert dim == length(oa_s)
     d = dim - 2
     E = extender(extend, d)
-    cache = EpiPerSquareCache{E}()
+    cache = EpiPerSquare{E}()
     cache.oa_s = oa_s
     cache.d = d
     return cache
@@ -35,13 +35,13 @@ per_square(v::Float64, w::AbstractVector{Float64}) = sum(w_i / 2v * w_i for w_i 
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{Float64},
-    cache::EpiPerSquareCache,
+    cache::EpiPerSquare,
     oa_model::JuMP.Model,
 )
     return _get_cuts(z[2], z[3:end], cache, oa_model)
 end
 
-function MOIPajarito.Cones.get_sep_cuts(cache::EpiPerSquareCache, oa_model::JuMP.Model)
+function MOIPajarito.Cones.get_sep_cuts(cache::EpiPerSquare, oa_model::JuMP.Model)
     s = cache.s
     us = s[1]
     vs = s[2]
@@ -60,10 +60,7 @@ end
 
 # unextended formulation
 
-function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiPerSquareCache{Unextended},
-    oa_model::JuMP.Model,
-)
+function MOIPajarito.Cones.add_init_cuts(cache::EpiPerSquare{Nat}, oa_model::JuMP.Model)
     u = cache.oa_s[1]
     v = cache.oa_s[2]
     @views w = cache.oa_s[3:end] # TODO cache?
@@ -81,7 +78,7 @@ end
 function _get_cuts(
     q::Float64,
     r::Vector{Float64},
-    cache::EpiPerSquareCache{Unextended},
+    cache::EpiPerSquare{Nat},
     oa_model::JuMP.Model,
 )
     clean_array!(r) && return AE[]
@@ -96,12 +93,9 @@ end
 
 # extended formulation
 
-MOIPajarito.Cones.num_ext_variables(cache::EpiPerSquareCache{Extended}) = cache.d
+MOIPajarito.Cones.num_ext_variables(cache::EpiPerSquare{Ext}) = cache.d
 
-function MOIPajarito.Cones.extend_start(
-    cache::EpiPerSquareCache{Extended},
-    s_start::Vector{Float64},
-)
+function MOIPajarito.Cones.extend_start(cache::EpiPerSquare{Ext}, s_start::Vector{Float64})
     u_start = s_start[1]
     v_start = s_start[2]
     w_start = s_start[3:end]
@@ -112,10 +106,7 @@ function MOIPajarito.Cones.extend_start(
     return [w_i / 2u_start * w_i for w_i in w_start]
 end
 
-function MOIPajarito.Cones.setup_auxiliary(
-    cache::EpiPerSquareCache{Extended},
-    oa_model::JuMP.Model,
-)
+function MOIPajarito.Cones.setup_auxiliary(cache::EpiPerSquare{Ext}, oa_model::JuMP.Model)
     @assert cache.d >= 2
     λ = cache.λ = JuMP.@variable(oa_model, [1:(cache.d)], lower_bound = 0)
     u = cache.oa_s[1]
@@ -123,10 +114,7 @@ function MOIPajarito.Cones.setup_auxiliary(
     return λ
 end
 
-function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiPerSquareCache{Extended},
-    oa_model::JuMP.Model,
-)
+function MOIPajarito.Cones.add_init_cuts(cache::EpiPerSquare{Ext}, oa_model::JuMP.Model)
     u = cache.oa_s[1]
     v = cache.oa_s[2]
     @views w = cache.oa_s[3:end]
@@ -146,7 +134,7 @@ end
 function _get_cuts(
     q::Float64,
     r::Vector{Float64},
-    cache::EpiPerSquareCache{Extended},
+    cache::EpiPerSquare{Ext},
     oa_model::JuMP.Model,
 )
     clean_array!(r) && return AE[]

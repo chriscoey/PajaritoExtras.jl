@@ -13,13 +13,13 @@ i.e. θ ≥ 0, wᵢ ≥ 0, λᵢ ≤ θ log(wᵢ / θ)
 dual of HypoPerLog is (p, q, r) : p ≤ 0, r ≥ 0, q ≥ p * (log(-r / p) + 1)
 =#
 
-mutable struct HypoGeoMeanCache{E <: Extender} <: ConeCache
+mutable struct HypoGeoMean{E <: NatExt} <: Cone
     oa_s::Vector{AE}
     s::Vector{Float64}
     d::Int
     θ::VR
     λ::Vector{VR}
-    HypoGeoMeanCache{E}() where {E <: Extender} = new{E}()
+    HypoGeoMean{E}() where {E <: NatExt} = new{E}()
 end
 
 function MOIPajarito.Cones.create_cache(
@@ -32,7 +32,7 @@ function MOIPajarito.Cones.create_cache(
     @assert dim == length(oa_s)
     d = dim - 1
     E = extender(extend, d)
-    cache = HypoGeoMeanCache{E}()
+    cache = HypoGeoMean{E}()
     cache.oa_s = oa_s
     cache.d = d
     return cache
@@ -40,13 +40,13 @@ end
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{Float64},
-    cache::HypoGeoMeanCache,
+    cache::HypoGeoMean,
     oa_model::JuMP.Model,
 )
     return _get_cuts(z[2:end], cache, oa_model)
 end
 
-function MOIPajarito.Cones.get_sep_cuts(cache::HypoGeoMeanCache, oa_model::JuMP.Model)
+function MOIPajarito.Cones.get_sep_cuts(cache::HypoGeoMean, oa_model::JuMP.Model)
     s = cache.s
     us = s[1]
     @views ws = s[2:end]
@@ -65,10 +65,7 @@ end
 
 # unextended formulation
 
-function MOIPajarito.Cones.add_init_cuts(
-    cache::HypoGeoMeanCache{Unextended},
-    oa_model::JuMP.Model,
-)
+function MOIPajarito.Cones.add_init_cuts(cache::HypoGeoMean{Nat}, oa_model::JuMP.Model)
     u = cache.oa_s[1]
     @views w = cache.oa_s[2:end] # TODO cache?
     d = cache.d
@@ -80,11 +77,7 @@ function MOIPajarito.Cones.add_init_cuts(
     return d + 1
 end
 
-function _get_cuts(
-    r::Vector{Float64},
-    cache::HypoGeoMeanCache{Unextended},
-    oa_model::JuMP.Model,
-)
+function _get_cuts(r::Vector{Float64}, cache::HypoGeoMean{Nat}, oa_model::JuMP.Model)
     # strengthened cut is (-d * geom(r), r)
     clean_array!(r) && return AE[]
     p = -cache.d * geomean(r)
@@ -96,12 +89,9 @@ end
 
 # extended formulation
 
-MOIPajarito.Cones.num_ext_variables(cache::HypoGeoMeanCache{Extended}) = 1 + cache.d
+MOIPajarito.Cones.num_ext_variables(cache::HypoGeoMean{Ext}) = 1 + cache.d
 
-function MOIPajarito.Cones.extend_start(
-    cache::HypoGeoMeanCache{Extended},
-    s_start::Vector{Float64},
-)
+function MOIPajarito.Cones.extend_start(cache::HypoGeoMean{Ext}, s_start::Vector{Float64})
     u_start = s_start[1]
     w_start = s_start[2:end]
     w_geom = geomean(w_start)
@@ -114,10 +104,7 @@ function MOIPajarito.Cones.extend_start(
     return vcat(u_start, λ_start)
 end
 
-function MOIPajarito.Cones.setup_auxiliary(
-    cache::HypoGeoMeanCache{Extended},
-    oa_model::JuMP.Model,
-)
+function MOIPajarito.Cones.setup_auxiliary(cache::HypoGeoMean{Ext}, oa_model::JuMP.Model)
     @assert cache.d >= 2
     θ = cache.θ = JuMP.@variable(oa_model, lower_bound = 0)
     u = cache.oa_s[1]
@@ -127,10 +114,7 @@ function MOIPajarito.Cones.setup_auxiliary(
     return vcat(θ, λ)
 end
 
-function MOIPajarito.Cones.add_init_cuts(
-    cache::HypoGeoMeanCache{Extended},
-    oa_model::JuMP.Model,
-)
+function MOIPajarito.Cones.add_init_cuts(cache::HypoGeoMean{Ext}, oa_model::JuMP.Model)
     @views w = cache.oa_s[2:end]
     d = cache.d
     θ = cache.θ
@@ -145,11 +129,7 @@ function MOIPajarito.Cones.add_init_cuts(
     return 2d
 end
 
-function _get_cuts(
-    r::Vector{Float64},
-    cache::HypoGeoMeanCache{Extended},
-    oa_model::JuMP.Model,
-)
+function _get_cuts(r::Vector{Float64}, cache::HypoGeoMean{Ext}, oa_model::JuMP.Model)
     clean_array!(r) && return AE[]
     p = -geomean(r)
     @views w = cache.oa_s[2:end]

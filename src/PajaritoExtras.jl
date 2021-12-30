@@ -13,14 +13,14 @@ import Hypatia.Cones: vec_length, vec_copyto!, svec_length, svec_side
 import Hypatia.Cones: smat_to_svec!, svec_to_smat!
 
 import MOIPajarito
-import MOIPajarito.Cones: Extender, Unextended, Extended, extender
-import MOIPajarito.Cones: ConeCache, clean_array!, dot_expr
+import MOIPajarito.Cones: NatExt, Nat, Ext, extender
+import MOIPajarito.Cones: Cone, clean_array!, dot_expr
 
-const RealOrComplex = Union{Float64, ComplexF64}
+const RealComp = Union{Float64, ComplexF64}
 
-abstract type PrimalOrDual end
-struct Primal <: PrimalOrDual end
-struct Dual <: PrimalOrDual end
+abstract type PrimDual end
+struct Primal <: PrimDual end
+struct Dual <: PrimDual end
 primal_or_dual(use_dual::Bool) = (use_dual ? Dual : Primal)
 
 const rt2 = sqrt(2.0)
@@ -38,15 +38,15 @@ include("wsosinterpnonnegative.jl")
 
 # supported cones for outer approximation
 const OACone = Union{
-    Hypatia.PosSemidefTriCone{Float64, <:RealOrComplex},
+    Hypatia.PosSemidefTriCone{Float64, <:RealComp},
     Hypatia.EpiNormEuclCone{Float64},
     Hypatia.EpiPerSquareCone{Float64},
-    Hypatia.EpiNormInfCone{Float64, <:RealOrComplex},
-    Hypatia.EpiNormSpectralCone{Float64, <:RealOrComplex},
+    Hypatia.EpiNormInfCone{Float64, <:RealComp},
+    Hypatia.EpiNormSpectralCone{Float64, <:RealComp},
     Hypatia.HypoGeoMeanCone{Float64},
-    Hypatia.HypoRootdetTriCone{Float64, <:RealOrComplex},
+    Hypatia.HypoRootdetTriCone{Float64, <:RealComp},
     Hypatia.EpiPerSepSpectralCone{Float64},
-    Hypatia.WSOSInterpNonnegativeCone{Float64, <:RealOrComplex},
+    Hypatia.WSOSInterpNonnegativeCone{Float64, <:RealComp},
 }
 
 # cone must be supported by both Pajarito and the conic solver
@@ -62,7 +62,7 @@ end
 function _get_psd_cuts(
     R_eig::Matrix{C},
     oa_w::AbstractVector{AE},
-    cache::ConeCache,
+    cache::Cone,
     oa_model::JuMP.Model,
 ) where {C}
     cuts = AE[]

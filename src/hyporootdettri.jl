@@ -8,21 +8,21 @@ dual cone is
 (u, w) : u ≤ 0, W ⪰ 0, u ≥ -d * rtdet(W)
 =#
 
-mutable struct HypoRootdetTriCache{C <: RealOrComplex} <: ConeCache
+mutable struct HypoRootdetTri{C <: RealComp} <: Cone
     oa_s::Vector{AE}
     s::Vector{Float64}
     d::Int
     w_temp::Vector{Float64}
     W_temp::Matrix{C}
-    HypoRootdetTriCache{C}() where {C <: RealOrComplex} = new{C}()
+    HypoRootdetTri{C}() where {C <: RealComp} = new{C}()
 end
 
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.HypoRootdetTriCone{Float64, C},
     ::Bool,
-) where {C <: RealOrComplex}
-    cache = HypoRootdetTriCache{C}()
+) where {C <: RealComp}
+    cache = HypoRootdetTri{C}()
     cache.oa_s = oa_s
     dim = MOI.dimension(cone)
     d = cache.d = svec_side(C, dim - 1)
@@ -32,7 +32,7 @@ function MOIPajarito.Cones.create_cache(
 end
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::HypoRootdetTriCache{C},
+    cache::HypoRootdetTri{C},
     oa_model::JuMP.Model,
 ) where {C}
     d = cache.d
@@ -50,7 +50,7 @@ end
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{Float64},
-    cache::HypoRootdetTriCache,
+    cache::HypoRootdetTri,
     oa_model::JuMP.Model,
 )
     p = z[1]
@@ -78,7 +78,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     return cuts
 end
 
-function MOIPajarito.Cones.get_sep_cuts(cache::HypoRootdetTriCache, oa_model::JuMP.Model)
+function MOIPajarito.Cones.get_sep_cuts(cache::HypoRootdetTri, oa_model::JuMP.Model)
     # check s ∉ K
     us = cache.s[1]
     Ws = cache.W_temp
@@ -110,7 +110,7 @@ end
 function _get_cut(
     rω::Vector{Float64},
     V::Matrix{C},
-    cache::HypoRootdetTriCache{C},
+    cache::HypoRootdetTri{C},
     oa_model::JuMP.Model,
 ) where {C}
     # strengthened cut is (-d * geom(rω), V * Diagonal(rω) * V')

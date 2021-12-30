@@ -4,21 +4,21 @@ W ⪰ 0
 self-dual
 =#
 
-mutable struct PosSemidefTriCache{C <: RealOrComplex} <: ConeCache
+mutable struct PosSemidefTri{C <: RealComp} <: Cone
     oa_s::Vector{AE}
     s::Vector{Float64}
     d::Int
     w_temp::Vector{Float64}
     W_temp::Matrix{C}
-    PosSemidefTriCache{C}() where {C <: RealOrComplex} = new{C}()
+    PosSemidefTri{C}() where {C <: RealComp} = new{C}()
 end
 
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.PosSemidefTriCone{Float64, C},
     ::Bool,
-) where {C <: RealOrComplex}
-    cache = PosSemidefTriCache{C}()
+) where {C <: RealComp}
+    cache = PosSemidefTri{C}()
     cache.oa_s = oa_s
     dim = MOI.dimension(cone)
     d = cache.d = svec_side(C, dim)
@@ -29,7 +29,7 @@ end
 
 # initial OA polyhedron is the dual cone of diagonally dominant matrices
 function MOIPajarito.Cones.add_init_cuts(
-    cache::PosSemidefTriCache{C},
+    cache::PosSemidefTri{C},
     oa_model::JuMP.Model,
 ) where {C}
     d = cache.d
@@ -44,12 +44,7 @@ function MOIPajarito.Cones.add_init_cuts(
 end
 
 # real: cuts on (w_ii, w_jj, w_ij) are (1, 1, ±rt2), ∀i != j
-function _add_init_cuts(
-    i::Int,
-    j::Int,
-    cache::PosSemidefTriCache{Float64},
-    oa_model::JuMP.Model,
-)
+function _add_init_cuts(i::Int, j::Int, cache::PosSemidefTri{Float64}, oa_model::JuMP.Model)
     w = cache.oa_s
     w_ii = w[svec_idx(Float64, i, i)]
     w_jj = w[svec_idx(Float64, j, j)]
@@ -65,7 +60,7 @@ end
 function _add_init_cuts(
     i::Int,
     j::Int,
-    cache::PosSemidefTriCache{ComplexF64},
+    cache::PosSemidefTri{ComplexF64},
     oa_model::JuMP.Model,
 )
     w = cache.oa_s
@@ -85,7 +80,7 @@ end
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{Float64},
-    cache::PosSemidefTriCache,
+    cache::PosSemidefTri,
     oa_model::JuMP.Model,
 )
     # strengthened cuts from eigendecomposition are λᵢ * rᵢ * rᵢ'
@@ -97,7 +92,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     return _get_psd_cuts(R_eig, cache.oa_s, cache, oa_model)
 end
 
-function MOIPajarito.Cones.get_sep_cuts(cache::PosSemidefTriCache, oa_model::JuMP.Model)
+function MOIPajarito.Cones.get_sep_cuts(cache::PosSemidefTri, oa_model::JuMP.Model)
     # check s ∉ K
     Ws = cache.W_temp
     svec_to_smat!(Ws, cache.s, rt2)

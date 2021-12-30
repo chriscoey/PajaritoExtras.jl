@@ -9,20 +9,20 @@ dual cone
 w : Pₗ' Diagonal(w) Pₗ ⪰ 0 ∀ l
 =#
 
-mutable struct WSOSInterpNonnegativeCache{C <: RealOrComplex} <: ConeCache
+mutable struct WSOSInterpNonnegative{C <: RealComp} <: Cone
     Ps::Vector{Matrix{C}}
     d::Int
     oa_s::Vector{AE}
     s::Vector{Float64}
-    WSOSInterpNonnegativeCache{C}() where {C <: RealOrComplex} = new{C}()
+    WSOSInterpNonnegative{C}() where {C <: RealComp} = new{C}()
 end
 
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.WSOSInterpNonnegativeCone{Float64, C},
     ::Bool,
-) where {C <: RealOrComplex}
-    cache = WSOSInterpNonnegativeCache{C}()
+) where {C <: RealComp}
+    cache = WSOSInterpNonnegative{C}()
     @assert !cone.use_dual # TODO
     cache.oa_s = oa_s
     cache.Ps = cone.Ps
@@ -32,10 +32,7 @@ function MOIPajarito.Cones.create_cache(
     return cache
 end
 
-function MOIPajarito.Cones.add_init_cuts(
-    cache::WSOSInterpNonnegativeCache,
-    oa_model::JuMP.Model,
-)
+function MOIPajarito.Cones.add_init_cuts(cache::WSOSInterpNonnegative, oa_model::JuMP.Model)
     # wᵢ ≥ 0
     JuMP.@constraint(oa_model, cache.oa_s .>= 0)
     return cache.d
@@ -43,7 +40,7 @@ end
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{Float64},
-    cache::WSOSInterpNonnegativeCache,
+    cache::WSOSInterpNonnegative,
     oa_model::JuMP.Model,
 )
     # TODO ????
@@ -51,7 +48,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     return [cut]
 end
 
-function MOIPajarito.Cones.get_sep_cuts(::WSOSInterpNonnegativeCache, ::JuMP.Model)
+function MOIPajarito.Cones.get_sep_cuts(::WSOSInterpNonnegative, ::JuMP.Model)
     # check s ∉ K
     # TODO don't know a fast separation oracle
     @warn("no separation oracle implemented for WSOSInterpNonnegative", maxlog = 1)

@@ -2,18 +2,14 @@
 real symmetric or complex Hermitian (svec scaled triangle) domain 𝕊ᵈ₊
 =#
 
-mutable struct MatrixEpiPerSepSpectralCache{D <: PrimalOrDual, C <: RealOrComplex} <:
-               ConeCache
+mutable struct MatrixEpiPerSepSpectral{D <: PrimDual, C <: RealComp} <: Cone
     oa_s::Vector{AE}
     s::Vector{Float64}
     h::SepSpectralFun
     d::Int
     w_temp::Vector{Float64}
     W_temp::Matrix{C}
-    function MatrixEpiPerSepSpectralCache{
-        D,
-        C,
-    }() where {D <: PrimalOrDual, C <: RealOrComplex}
+    function MatrixEpiPerSepSpectral{D, C}() where {D <: PrimDual, C <: RealComp}
         return new{D, C}()
     end
 end
@@ -23,16 +19,16 @@ function create_sepspectral_cache(
     use_dual::Bool,
     d::Int,
     ::Bool,
-) where {C <: RealOrComplex}
+) where {C <: RealComp}
     D = primal_or_dual(use_dual)
-    cache = MatrixEpiPerSepSpectralCache{D, C}()
+    cache = MatrixEpiPerSepSpectral{D, C}()
     cache.w_temp = zeros(Float64, svec_length(C, d))
     cache.W_temp = zeros(C, d, d)
     return cache
 end
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::MatrixEpiPerSepSpectralCache{D, C},
+    cache::MatrixEpiPerSepSpectral{D, C},
     oa_model::JuMP.Model,
 ) where {D, C}
     h = cache.h
@@ -59,10 +55,10 @@ end
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{Float64},
-    cache::MatrixEpiPerSepSpectralCache{D},
+    cache::MatrixEpiPerSepSpectral{D},
     oa_model::JuMP.Model,
 ) where {D}
-    (p, q) = cache.oa_s[epi_per_idxs(D)]
+    (p, q) = z[epi_per_idxs(D)]
     R = cache.W_temp
     @views svec_to_smat!(R, z[3:end], rt2)
     F = eigen(Hermitian(R, :U))
@@ -72,7 +68,6 @@ function MOIPajarito.Cones.get_subp_cuts(
     cuts = AE[]
     if abs(q) < 1e-7
         # TODO only if domain for this part is pos
-
 
         # TODO decide when to add
         # add eigenvector cuts
@@ -89,7 +84,7 @@ function MOIPajarito.Cones.get_subp_cuts(
 end
 
 function MOIPajarito.Cones.get_sep_cuts(
-    cache::MatrixEpiPerSepSpectralCache{Primal},
+    cache::MatrixEpiPerSepSpectral{Primal},
     oa_model::JuMP.Model,
 )
     # check s ∉ K
@@ -98,8 +93,6 @@ function MOIPajarito.Cones.get_sep_cuts(
     F = eigen(Hermitian(Ws, :U))
     V = F.vectors
     ω = F.values
-
-
 
     # TODO only if domain for this part is pos
     num_neg = count(<(-1e-7), ω)
@@ -116,7 +109,6 @@ function MOIPajarito.Cones.get_sep_cuts(
     (us, vs) = cache.s[epi_per_idxs(D)]
     v_pos = max(vs, 1e-7)
 
-
     # TODO only if domain for this part is pos
     ω_pos = max.(ω, 1e-7)
     us - per_sepspec(h_val, cache.h, v_pos, ω_pos) > -1e-7 && return AE[]
@@ -132,7 +124,7 @@ function _get_cut(
     p::Float64,
     rω::Vector{Float64},
     V::Matrix{C},
-    cache::MatrixEpiPerSepSpectralCache{Primal, C},
+    cache::MatrixEpiPerSepSpectral{Primal, C},
     oa_model::JuMP.Model,
 ) where {C}
     # strengthened cut is (p, p * h⋆(rω / p), V * Diagonal(rω) * V')
