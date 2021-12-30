@@ -12,23 +12,20 @@ real case (polyhedral): λᵢ ≥ Wᵢ, λᵢ ≥ -Wᵢ
 complex case: (λᵢ, re(Wᵢ), im(Wᵢ)) in EpiNormEucl
 =#
 
-# primal cone
-mutable struct EpiNormInfCache{C <: RealOrComplex} <: ConeCache
-    oa_s::Vector{AE}
-    s::Vector{Float64}
-    d::Int
-    W_temp::Vector{C}
-    EpiNormInfCache{C}() where {C <: RealOrComplex} = new{C}()
-end
-
-# dual cone
-mutable struct DualEpiNormInfCache{C <: RealOrComplex, E <: Extender} <: ConeCache
+mutable struct EpiNormInfCache{D <: PrimalOrDual, C <: RealOrComplex, E <: Extender} <:
+               ConeCache
     oa_s::Vector{AE}
     s::Vector{Float64}
     d::Int
     λ::Vector{VR}
     W_temp::Vector{C}
-    DualEpiNormInfCache{C, E}() where {C <: RealOrComplex, E <: Extender} = new{C, E}()
+    function EpiNormInfCache{
+        D,
+        C,
+        E,
+    }() where {D <: PrimalOrDual, C <: RealOrComplex, E <: Extender}
+        return new{D, C, E}()
+    end
 end
 
 function MOIPajarito.Cones.create_cache(
@@ -36,16 +33,12 @@ function MOIPajarito.Cones.create_cache(
     cone::Hypatia.EpiNormInfCone{Float64, C},
     extend::Bool,
 ) where {C <: RealOrComplex}
-    is_complex = (C == ComplexF64)
     dim = MOI.dimension(cone)
     @assert dim == length(oa_s)
-    d = (is_complex ? div(dim - 1, 2) : dim - 1)
-    cache = if cone.use_dual
-        E = extender(extend, d)
-        cache = DualEpiNormInfCache{C, E}()
-    else
-        EpiNormInfCache{C}()
-    end
+    d = (C == ComplexF64 ? div(dim - 1, 2) : dim - 1)
+    E = (cone.use_dual ? extender(extend, d) : Unextended)
+    D = primal_or_dual(cone.use_dual)
+    cache = EpiNormInfCache{D, C, E}()
     cache.oa_s = oa_s
     cache.d = d
     cache.W_temp = zeros(C, d)
@@ -55,7 +48,7 @@ end
 # primal cone functions
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiNormInfCache{Float64},
+    cache::EpiNormInfCache{Primal, Float64},
     oa_model::JuMP.Model,
 )
     u = cache.oa_s[1]
@@ -69,7 +62,7 @@ function MOIPajarito.Cones.add_init_cuts(
 end
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiNormInfCache{ComplexF64},
+    cache::EpiNormInfCache{Primal, ComplexF64},
     oa_model::JuMP.Model,
 )
     u = cache.oa_s[1]
@@ -91,7 +84,7 @@ end
 
 function MOIPajarito.Cones.get_subp_cuts(
     ::Vector{Float64},
-    ::EpiNormInfCache{Float64},
+    ::EpiNormInfCache{Primal, Float64},
     ::JuMP.Model,
 )
     return AE[]
@@ -99,7 +92,7 @@ end
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{Float64},
-    cache::EpiNormInfCache{ComplexF64},
+    cache::EpiNormInfCache{Primal, ComplexF64},
     oa_model::JuMP.Model,
 )
     # strengthened cut on (u, re(Wᵢ), im(Wᵢ)) is (‖Rᵢ‖, re(Rᵢ), im(Rᵢ))
@@ -114,12 +107,12 @@ function MOIPajarito.Cones.get_subp_cuts(
     return cuts
 end
 
-function MOIPajarito.Cones.get_sep_cuts(::EpiNormInfCache{Float64}, ::JuMP.Model)
+function MOIPajarito.Cones.get_sep_cuts(::EpiNormInfCache{Primal, Float64}, ::JuMP.Model)
     return AE[]
 end
 
 function MOIPajarito.Cones.get_sep_cuts(
-    cache::EpiNormInfCache{ComplexF64},
+    cache::EpiNormInfCache{Primal, ComplexF64},
     oa_model::JuMP.Model,
 )
     # decomposed gradient cut on (u, Wᵢ) is (1, -Wsᵢ / ‖Wsᵢ‖)
@@ -141,7 +134,7 @@ end
 function _get_cut(
     R_i::ComplexF64,
     i::Int,
-    cache::EpiNormInfCache{ComplexF64},
+    cache::EpiNormInfCache{Primal, ComplexF64},
     oa_model::JuMP.Model,
 )
     u = cache.oa_s[1]
@@ -154,7 +147,7 @@ end
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{Float64},
-    cache::DualEpiNormInfCache,
+    cache::EpiNormInfCache{Dual},
     oa_model::JuMP.Model,
 )
     R = cache.W_temp
@@ -162,7 +155,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     return _get_cuts(R, cache, oa_model)
 end
 
-function MOIPajarito.Cones.get_sep_cuts(cache::DualEpiNormInfCache, oa_model::JuMP.Model)
+function MOIPajarito.Cones.get_sep_cuts(cache::EpiNormInfCache{Dual}, oa_model::JuMP.Model)
     us = cache.s[1]
     Ws = cache.W_temp
     @views vec_copyto!(Ws, cache.s[2:end])
@@ -180,7 +173,7 @@ end
 # unextended formulation
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::DualEpiNormInfCache{Float64, Unextended},
+    cache::EpiNormInfCache{Dual, Float64, Unextended},
     oa_model::JuMP.Model,
 )
     u = cache.oa_s[1]
@@ -195,7 +188,7 @@ function MOIPajarito.Cones.add_init_cuts(
 end
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::DualEpiNormInfCache{ComplexF64, Unextended},
+    cache::EpiNormInfCache{Dual, ComplexF64, Unextended},
     oa_model::JuMP.Model,
 )
     u = cache.oa_s[1]
@@ -213,7 +206,7 @@ end
 
 function _get_cuts(
     R::Vector{C},
-    cache::DualEpiNormInfCache{C, Unextended},
+    cache::EpiNormInfCache{Dual, C, Unextended},
     oa_model::JuMP.Model,
 ) where {C}
     # strengthened cut on (u, W) is (‖R‖∞, R)
@@ -229,13 +222,13 @@ end
 # extended formulation
 
 function MOIPajarito.Cones.num_ext_variables(
-    cache::DualEpiNormInfCache{<:RealOrComplex, Extended},
+    cache::EpiNormInfCache{Dual, <:RealOrComplex, Extended},
 )
     return cache.d
 end
 
 function MOIPajarito.Cones.extend_start(
-    cache::DualEpiNormInfCache{C, Extended},
+    cache::EpiNormInfCache{Dual, C, Extended},
     s_start::Vector{Float64},
 ) where {C}
     s_start[1] < 1e-7 && return zeros(cache.d)
@@ -245,7 +238,7 @@ function MOIPajarito.Cones.extend_start(
 end
 
 function MOIPajarito.Cones.setup_auxiliary(
-    cache::DualEpiNormInfCache{<:RealOrComplex, Extended},
+    cache::EpiNormInfCache{Dual, <:RealOrComplex, Extended},
     oa_model::JuMP.Model,
 )
     @assert cache.d >= 2
@@ -256,7 +249,7 @@ function MOIPajarito.Cones.setup_auxiliary(
 end
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::DualEpiNormInfCache{Float64, Extended},
+    cache::EpiNormInfCache{Dual, Float64, Extended},
     oa_model::JuMP.Model,
 )
     @views w = cache.oa_s[2:end]
@@ -271,7 +264,7 @@ function MOIPajarito.Cones.add_init_cuts(
 end
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::DualEpiNormInfCache{ComplexF64, Extended},
+    cache::EpiNormInfCache{Dual, ComplexF64, Extended},
     oa_model::JuMP.Model,
 )
     @views w = cache.oa_s[2:end]
@@ -294,14 +287,14 @@ end
 
 function MOIPajarito.Cones.get_subp_cuts(
     ::Vector{Float64},
-    ::DualEpiNormInfCache{Float64, Extended},
+    ::EpiNormInfCache{Dual, Float64, Extended},
     ::JuMP.Model,
 )
     return AE[]
 end
 
 function MOIPajarito.Cones.get_sep_cuts(
-    ::DualEpiNormInfCache{Float64, Extended},
+    ::EpiNormInfCache{Dual, Float64, Extended},
     ::JuMP.Model,
 )
     return AE[]
@@ -309,7 +302,7 @@ end
 
 function _get_cuts(
     R::Vector{ComplexF64},
-    cache::DualEpiNormInfCache{ComplexF64, Extended},
+    cache::EpiNormInfCache{Dual, ComplexF64, Extended},
     oa_model::JuMP.Model,
 )
     cuts = AE[]
@@ -325,7 +318,7 @@ end
 function _get_cut(
     R_i::ComplexF64,
     i::Int,
-    cache::DualEpiNormInfCache{ComplexF64, Extended},
+    cache::EpiNormInfCache{Dual, ComplexF64, Extended},
     oa_model::JuMP.Model,
 )
     λ_i = cache.λ[i]

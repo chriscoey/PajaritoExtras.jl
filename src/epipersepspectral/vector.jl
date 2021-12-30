@@ -5,22 +5,32 @@ extended formulation
 ∃ λ, u ≥ Σᵢ λᵢ, (λᵢ, v, wᵢ) ∈ EpiPerSepSpectralCone
 =#
 
-mutable struct VectorEpiPerSepSpectralCache{E <: Extender} <: ConeCache
+mutable struct VectorEpiPerSepSpectralCache{D <: PrimalOrDual, E <: Extender} <: ConeCache
     oa_s::Vector{AE}
     s::Vector{Float64}
     h::SepSpectralFun
     d::Int
     λ::Vector{VR}
-    VectorEpiPerSepSpectralCache{E}() where {E <: Extender} = new{E}()
+    function VectorEpiPerSepSpectralCache{D, E}() where {D <: PrimalOrDual, E <: Extender}
+        return new{D, E}()
+    end
 end
 
-function create_sepspectral_cache(::Type{VectorCSqr{Float64}}, d::Int, extend::Bool)
+function create_sepspectral_cache(
+    ::Type{VectorCSqr{Float64}},
+    use_dual::Bool,
+    d::Int,
+    extend::Bool,
+)
+    D = primal_or_dual(use_dual)
     E = extender(extend, d)
-    return VectorEpiPerSepSpectralCache{E}()
+    return VectorEpiPerSepSpectralCache{D, E}()
 end
+
+# primal cone functions
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::VectorEpiPerSepSpectralCache,
+    cache::VectorEpiPerSepSpectralCache{Primal},
     oa_model::JuMP.Model,
 )
     v = cache.oa_s[2]
@@ -46,14 +56,14 @@ end
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{Float64},
-    cache::VectorEpiPerSepSpectralCache,
+    cache::VectorEpiPerSepSpectralCache{Primal},
     oa_model::JuMP.Model,
 )
     return _get_cuts(z[1], z[3:end], cache, oa_model)
 end
 
 function MOIPajarito.Cones.get_sep_cuts(
-    cache::VectorEpiPerSepSpectralCache,
+    cache::VectorEpiPerSepSpectralCache{Primal},
     oa_model::JuMP.Model,
 )
     s = cache.s
@@ -74,12 +84,12 @@ function MOIPajarito.Cones.get_sep_cuts(
     return _get_cuts(1.0, r, cache, oa_model)
 end
 
-# unextended formulation
+# primal unextended formulation
 
 function _get_cuts(
     p::Float64,
     r::Vector{Float64},
-    cache::VectorEpiPerSepSpectralCache{Unextended},
+    cache::VectorEpiPerSepSpectralCache{Primal, Unextended},
     oa_model::JuMP.Model,
 )
     # strengthened cut is (p, p * h⋆(r / p), r)
@@ -93,12 +103,16 @@ function _get_cuts(
     return [cut]
 end
 
-# extended formulation
+# primal extended formulation
 
-MOIPajarito.Cones.num_ext_variables(cache::VectorEpiPerSepSpectralCache{Extended}) = cache.d
+function MOIPajarito.Cones.num_ext_variables(
+    cache::VectorEpiPerSepSpectralCache{Primal, Extended},
+)
+    return cache.d
+end
 
 function MOIPajarito.Cones.extend_start(
-    cache::VectorEpiPerSepSpectralCache{Extended},
+    cache::VectorEpiPerSepSpectralCache{Primal, Extended},
     s_start::Vector{Float64},
 )
     v_start = s_start[2]
@@ -108,7 +122,7 @@ function MOIPajarito.Cones.extend_start(
 end
 
 function MOIPajarito.Cones.setup_auxiliary(
-    cache::VectorEpiPerSepSpectralCache{Extended},
+    cache::VectorEpiPerSepSpectralCache{Primal, Extended},
     oa_model::JuMP.Model,
 )
     @assert cache.d >= 2
@@ -121,7 +135,7 @@ end
 function _get_cuts(
     p::Float64,
     r::Vector{Float64},
-    cache::VectorEpiPerSepSpectralCache{Extended},
+    cache::VectorEpiPerSepSpectralCache{Primal, Extended},
     oa_model::JuMP.Model,
 )
     @assert p > 1e-12
@@ -143,3 +157,5 @@ function _get_cuts(
     end
     return cuts
 end
+
+# dual cone functions

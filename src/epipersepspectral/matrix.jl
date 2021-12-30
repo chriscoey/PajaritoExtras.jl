@@ -2,29 +2,39 @@
 real symmetric or complex Hermitian (svec scaled triangle) domain 𝕊ᵈ₊
 =#
 
-mutable struct MatrixEpiPerSepSpectralCache{C <: RealOrComplex} <: ConeCache
+mutable struct MatrixEpiPerSepSpectralCache{D <: PrimalOrDual, C <: RealOrComplex} <:
+               ConeCache
     oa_s::Vector{AE}
     s::Vector{Float64}
     h::SepSpectralFun
     d::Int
     w_temp::Vector{Float64}
     W_temp::Matrix{C}
-    MatrixEpiPerSepSpectralCache{C}() where {C <: RealOrComplex} = new{C}()
+    function MatrixEpiPerSepSpectralCache{
+        D,
+        C,
+    }() where {D <: PrimalOrDual, C <: RealOrComplex}
+        return new{D, C}()
+    end
 end
 
 function create_sepspectral_cache(
     ::Type{MatrixCSqr{Float64, C}},
+    use_dual::Bool,
     d::Int,
     ::Bool,
 ) where {C <: RealOrComplex}
-    cache = MatrixEpiPerSepSpectralCache{C}()
+    D = primal_or_dual(use_dual)
+    cache = MatrixEpiPerSepSpectralCache{D, C}()
     cache.w_temp = zeros(Float64, svec_length(C, d))
     cache.W_temp = zeros(C, d, d)
     return cache
 end
 
+# primal cone functions
+
 function MOIPajarito.Cones.add_init_cuts(
-    cache::MatrixEpiPerSepSpectralCache{C},
+    cache::MatrixEpiPerSepSpectralCache{Primal, C},
     oa_model::JuMP.Model,
 ) where {C}
     v = cache.oa_s[2]
@@ -50,7 +60,7 @@ end
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{Float64},
-    cache::MatrixEpiPerSepSpectralCache,
+    cache::MatrixEpiPerSepSpectralCache{Primal},
     oa_model::JuMP.Model,
 )
     R = cache.W_temp
@@ -76,7 +86,7 @@ function MOIPajarito.Cones.get_subp_cuts(
 end
 
 function MOIPajarito.Cones.get_sep_cuts(
-    cache::MatrixEpiPerSepSpectralCache,
+    cache::MatrixEpiPerSepSpectralCache{Primal},
     oa_model::JuMP.Model,
 )
     # check s ∉ K
@@ -112,7 +122,7 @@ function _get_cut(
     p::Float64,
     rω::Vector{Float64},
     V::Matrix{C},
-    cache::MatrixEpiPerSepSpectralCache{C},
+    cache::MatrixEpiPerSepSpectralCache{Primal, C},
     oa_model::JuMP.Model,
 ) where {C}
     # strengthened cut is (p, p * h⋆(rω / p), V * Diagonal(rω) * V')
@@ -127,3 +137,5 @@ function _get_cut(
     cut = dot_expr(z, cache.oa_s, oa_model)
     return cut
 end
+
+# dual cone functions

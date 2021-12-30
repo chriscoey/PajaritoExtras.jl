@@ -130,7 +130,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     oa_model::JuMP.Model,
 )
     # gradient cut is (1, -∑ᵢ Uᵢ * Vtᵢ)
-    # TODO incorrect, check math
+    # TODO check math
     F = get_svd(cache.s, cache)
     (cache.s[1] - sum(F.S) > -1e-7) && return AE[]
     R = -F.U * F.Vt

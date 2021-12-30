@@ -27,9 +27,9 @@ const rt2 = sqrt(2.0)
 const irt2 = inv(rt2)
 
 include("possemideftri.jl")
-include("epinorminf.jl")
 include("epinormeucl.jl")
 include("epipersquare.jl")
+include("epinorminf.jl")
 include("epinormspectral.jl")
 include("hypogeomean.jl")
 include("hyporootdettri.jl")
@@ -39,9 +39,9 @@ include("wsosinterpnonnegative.jl")
 # supported cones for outer approximation
 const OACone = Union{
     Hypatia.PosSemidefTriCone{Float64, <:RealOrComplex},
-    Hypatia.EpiNormInfCone{Float64, <:RealOrComplex},
     Hypatia.EpiNormEuclCone{Float64},
     Hypatia.EpiPerSquareCone{Float64},
+    Hypatia.EpiNormInfCone{Float64, <:RealOrComplex},
     Hypatia.EpiNormSpectralCone{Float64, <:RealOrComplex},
     Hypatia.HypoGeoMeanCone{Float64},
     Hypatia.HypoRootdetTriCone{Float64, <:RealOrComplex},
@@ -58,15 +58,11 @@ function MOI.supports_constraint(
     return MOI.supports_constraint(MOIPajarito.get_conic_opt(opt), F, S)
 end
 
-# caches for cones needing PSD cuts
-const PSDDomainCache{C <: RealOrComplex} =
-    Union{PosSemidefTriCache{C}, HypoRootdetTriCache{C}, MatrixEpiPerSepSpectralCache{C}}
-
 # eigenvector cuts for a PSD constraint W ⪰ 0
 function _get_psd_cuts(
     R_eig::Matrix{C},
     oa_w::AbstractVector{AE},
-    cache::PSDDomainCache{C},
+    cache::ConeCache,
     oa_model::JuMP.Model,
 ) where {C}
     cuts = AE[]

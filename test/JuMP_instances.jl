@@ -71,118 +71,6 @@ function possemideftri2(opt)
     return
 end
 
-function epinorminf1(opt)
-    TOL = 1e-4
-    for is_complex in (false, true)
-        R = (is_complex ? ComplexF64 : Float64)
-        u_fix = (is_complex ? rt2 : 1.0) * 0.4
-        w_fix = (is_complex ? [0.3, 0.3, 0.7, 0.7, 1.2, 1.2] : [0.3, 0.7, 1.2])
-        w_opt = round.(w_fix)
-        dim = vec_length(R, 3)
-        m = JuMP.Model(opt)
-
-        JuMP.@variable(m, w[1:dim], Bin)
-        K = Hypatia.EpiNormInfCone{Float64, R}(1 + dim)
-        c1 = JuMP.@constraint(m, vcat(u_fix, w .- 0.5) in K)
-        JuMP.optimize!(m)
-        @test JuMP.termination_status(m) == MOI.INFEASIBLE
-        @test JuMP.primal_status(m) == MOI.NO_SOLUTION
-
-        JuMP.@objective(m, Min, 1 + sum(w))
-        JuMP.delete(m, c1)
-        K = Hypatia.EpiNormInfCone{Float64, R}(1 + dim)
-        JuMP.@constraint(m, vcat(u_fix, w - w_fix) in K)
-        JuMP.set_start_value.(w, w_opt)
-        JuMP.optimize!(m)
-        @test JuMP.termination_status(m) == MOI.OPTIMAL
-        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-        @test isapprox(JuMP.objective_value(m), 1 + sum(w_opt), atol = TOL)
-        @test isapprox(JuMP.objective_bound(m), 1 + sum(w_opt), atol = TOL)
-        @test isapprox(JuMP.value.(w), w_opt, atol = TOL)
-    end
-    return
-end
-
-function epinorminf2(opt)
-    TOL = 1e-4
-    for is_complex in (false, true)
-        R = (is_complex ? ComplexF64 : Float64)
-        dim = vec_length(R, 2)
-        m = JuMP.Model(opt)
-
-        JuMP.@variable(m, w[1:dim], Int)
-        K = Hypatia.EpiNormInfCone{Float64, R}(1 + dim)
-        aff = [i * w[i] for i in eachindex(w)]
-        JuMP.@constraint(m, vcat(10.5, aff) in K)
-        JuMP.@objective(m, Min, sum(w))
-        JuMP.optimize!(m)
-        @test JuMP.termination_status(m) == MOI.OPTIMAL
-        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-        w_opt = JuMP.value.(w)
-        @test isapprox(JuMP.objective_value(m), sum(w_opt), atol = TOL)
-        @test isapprox(JuMP.objective_bound(m), sum(w_opt), atol = TOL)
-        aff_opt = vec_copyto!(zeros(R, 2), JuMP.value.(aff))
-        @test norm(aff_opt, Inf) <= 10.5 + TOL
-    end
-    return
-end
-
-function dual_epinorminf1(opt)
-    TOL = 1e-4
-    for is_complex in (false, true)
-        R = (is_complex ? ComplexF64 : Float64)
-        u_fix = (is_complex ? rt2 : 1.0)
-        w_fix = (is_complex ? [0.3, 0.3, 0.7, 0.7, 1.2, 1.2] : [0.3, 0.7, 1.2])
-        w_opt = round.(w_fix)
-        dim = vec_length(R, 3)
-        m = JuMP.Model(opt)
-
-        JuMP.@variable(m, w[1:dim], Bin)
-        K = Hypatia.EpiNormInfCone{Float64, R}(1 + dim, true)
-        c1 = JuMP.@constraint(m, vcat(u_fix / 2, w .- 0.5) in K)
-        JuMP.optimize!(m)
-        @test JuMP.termination_status(m) == MOI.INFEASIBLE
-        @test JuMP.primal_status(m) == MOI.NO_SOLUTION
-
-        JuMP.@objective(m, Min, 1 + sum(w))
-        JuMP.delete(m, c1)
-        K = Hypatia.EpiNormInfCone{Float64, R}(1 + dim, true)
-        JuMP.@constraint(m, vcat(u_fix, w - w_fix) in K)
-        JuMP.set_start_value.(w, w_opt)
-        JuMP.optimize!(m)
-        @test JuMP.termination_status(m) == MOI.OPTIMAL
-        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-        @test isapprox(JuMP.objective_value(m), 1 + sum(w_opt), atol = TOL)
-        @test isapprox(JuMP.objective_bound(m), 1 + sum(w_opt), atol = TOL)
-        @test isapprox(JuMP.value.(w), w_opt, atol = TOL)
-    end
-    return
-end
-
-function dual_epinorminf2(opt)
-    TOL = 1e-4
-    for is_complex in (false, true)
-        R = (is_complex ? ComplexF64 : Float64)
-        dim = vec_length(R, 2)
-        m = JuMP.Model(opt)
-
-        JuMP.@variable(m, w[1:dim], Int)
-        K = Hypatia.EpiNormInfCone{Float64, R}(1 + dim, true)
-        aff = [i * w[i] for i in eachindex(w)]
-        JuMP.@constraint(m, vcat(10.5, aff) in K)
-        JuMP.@objective(m, Min, sum(w))
-        JuMP.optimize!(m)
-        @test JuMP.termination_status(m) == MOI.OPTIMAL
-        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-        w_opt = JuMP.value.(w)
-        @test isapprox(JuMP.objective_value(m), sum(w_opt), atol = TOL)
-        @test isapprox(JuMP.objective_bound(m), sum(w_opt), atol = TOL)
-        aff_opt = vec_copyto!(zeros(R, 2), JuMP.value.(aff))
-        @test norm(aff_opt, 1) <= 10.5 + TOL
-    end
-    return
-end
-
 function epinormeucl1(opt)
     TOL = 1e-4
     m = JuMP.Model(opt)
@@ -276,29 +164,89 @@ function epipersquare2(opt)
     return
 end
 
+function epinorminf1(opt)
+    TOL = 1e-4
+    for use_dual in (false, true), is_complex in (false, true)
+        R = (is_complex ? ComplexF64 : Float64)
+        u_fix = (is_complex ? rt2 : 1.0) * (use_dual ? 0.5 : 0.4)
+        w_fix = (is_complex ? [0.3, 0.3, 0.7, 0.7, 1.2, 1.2] : [0.3, 0.7, 1.2])
+        w_opt = round.(w_fix)
+        dim = vec_length(R, 3)
+        m = JuMP.Model(opt)
+
+        JuMP.@variable(m, w[1:dim], Bin)
+        K = Hypatia.EpiNormInfCone{Float64, R}(1 + dim, use_dual)
+        c1 = JuMP.@constraint(m, vcat(u_fix, w .- 0.5) in K)
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.INFEASIBLE
+        @test JuMP.primal_status(m) == MOI.NO_SOLUTION
+
+        JuMP.@objective(m, Min, 1 + sum(w))
+        JuMP.delete(m, c1)
+        K = Hypatia.EpiNormInfCone{Float64, R}(1 + dim, use_dual)
+        if use_dual
+            u_fix *= 2
+        end
+        JuMP.@constraint(m, vcat(u_fix, w - w_fix) in K)
+        JuMP.set_start_value.(w, w_opt)
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        @test isapprox(JuMP.objective_value(m), 1 + sum(w_opt), atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), 1 + sum(w_opt), atol = TOL)
+        @test isapprox(JuMP.value.(w), w_opt, atol = TOL)
+    end
+    return
+end
+
+function epinorminf2(opt)
+    TOL = 1e-4
+    for use_dual in (false, true), is_complex in (false, true)
+        R = (is_complex ? ComplexF64 : Float64)
+        dim = vec_length(R, 2)
+        m = JuMP.Model(opt)
+
+        JuMP.@variable(m, w[1:dim], Int)
+        K = Hypatia.EpiNormInfCone{Float64, R}(1 + dim, use_dual)
+        aff = [i * w[i] for i in eachindex(w)]
+        JuMP.@constraint(m, vcat(10.5, aff) in K)
+        JuMP.@objective(m, Min, sum(w))
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        w_opt = JuMP.value.(w)
+        @test isapprox(JuMP.objective_value(m), sum(w_opt), atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), sum(w_opt), atol = TOL)
+        aff_opt = vec_copyto!(zeros(R, 2), JuMP.value.(aff))
+        @test norm(aff_opt, (use_dual ? 1 : Inf)) <= 10.5 + TOL
+    end
+    return
+end
+
 function epinormspectral1(opt)
     TOL = 1e-4
     d1 = 2
     d2 = 3
-    for is_complex in (false, true)
+    for use_dual in (false, true), is_complex in (false, true)
         R = (is_complex ? ComplexF64 : Float64)
         dim = vec_length(R, d1 * d2)
         vec = collect(1:dim)
         mat = vec_copyto!(zeros(R, d1, d2), fill(0.1, dim))
-        σ₁ = svdvals(mat)[1]
+        σ = svdvals(mat)
+        opt_val = (use_dual ? sum(σ) : σ[1])
         m = JuMP.Model(opt)
 
         JuMP.@variable(m, y)
         x = JuMP.@variable(m, [1:dim], Int)
         JuMP.@constraint(m, [i in 1:dim], i - 1 <= x[i] <= i + 1)
-        K = Hypatia.EpiNormSpectralCone{Float64, R}(d1, d2)
+        K = Hypatia.EpiNormSpectralCone{Float64, R}(d1, d2, use_dual)
         JuMP.@constraint(m, vcat(y, vec - x .+ 0.1) in K)
         JuMP.@objective(m, Min, y)
         JuMP.optimize!(m)
         @test JuMP.termination_status(m) == MOI.OPTIMAL
         @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-        @test isapprox(JuMP.objective_value(m), σ₁, atol = TOL)
-        @test isapprox(JuMP.objective_bound(m), σ₁, atol = TOL)
+        @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
         @test isapprox(JuMP.value.(x), vec, atol = TOL)
     end
     return
@@ -307,71 +255,22 @@ end
 function epinormspectral2(opt)
     TOL = 1e-4
     d1 = d2 = 2
-    for is_complex in (false, true)
+    for use_dual in (false, true), is_complex in (false, true)
         R = (is_complex ? ComplexF64 : Float64)
         dim = vec_length(R, d1 * d2)
+        opt_val = (use_dual ? 1 : d1)
         m = JuMP.Model(opt)
 
         x = JuMP.@variable(m, [1:dim], Bin)
-        K = Hypatia.EpiNormSpectralCone{Float64, R}(d1, d2)
+        K = Hypatia.EpiNormSpectralCone{Float64, R}(d1, d2, use_dual)
         JuMP.@constraint(m, vcat(1, x) in K)
         JuMP.@objective(m, Max, sum(x))
         JuMP.optimize!(m)
         @test JuMP.termination_status(m) == MOI.OPTIMAL
         @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-        @test isapprox(JuMP.objective_value(m), d1, atol = TOL)
-        @test isapprox(JuMP.objective_bound(m), d1, atol = TOL)
-        @test isapprox(sum(JuMP.value.(x)), d1, atol = TOL)
-    end
-    return
-end
-
-function dual_epinormspectral1(opt)
-    TOL = 1e-4
-    d1 = 2
-    d2 = 3
-    for is_complex in (false, true)
-        R = (is_complex ? ComplexF64 : Float64)
-        dim = vec_length(R, d1 * d2)
-        vec = collect(1:dim)
-        mat = vec_copyto!(zeros(R, d1, d2), fill(0.1, dim))
-        nuc = sum(svdvals(mat))
-        m = JuMP.Model(opt)
-
-        JuMP.@variable(m, y)
-        x = JuMP.@variable(m, [1:dim], Int)
-        JuMP.@constraint(m, [i in 1:dim], i - 1 <= x[i] <= i + 1)
-        K = Hypatia.EpiNormSpectralCone{Float64, R}(d1, d2, true)
-        JuMP.@constraint(m, vcat(y, vec - x .+ 0.1) in K)
-        JuMP.@objective(m, Min, y)
-        JuMP.optimize!(m)
-        @test JuMP.termination_status(m) == MOI.OPTIMAL
-        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-        @test isapprox(JuMP.objective_value(m), nuc, atol = TOL)
-        @test isapprox(JuMP.objective_bound(m), nuc, atol = TOL)
-        @test isapprox(JuMP.value.(x), vec, atol = TOL)
-    end
-    return
-end
-
-function dual_epinormspectral2(opt)
-    TOL = 1e-4
-    d1 = d2 = 2
-    for is_complex in (false, true)
-        R = (is_complex ? ComplexF64 : Float64)
-        dim = vec_length(R, d1 * d2)
-        m = JuMP.Model(opt)
-
-        x = JuMP.@variable(m, [1:dim], Bin)
-        K = Hypatia.EpiNormSpectralCone{Float64, R}(d1, d2, true)
-        JuMP.@constraint(m, vcat(1, x) in K)
-        JuMP.@objective(m, Max, sum(x))
-        JuMP.optimize!(m)
-        @test JuMP.termination_status(m) == MOI.OPTIMAL
-        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-        @test isapprox(JuMP.objective_value(m), 1, atol = TOL)
-        @test isapprox(JuMP.objective_bound(m), 1, atol = TOL)
-        @test isapprox(sum(JuMP.value.(x)), 1, atol = TOL)
+        @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
+        @test isapprox(sum(JuMP.value.(x)), opt_val, atol = TOL)
     end
     return
 end
