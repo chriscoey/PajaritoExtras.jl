@@ -42,7 +42,7 @@ end
 # primal cone functions
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiNormInf{Primal, RealF},
+    cache::EpiNormInf{Prim, RealF},
     oa_model::JuMP.Model,
 )
     u = cache.oa_s[1]
@@ -56,7 +56,7 @@ function MOIPajarito.Cones.add_init_cuts(
 end
 
 function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiNormInf{Primal, CompF},
+    cache::EpiNormInf{Prim, CompF},
     oa_model::JuMP.Model,
 )
     u = cache.oa_s[1]
@@ -78,7 +78,7 @@ end
 
 function MOIPajarito.Cones.get_subp_cuts(
     ::Vector{RealF},
-    ::EpiNormInf{Primal, RealF},
+    ::EpiNormInf{Prim, RealF},
     ::JuMP.Model,
 )
     return AE[]
@@ -86,7 +86,7 @@ end
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
-    cache::EpiNormInf{Primal, CompF},
+    cache::EpiNormInf{Prim, CompF},
     oa_model::JuMP.Model,
 )
     # strengthened cut on (u, re(Wᵢ), im(Wᵢ)) is (‖Rᵢ‖, re(Rᵢ), im(Rᵢ))
@@ -103,7 +103,7 @@ end
 
 function MOIPajarito.Cones.get_sep_cuts(
     ::Vector{RealF},
-    ::EpiNormInf{Primal, RealF},
+    ::EpiNormInf{Prim, RealF},
     ::JuMP.Model,
 )
     return AE[]
@@ -111,7 +111,7 @@ end
 
 function MOIPajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
-    cache::EpiNormInf{Primal, CompF},
+    cache::EpiNormInf{Prim, CompF},
     oa_model::JuMP.Model,
 )
     # decomposed gradient cut on (u, Wᵢ) is (1, -Wsᵢ / ‖Wsᵢ‖)
@@ -130,12 +130,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     return cuts
 end
 
-function _get_cut(
-    R_i::CompF,
-    i::Int,
-    cache::EpiNormInf{Primal, CompF},
-    oa_model::JuMP.Model,
-)
+function _get_cut(R_i::CompF, i::Int, cache::EpiNormInf{Prim, CompF}, oa_model::JuMP.Model)
     u = cache.oa_s[1]
     re_w = cache.oa_s[2i]
     im_w = cache.oa_s[2i + 1]

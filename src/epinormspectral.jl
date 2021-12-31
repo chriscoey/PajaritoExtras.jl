@@ -60,7 +60,7 @@ end
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
-    cache::EpiNormSpectral{Primal},
+    cache::EpiNormSpectral{Prim},
     oa_model::JuMP.Model,
 )
     F = get_svd(z, cache)
@@ -75,7 +75,7 @@ end
 
 function MOIPajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
-    cache::EpiNormSpectral{Primal},
+    cache::EpiNormSpectral{Prim},
     oa_model::JuMP.Model,
 )
     # decomposed gradient cut is (1, -Uᵢ * Vtᵢ)
@@ -97,7 +97,7 @@ function _get_cut(
     i::Int,
     U::Matrix{C},
     Vt::Matrix{C},
-    cache::EpiNormSpectral{Primal, C},
+    cache::EpiNormSpectral{Prim, C},
     oa_model::JuMP.Model,
 ) where {C}
     u = cache.oa_s[1]

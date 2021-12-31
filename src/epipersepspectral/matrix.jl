@@ -32,7 +32,7 @@ function MOIPajarito.Cones.add_init_cuts(
 ) where {D, C}
     h = cache.h
     d = cache.d
-    (u, v) = cache.oa_s[epi_per_idxs(D)]
+    (u, v) = swap_epiper(D, cache.oa_s[1:2]...)
     @views w = cache.oa_s[3:end]
     W_diag = [w[svec_idx(C, i, i)] for i in 1:d]
 
@@ -46,7 +46,8 @@ function MOIPajarito.Cones.add_init_cuts(
     r_vals = init_r_vals(D, h)
     for r0 in r_vals
         R_diag = fill(r0, d)
-        q = per_sepspec(sepspec_dual(D), h, 1.0, R_diag)
+        q = per_sepspec(conj_or_val(D), h, 1.0, R_diag)
+        @show D, r0, q
         JuMP.@constraint(oa_model, u + q * v + JuMP.dot(R_diag, W_diag) >= 0)
     end
     return 1 + d + length(r_vals)
@@ -57,17 +58,15 @@ function MOIPajarito.Cones.get_subp_cuts(
     cache::MatrixEpiPerSepSpectral{D},
     oa_model::JuMP.Model,
 ) where {D}
-    (p, q) = z[epi_per_idxs(D)]
+    (p, q) = swap_epiper(D, z[1:2]...)
     R = cache.W_temp
     @views svec_to_smat!(R, z[3:end], rt2)
     F = eigen(Hermitian(R, :U))
     V = F.vectors
     ω = F.values
-
     cuts = AE[]
-    if abs(q) < 1e-7
-        # TODO only if domain for this part is pos
 
+    if dom_pos(D, cache.h) && abs(q) < 1e-7
         # TODO decide when to add
         # add eigenvector cuts
         num_pos = count(>(1e-7), ω)
@@ -84,36 +83,38 @@ end
 
 function MOIPajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
-    cache::MatrixEpiPerSepSpectral{Primal},
+    cache::MatrixEpiPerSepSpectral{D},
     oa_model::JuMP.Model,
-)
+) where {D}
+    h = cache.h
     Ws = cache.W_temp
     @views svec_to_smat!(Ws, s[3:end], rt2)
     F = eigen(Hermitian(Ws, :U))
     V = F.vectors
     ω = F.values
-
-    # TODO only if domain for this part is pos
-    num_neg = count(<(-1e-7), ω)
     @assert issorted(ω)
-
     cuts = AE[]
-    if !iszero(num_neg)
-        # add eigenvector cuts
-        V_neg = V[:, 1:num_neg]
-        @views w = cache.oa_s[3:end]
-        cuts = _get_psd_cuts(V_neg, w, cache, oa_model)
+
+    if dom_pos(D, h)
+        num_neg = count(<(-1e-7), ω)
+        if !iszero(num_neg)
+            # add eigenvector cuts
+            V_neg = V[:, 1:num_neg]
+            @views w = cache.oa_s[3:end]
+            cuts = _get_psd_cuts(V_neg, w, cache, oa_model)
+        end
+
+        ω = max.(ω, 1e-7)
     end
 
-    (us, vs) = s[epi_per_idxs(D)]
+    (us, vs) = swap_epiper(D, s[1:2]...)
     v_pos = max(vs, 1e-7)
-
-    # TODO only if domain for this part is pos
-    ω_pos = max.(ω, 1e-7)
-    us - per_sepspec(h_val, cache.h, v_pos, ω_pos) > -1e-7 && return AE[]
+    if us - per_sepspec(val_or_conj(D), h, v_pos, ω) > -1e-7
+        return cuts
+    end
 
     # gradient cut is (1, h⋆(rω), V * Diagonal(rω) * V') at rω = -h'(ω / vs)
-    rω = -h_grad(ω_pos / v_pos, cache.h)
+    rω = -h_grad(D, h, ω / v_pos)
     cut = _get_cut(1.0, rω, V, cache, oa_model)
     push!(cuts, cut)
     return cuts
@@ -123,20 +124,18 @@ function _get_cut(
     p::RealF,
     rω::Vector{RealF},
     V::Matrix{C},
-    cache::MatrixEpiPerSepSpectral{Primal, C},
+    cache::MatrixEpiPerSepSpectral{D, C},
     oa_model::JuMP.Model,
-) where {C}
+) where {D, C}
     # strengthened cut is (p, p * h⋆(rω / p), V * Diagonal(rω) * V')
     @assert p > 1e-12
-    if h_conj_dom_pos(cache.h)
-        @assert all(>(1e-12), rω)
-    end
-    q = per_sepspec(h_conj, cache.h, p, rω)
+    q = per_sepspec(conj_or_val(D), cache.h, p, rω)
+    (p, q) = swap_epiper(D, p, q)
+
     R = V * Diagonal(rω) * V'
     r = smat_to_svec!(cache.w_temp, R, rt2)
+
     z = vcat(p, q, r)
     cut = dot_expr(z, cache.oa_s, oa_model)
     return cut
 end
-
-# dual cone functions

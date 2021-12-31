@@ -9,7 +9,7 @@ const MOI = MathOptInterface
 import JuMP
 import MOIPajarito
 import PajaritoExtras
-import PajaritoExtras: svec_idx
+import PajaritoExtras: Prim, Dual, svec_idx
 import Hypatia
 import Hypatia.Cones: vec_length, svec_length, vec_copyto!
 import Hypatia.PolyUtils

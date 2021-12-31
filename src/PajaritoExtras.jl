@@ -21,9 +21,9 @@ const CompF = ComplexF64
 const RealCompF = Union{RealF, CompF}
 
 abstract type PrimDual end
-struct Primal <: PrimDual end
+struct Prim <: PrimDual end
 struct Dual <: PrimDual end
-primal_or_dual(use_dual::Bool) = (use_dual ? Dual : Primal)
+primal_or_dual(use_dual::Bool) = (use_dual ? Dual : Prim)
 
 const rt2 = sqrt(2.0)
 const irt2 = inv(rt2)

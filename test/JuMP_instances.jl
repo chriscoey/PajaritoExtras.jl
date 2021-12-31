@@ -446,13 +446,14 @@ function matrix_epipersepspectral1(opt)
         Hypatia.Cones.NegLogSSF(),
         Hypatia.Cones.NegEntropySSF(),
         Hypatia.Cones.NegSqrtSSF(),
-        Hypatia.Cones.NegPower01SSF(3 // 10),
-        Hypatia.Cones.Power12SSF(1.5),
+        Hypatia.Cones.NegPower01SSF(8 // 10),
+        Hypatia.Cones.Power12SSF(1.2),
     ]
-    for h_fun in sep_spectral_funs, is_complex in (false,)#true)
+    for h_fun in sep_spectral_funs, use_dual in (false, true), is_complex in (false, true)
         R = (is_complex ? ComplexF64 : Float64)
+        D = (use_dual ? Dual : Prim)
         Q = Hypatia.Cones.MatrixCSqr{Float64, R}
-        K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 3, false)
+        K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 3, use_dual)
         w_dim = svec_length(R, 3)
         vec_diag = svec(Matrix{R}(Diagonal([1.2, 2.5, 0.9])))
         m = JuMP.Model(opt)
@@ -465,15 +466,20 @@ function matrix_epipersepspectral1(opt)
         JuMP.@constraint(m, sum(w) >= 9)
         JuMP.@objective(m, Min, u)
         K_vec = w - vec_diag
-        JuMP.@constraint(m, vcat(u, 1, K_vec) in K)
+        epiper = PajaritoExtras.swap_epiper(D, [u, 1]...)
+        JuMP.@constraint(m, vcat(epiper..., K_vec) in K)
         JuMP.optimize!(m)
+
         @test JuMP.termination_status(m) == MOI.OPTIMAL
         @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
         diag_sol = JuMP.value.(W_diag)
         @test isapprox(diag_sol, round.(diag_sol), atol = TOL)
         ω = eigvals(Hermitian(smat(R, JuMP.value.(K_vec)), :U))
-        @test minimum(ω) > TOL
-        opt_val = Hypatia.Cones.h_val(max.(ω, 1e-9), h_fun)
+        if PajaritoExtras.dom_pos(D, h_fun)
+            @test minimum(ω) > -TOL
+            ω = max.(ω, 1e-9)
+        end
+        opt_val = PajaritoExtras.val_or_conj(D)(ω, h_fun)
         @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
         @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
         @test isapprox(JuMP.value(u), opt_val, atol = TOL)
@@ -484,20 +490,26 @@ end
 function matrix_epipersepspectral2(opt)
     TOL = 1e-4
     # only functions that are decreasing
-    sep_spectral_funs = [
-        Hypatia.Cones.NegLogSSF(),
-        Hypatia.Cones.NegSqrtSSF(),
-        Hypatia.Cones.NegPower01SSF(3 // 10),
+    dual_and_h = [
+        (false, Hypatia.Cones.NegLogSSF()),
+        (false, Hypatia.Cones.NegSqrtSSF()),
+        (false, Hypatia.Cones.NegPower01SSF(3 // 10)),
+        (true, Hypatia.Cones.NegLogSSF()),
+        (true, Hypatia.Cones.NegEntropySSF()),
+        (true, Hypatia.Cones.NegSqrtSSF()),
+        (true, Hypatia.Cones.NegPower01SSF(5 // 10)),
     ]
-    for h_fun in sep_spectral_funs
+    for (use_dual, h_fun) in dual_and_h
+        D = (use_dual ? Dual : Prim)
         Q = Hypatia.Cones.MatrixCSqr{Float64, Float64}
-        K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 2, false)
+        K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 2, use_dual)
         (m, x, Q, opt_x, opt_Q) = _setup_expdesign(opt)
-        opt_val = Hypatia.Cones.h_val(eigvals(Symmetric(opt_Q, :U)), h_fun)
+        opt_val = PajaritoExtras.val_or_conj(D)(eigvals(Symmetric(opt_Q, :U)), h_fun)
 
         JuMP.@variable(m, y)
         JuMP.@objective(m, Min, y)
-        JuMP.@constraint(m, vcat(y, 1, svec(Q)) in K)
+        epiper = PajaritoExtras.swap_epiper(D, [y, 1]...)
+        JuMP.@constraint(m, vcat(epiper..., svec(Q)) in K)
         JuMP.optimize!(m)
         @test JuMP.termination_status(m) == MOI.OPTIMAL
         @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
