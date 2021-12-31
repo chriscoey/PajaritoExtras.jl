@@ -47,7 +47,6 @@ function MOIPajarito.Cones.add_init_cuts(
     for r0 in r_vals
         R_diag = fill(r0, d)
         q = per_sepspec(conj_or_val(D), h, 1.0, R_diag)
-        @show D, r0, q
         JuMP.@constraint(oa_model, u + q * v + JuMP.dot(R_diag, W_diag) >= 0)
     end
     return 1 + d + length(r_vals)
@@ -92,7 +91,6 @@ function MOIPajarito.Cones.get_sep_cuts(
     F = eigen(Hermitian(Ws, :U))
     V = F.vectors
     ω = F.values
-    @assert issorted(ω)
     cuts = AE[]
 
     if dom_pos(D, h)
@@ -128,7 +126,6 @@ function _get_cut(
     oa_model::JuMP.Model,
 ) where {D, C}
     # strengthened cut is (p, p * h⋆(rω / p), V * Diagonal(rω) * V')
-    @assert p > 1e-12
     q = per_sepspec(conj_or_val(D), cache.h, p, rω)
     (p, q) = swap_epiper(D, p, q)
 

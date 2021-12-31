@@ -14,6 +14,7 @@ function possemideftri1(opt)
     c1 = JuMP.@constraint(m, Z[1, 2] >= 1)
     c2 = JuMP.@constraint(m, y >= Z[2, 2])
     JuMP.optimize!(m)
+
     @test JuMP.termination_status(m) == MOI.OPTIMAL
     @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
     @test isapprox(JuMP.objective_value(m), 7.5, atol = TOL)
@@ -49,6 +50,7 @@ function possemideftri2(opt)
         x_diag = [x[svec_idx(R, i, i)] for i in 1:d]
         JuMP.@constraint(m, sum(x_diag) == 1)
         JuMP.optimize!(m)
+
         @test JuMP.termination_status(m) == MOI.OPTIMAL
         @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
         @test isapprox(JuMP.objective_value(m), λ₁, atol = TOL)
@@ -83,6 +85,7 @@ function epinormeucl1(opt)
     JuMP.@constraint(m, [z, x, y] in Hypatia.EpiNormEuclCone{Float64}(3))
     JuMP.set_integer(x)
     JuMP.optimize!(m)
+
     @test JuMP.termination_status(m) == MOI.OPTIMAL
     @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
     opt_obj = -1 - 2 * sqrt(3)
@@ -212,6 +215,7 @@ function epinorminf2(opt)
         JuMP.@constraint(m, vcat(10.5, aff) in K)
         JuMP.@objective(m, Min, sum(w))
         JuMP.optimize!(m)
+
         @test JuMP.termination_status(m) == MOI.OPTIMAL
         @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
         w_opt = JuMP.value.(w)
@@ -243,6 +247,7 @@ function epinormspectral1(opt)
         JuMP.@constraint(m, vcat(y, vec - x .+ 0.1) in K)
         JuMP.@objective(m, Min, y)
         JuMP.optimize!(m)
+
         @test JuMP.termination_status(m) == MOI.OPTIMAL
         @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
         @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
@@ -266,6 +271,7 @@ function epinormspectral2(opt)
         JuMP.@constraint(m, vcat(1, x) in K)
         JuMP.@objective(m, Max, sum(x))
         JuMP.optimize!(m)
+
         @test JuMP.termination_status(m) == MOI.OPTIMAL
         @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
         @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
@@ -286,6 +292,7 @@ function hypogeomean1(opt)
     w_max = [1.1, 2.3, 3.5]
     JuMP.@constraint(m, w .<= w_max)
     JuMP.optimize!(m)
+
     @test JuMP.termination_status(m) == MOI.OPTIMAL
     @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
     opt_obj = PajaritoExtras.geomean(Float64.(1:3))
@@ -313,6 +320,7 @@ function hypogeomean2(opt)
     JuMP.@constraint(m, vcat(0.5 * x, y) in Hypatia.HypoGeoMeanCone{Float64}(4))
     JuMP.@objective(m, Max, 5x - sum(y))
     JuMP.optimize!(m)
+
     @test JuMP.termination_status(m) == MOI.OPTIMAL
     @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
     @test isapprox(JuMP.objective_value(m), 2, atol = TOL)
@@ -334,6 +342,7 @@ function hyporootdettri1(opt)
         JuMP.@constraint(m, vcat(1, w) in K)
         JuMP.@objective(m, Max, sum(w))
         JuMP.optimize!(m)
+
         @test JuMP.termination_status(m) == MOI.OPTIMAL
         @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
         @test isapprox(JuMP.objective_value(m), d, atol = TOL)
@@ -360,6 +369,7 @@ function hyporootdettri2(opt)
     JuMP.@objective(m, Max, y)
     JuMP.@constraint(m, vcat(y, svec(Q)) in K)
     JuMP.optimize!(m)
+
     @test JuMP.termination_status(m) == MOI.OPTIMAL
     @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
     @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
@@ -374,12 +384,13 @@ function vector_epipersepspectral1(opt)
         Hypatia.Cones.NegLogSSF(),
         Hypatia.Cones.NegEntropySSF(),
         Hypatia.Cones.NegSqrtSSF(),
-        Hypatia.Cones.NegPower01SSF(3 // 10),
-        Hypatia.Cones.Power12SSF(1.5),
+        Hypatia.Cones.NegPower01SSF(0.3),
+        Hypatia.Cones.Power12SSF(3 // 2),
     ]
-    for h_fun in sep_spectral_funs
+    for h_fun in sep_spectral_funs, use_dual in (false, true)
+        D = (use_dual ? Dual : Prim)
         Q = Hypatia.Cones.VectorCSqr{Float64}
-        K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 3, false)
+        K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 3, use_dual)
         m = JuMP.Model(opt)
 
         JuMP.@variable(m, u)
@@ -387,12 +398,14 @@ function vector_epipersepspectral1(opt)
         JuMP.@constraint(m, w .<= [3.2, 5.5, 6.9])
         JuMP.@constraint(m, sum(w) == 8)
         JuMP.@objective(m, Min, u)
-        JuMP.@constraint(m, vcat(u, 1, w) in K)
+        epiper = PajaritoExtras.swap_epiper(D, [u, 1]...)
+        JuMP.@constraint(m, vcat(epiper..., w) in K)
         JuMP.optimize!(m)
+
         @test JuMP.termination_status(m) == MOI.OPTIMAL
         @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
         w_sol = JuMP.value.(w)
-        opt_val = Hypatia.Cones.h_val(max.(w_sol, 1e-9), h_fun)
+        opt_val = PajaritoExtras.val_or_conj(D)(w_sol, h_fun)
         @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
         @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
         @test isapprox(JuMP.value(u), opt_val, atol = TOL)
@@ -409,7 +422,8 @@ function vector_epipersepspectral2(opt)
         Hypatia.Cones.NegSqrtSSF(),
         Hypatia.Cones.NegPower01SSF(3 // 10),
     ]
-    for h_fun in sep_spectral_funs
+    for h_fun in sep_spectral_funs, use_dual in (false, true)
+        D = (use_dual ? Dual : Prim)
         Q = Hypatia.Cones.VectorCSqr{Float64}
         w = [0.5, 2.3]
         m = JuMP.Model(opt)
@@ -419,10 +433,12 @@ function vector_epipersepspectral2(opt)
         JuMP.@variable(m, u[1:2])
         JuMP.@objective(m, Min, sum(u))
         for i in 1:2
-            K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 2, false)
-            JuMP.@constraint(m, vcat(u[i], x[i], w .+ i) in K)
+            K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 2, use_dual)
+            epiper = PajaritoExtras.swap_epiper(D, u[i], x[i])
+            JuMP.@constraint(m, vcat(epiper..., w .+ i) in K)
         end
         JuMP.optimize!(m)
+
         @test JuMP.termination_status(m) == MOI.OPTIMAL
         @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
         x_sol = JuMP.value.(x)
@@ -431,7 +447,7 @@ function vector_epipersepspectral2(opt)
         @test round_x_sol in ([0.0, 1.0], [1.0, 0.0])
         i = findfirst(Bool.(round_x_sol))
         u_sol = JuMP.value.(u)
-        opt_val = Hypatia.Cones.h_val(w .+ i, h_fun)
+        opt_val = PajaritoExtras.val_or_conj(D)(w .+ i, h_fun)
         @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
         @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
         @test isapprox(u_sol[i], opt_val, atol = TOL)
@@ -446,7 +462,7 @@ function matrix_epipersepspectral1(opt)
         Hypatia.Cones.NegLogSSF(),
         Hypatia.Cones.NegEntropySSF(),
         Hypatia.Cones.NegSqrtSSF(),
-        Hypatia.Cones.NegPower01SSF(8 // 10),
+        Hypatia.Cones.NegPower01SSF(0.8),
         Hypatia.Cones.Power12SSF(1.2),
     ]
     for h_fun in sep_spectral_funs, use_dual in (false, true), is_complex in (false, true)
@@ -497,7 +513,7 @@ function matrix_epipersepspectral2(opt)
         (true, Hypatia.Cones.NegLogSSF()),
         (true, Hypatia.Cones.NegEntropySSF()),
         (true, Hypatia.Cones.NegSqrtSSF()),
-        (true, Hypatia.Cones.NegPower01SSF(5 // 10)),
+        (true, Hypatia.Cones.NegPower01SSF(0.5)),
     ]
     for (use_dual, h_fun) in dual_and_h
         D = (use_dual ? Dual : Prim)
@@ -511,6 +527,7 @@ function matrix_epipersepspectral2(opt)
         epiper = PajaritoExtras.swap_epiper(D, [y, 1]...)
         JuMP.@constraint(m, vcat(epiper..., svec(Q)) in K)
         JuMP.optimize!(m)
+
         @test JuMP.termination_status(m) == MOI.OPTIMAL
         @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
         @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
@@ -549,6 +566,7 @@ function wsosinterpnonnegative1(opt)
     JuMP.@objective(m, Max, y)
     JuMP.@constraint(m, [i in 1:4], [fs[i](p_j) + 3 * (1 - x[i]) - y for p_j in pts] in K)
     JuMP.optimize!(m)
+
     @test JuMP.termination_status(m) == MOI.OPTIMAL
     @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
     @test isapprox(JuMP.value.(x), [1, 0, 0, 1], atol = TOL)
@@ -578,6 +596,7 @@ function wsosinterpnonnegative2(opt)
     JuMP.@objective(m, Max, y)
     JuMP.@constraint(m, [i in 1:4], [fs[i](p_j[1]) + 3 * x[i] - y for p_j in pts] in K)
     JuMP.optimize!(m)
+
     @test JuMP.termination_status(m) == MOI.OPTIMAL
     @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
     @test isapprox(JuMP.value.(x), [0, 1, 0, 1], atol = TOL)
