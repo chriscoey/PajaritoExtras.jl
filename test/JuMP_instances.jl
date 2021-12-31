@@ -387,6 +387,7 @@ function vector_epipersepspectral1(opt)
         Hypatia.Cones.NegPower01SSF(0.3),
         Hypatia.Cones.Power12SSF(3 // 2),
     ]
+
     for h_fun in sep_spectral_funs, use_dual in (false, true)
         D = (use_dual ? Dual : Prim)
         Q = Hypatia.Cones.VectorCSqr{Float64}
@@ -422,6 +423,7 @@ function vector_epipersepspectral2(opt)
         Hypatia.Cones.NegSqrtSSF(),
         Hypatia.Cones.NegPower01SSF(3 // 10),
     ]
+
     for h_fun in sep_spectral_funs, use_dual in (false, true)
         D = (use_dual ? Dual : Prim)
         Q = Hypatia.Cones.VectorCSqr{Float64}
@@ -465,6 +467,7 @@ function matrix_epipersepspectral1(opt)
         Hypatia.Cones.NegPower01SSF(0.8),
         Hypatia.Cones.Power12SSF(1.2),
     ]
+
     for h_fun in sep_spectral_funs, use_dual in (false, true), is_complex in (false, true)
         R = (is_complex ? ComplexF64 : Float64)
         D = (use_dual ? Dual : Prim)
@@ -515,6 +518,7 @@ function matrix_epipersepspectral2(opt)
         (true, Hypatia.Cones.NegSqrtSSF()),
         (true, Hypatia.Cones.NegPower01SSF(0.5)),
     ]
+
     for (use_dual, h_fun) in dual_and_h
         D = (use_dual ? Dual : Prim)
         Q = Hypatia.Cones.MatrixCSqr{Float64, Float64}
@@ -553,55 +557,87 @@ end
 
 function wsosinterpnonnegative1(opt)
     TOL = 1e-4
-    # real case: pick 2/4 polynomials to maximize the minimum value
-    fs = Function[x -> (x - 0.5)^2 + 0.3, x -> 2x + 1, x -> -1 - x, x -> 3 - 2x^2]
-    (U, pts, Ps) = PolyUtils.interpolate(PolyUtils.BoxDomain{Float64}(-ones(1), ones(1)), 2)
+    # real case
+    dom = PolyUtils.BoxDomain{Float64}(-ones(1), ones(1))
+    fs = Function[
+        x -> (x - 0.5)^2 + 0.3, # min 0.3
+        x -> 2x + 1.2, # min -0.8
+        x -> -1 - x, # min -2
+        x -> 3 - 2x^2, # min 1
+    ]
+    (U, pts, Ps) = PolyUtils.interpolate(dom, 2)
     pts = vec(pts)
-    K = Hypatia.WSOSInterpNonnegativeCone{Float64, Float64}(U, Ps)
-    m = JuMP.Model(opt)
+    f_pts = [f_i.(pts) for f_i in fs]
 
-    JuMP.@variable(m, x[1:4], Bin)
-    JuMP.@constraint(m, sum(x) == 2)
-    JuMP.@variable(m, y)
-    JuMP.@objective(m, Max, y)
-    JuMP.@constraint(m, [i in 1:4], [fs[i](p_j) + 3 * (1 - x[i]) - y for p_j in pts] in K)
-    JuMP.optimize!(m)
+    for use_dual in (false, true)
+        opt_val = (use_dual ? -0.8 : 0.3)
+        K = Hypatia.WSOSInterpNonnegativeCone{Float64, Float64}(U, Ps, use_dual)
+        (m, x, y) = _setup_polymin(opt, use_dual, K, f_pts, 3.0)
+        JuMP.optimize!(m)
 
-    @test JuMP.termination_status(m) == MOI.OPTIMAL
-    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-    @test isapprox(JuMP.value.(x), [1, 0, 0, 1], atol = TOL)
-    @test isapprox(JuMP.objective_value(m), 0.3, atol = TOL)
-    @test isapprox(JuMP.objective_bound(m), 0.3, atol = TOL)
-    @test isapprox(JuMP.value(y), 0.3, atol = TOL)
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        @test isapprox(JuMP.value.(x), [1, 0, 0, 1], atol = TOL)
+        @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.value(y), opt_val, atol = TOL)
+    end
     return
 end
 
 function wsosinterpnonnegative2(opt)
     TOL = 1e-4
-    # complex case: pick 2/4 polynomials to maximize the minimum value
+    # complex case
+    dom = [x -> 1 - abs2(x[1])]
     fs = Function[
         x -> abs2(x - 0.5) - 0.4, # min -0.4
         x -> 2 * real(x) - imag(x) + 1, # min -1.2361
         x -> 2 * abs2(x) + imag(x), # min -0.125
-        x -> real(x), # min -1
+        x -> real(x) + 0.1, # min -0.9
     ]
-    gs = [x -> 1 - abs2(x[1])]
-    (pts, Ps) = PolyUtils.interpolate(ComplexF64, 1, 1, gs, [1])
-    K = Hypatia.WSOSInterpNonnegativeCone{Float64, ComplexF64}(length(pts), Ps)
-    m = JuMP.Model(opt)
+    (pts, Ps) = PolyUtils.interpolate(ComplexF64, 1, 1, dom, [1])
+    pts = first.(pts)
+    U = length(pts)
+    f_pts = [f_i.(pts) for f_i in fs]
 
+    for use_dual in (false, true)
+        opt_val = (use_dual ? -0.9 : -0.4)
+        K = Hypatia.WSOSInterpNonnegativeCone{Float64, ComplexF64}(U, Ps, use_dual)
+        (m, x, y) = _setup_polymin(opt, use_dual, K, f_pts, 3.0)
+        JuMP.optimize!(m)
+
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        @test isapprox(JuMP.value.(x), [1, 0, 1, 0], atol = TOL)
+        @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.value(y), opt_val, atol = TOL)
+    end
+    return
+end
+
+function _setup_polymin(opt, use_dual, K, f_pts, bound)
+    # pick 2/4 polynomials to either
+    # maximize the minimum value (primal) or minimize the maximum value (dual)
+    m = JuMP.Model(opt)
     JuMP.@variable(m, x[1:4], Bin)
     JuMP.@constraint(m, sum(x) == 2)
     JuMP.@variable(m, y)
-    JuMP.@objective(m, Max, y)
-    JuMP.@constraint(m, [i in 1:4], [fs[i](p_j[1]) + 3 * x[i] - y for p_j in pts] in K)
-    JuMP.optimize!(m)
 
-    @test JuMP.termination_status(m) == MOI.OPTIMAL
-    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-    @test isapprox(JuMP.value.(x), [0, 1, 0, 1], atol = TOL)
-    @test isapprox(JuMP.objective_value(m), -0.4, atol = TOL)
-    @test isapprox(JuMP.objective_bound(m), -0.4, atol = TOL)
-    @test isapprox(JuMP.value(y), -0.4, atol = TOL)
-    return
+    if use_dual
+        JuMP.@objective(m, Min, y)
+        U = MOI.dimension(K)
+        for i in 1:4
+            z_i = JuMP.@variable(m, [1:U])
+            JuMP.@constraint(m, z_i in K)
+            JuMP.@constraint(m, sum(z_i) == 1)
+            JuMP.@constraint(m, y >= JuMP.dot(f_pts[i], z_i) - bound * x[i])
+        end
+    else
+        JuMP.@objective(m, Max, y)
+        for i in 1:4
+            JuMP.@constraint(m, f_pts[i] .+ (bound * (1 - x[i]) - y) in K)
+        end
+    end
+    return (m, x, y)
 end
