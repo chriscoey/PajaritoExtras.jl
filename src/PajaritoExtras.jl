@@ -37,6 +37,7 @@ include("hypogeomean.jl")
 include("hyporootdettri.jl")
 include("epipersepspectral/epipersepspectral.jl")
 include("wsosinterpnonnegative.jl")
+include("possemideftrisparse.jl")
 
 # supported cones for outer approximation
 const OACone = Union{
@@ -49,6 +50,8 @@ const OACone = Union{
     Hypatia.HypoRootdetTriCone{RealF, <:RealCompF},
     Hypatia.EpiPerSepSpectralCone{RealF},
     Hypatia.WSOSInterpNonnegativeCone{RealF, <:RealCompF},
+    # TODO maybe shouldn't have the PSDSparseImpl param in Hypatia (sep spectral doesn't do it):
+    Hypatia.PosSemidefTriSparseCone{<:Hypatia.Cones.PSDSparseImpl, RealF, <:RealCompF},
 }
 
 # cone must be supported by both Pajarito and the conic solver

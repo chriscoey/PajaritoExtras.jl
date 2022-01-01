@@ -36,6 +36,8 @@ inst_all = String[
     "matrix_epipersepspectral2",
     "wsosinterpnonnegative1",
     "wsosinterpnonnegative2",
+    "possemideftrisparse1",
+    "possemideftrisparse2",
 ]
 
 # instances to test with extended formulations option off
