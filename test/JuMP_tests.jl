@@ -18,6 +18,8 @@ import Hypatia.PolyUtils
 inst_all = String[
     "possemideftri1",
     "possemideftri2",
+    "possemideftrisparse1",
+    "possemideftrisparse2",
     "epinormeucl1",
     "epinormeucl2",
     "epipersquare1",
@@ -36,8 +38,6 @@ inst_all = String[
     "matrix_epipersepspectral2",
     "wsosinterpnonnegative1",
     "wsosinterpnonnegative2",
-    "possemideftrisparse1",
-    "possemideftrisparse2",
 ]
 
 # instances to test with extended formulations option off

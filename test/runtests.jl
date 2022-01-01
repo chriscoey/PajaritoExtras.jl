@@ -27,8 +27,13 @@ hypatia = MOI.OptimizerWithAttributes(
     "tol_inconsistent" => 1e-7,
 )
 
-println("starting PajaritoExtras tests")
-Test.@testset "PajaritoExtras tests" begin
-    include("JuMP_tests.jl")
-    TestJuMP.runtests(gurobi, hypatia)
+# println("starting PajaritoExtras tests")
+# Test.@testset "PajaritoExtras tests" begin
+#     include("JuMP_tests.jl")
+#     TestJuMP.runtests(gurobi, hypatia)
+# end
+
+println("starting examples tests")
+Test.@testset "examples tests" begin
+    include("../examples/polyfacilitylocation/JuMP.jl")
 end

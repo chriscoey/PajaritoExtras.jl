@@ -73,6 +73,70 @@ function possemideftri2(opt)
     return
 end
 
+function possemideftrisparse1(opt)
+    # arrow PSD formulation of second-order cone constraint
+    TOL = 1e-4
+    row_idxs = [1, 2, 3, 4, 2, 3, 4]
+    col_idxs = [1, 1, 1, 1, 2, 3, 4]
+
+    for is_complex in (false, true)
+        R = (is_complex ? ComplexF64 : Float64)
+        KT = Hypatia.PosSemidefTriSparseCone{Hypatia.Cones.PSDSparseDense, Float64, R}
+        K = KT(4, row_idxs, col_idxs, false)
+        x_dim = vec_length(R, 3)
+        x0 = vec_copyto!(zeros(x_dim), -Real.(1:x_dim) .+ 0.5)
+        opt_val = norm(Real.(1:x_dim), 2)
+        m = JuMP.Model(opt)
+
+        JuMP.@variable(m, y)
+        JuMP.@objective(m, Min, y)
+        JuMP.@variable(m, x[1:x_dim], Int)
+        JuMP.@constraint(m, x .<= x0)
+        aff = vcat(y, rt2 * x, y, y, y)
+        JuMP.@constraint(m, aff in K)
+        JuMP.optimize!(m)
+
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.value.(x), -Float64.(1:x_dim), atol = TOL)
+
+        JuMP.@constraint(m, y <= opt_val - 0.2)
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.INFEASIBLE
+        @test JuMP.primal_status(m) == MOI.NO_SOLUTION
+    end
+    return
+end
+
+function possemideftrisparse2(opt)
+    TOL = 1e-4
+    row_idxs = [1, 2, 3, 2, 3, 3, 4, 4, 5, 5]
+    col_idxs = [1, 1, 1, 2, 2, 3, 3, 4, 4, 5]
+    KT = Hypatia.PosSemidefTriSparseCone{Hypatia.Cones.PSDSparseDense, Float64, Float64}
+    K = KT(5, row_idxs, col_idxs, true)
+    m = JuMP.Model(opt)
+
+    JuMP.@variable(m, y[1:3], Int)
+    JuMP.@objective(m, Min, sum(y))
+    aff = [8, -2, -4, y[1], 7, y[2], 5, y[3], -6, 5]
+    JuMP.@constraint(m, y .>= 3)
+    JuMP.@constraint(m, aff in K)
+
+    JuMP.optimize!(m)
+    @test JuMP.termination_status(m) == MOI.OPTIMAL
+    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+    @test isapprox(JuMP.objective_value(m), 15, atol = TOL)
+    @test isapprox(JuMP.objective_bound(m), 15, atol = TOL)
+
+    JuMP.@constraint(m, y[3] == 3)
+    JuMP.optimize!(m)
+    @test JuMP.termination_status(m) == MOI.INFEASIBLE
+    @test JuMP.primal_status(m) == MOI.NO_SOLUTION
+    return
+end
+
 function epinormeucl1(opt)
     TOL = 1e-4
     m = JuMP.Model(opt)
@@ -641,68 +705,4 @@ function _setup_polymin(opt, use_dual, K, f_pts, bound)
         end
     end
     return (m, x, y)
-end
-
-function possemideftrisparse1(opt)
-    # arrow PSD formulation of second-order cone constraint
-    TOL = 1e-4
-    row_idxs = [1, 2, 3, 4, 2, 3, 4]
-    col_idxs = [1, 1, 1, 1, 2, 3, 4]
-
-    for is_complex in (false, true)
-        R = (is_complex ? ComplexF64 : Float64)
-        KT = Hypatia.PosSemidefTriSparseCone{Hypatia.Cones.PSDSparseDense, Float64, R}
-        K = KT(4, row_idxs, col_idxs, false)
-        x_dim = vec_length(R, 3)
-        x0 = vec_copyto!(zeros(x_dim), -Real.(1:x_dim) .+ 0.5)
-        opt_val = norm(Real.(1:x_dim), 2)
-        m = JuMP.Model(opt)
-
-        JuMP.@variable(m, y)
-        JuMP.@objective(m, Min, y)
-        JuMP.@variable(m, x[1:x_dim], Int)
-        JuMP.@constraint(m, x .<= x0)
-        aff = vcat(y, rt2 * x, y, y, y)
-        JuMP.@constraint(m, aff in K)
-        JuMP.optimize!(m)
-
-        @test JuMP.termination_status(m) == MOI.OPTIMAL
-        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-        @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
-        @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
-        @test isapprox(JuMP.value.(x), -Float64.(1:x_dim), atol = TOL)
-
-        JuMP.@constraint(m, y <= opt_val - 0.2)
-        JuMP.optimize!(m)
-        @test JuMP.termination_status(m) == MOI.INFEASIBLE
-        @test JuMP.primal_status(m) == MOI.NO_SOLUTION
-    end
-    return
-end
-
-function possemideftrisparse2(opt)
-    TOL = 1e-4
-    row_idxs = [1, 2, 3, 2, 3, 3, 4, 4, 5, 5]
-    col_idxs = [1, 1, 1, 2, 2, 3, 3, 4, 4, 5]
-    KT = Hypatia.PosSemidefTriSparseCone{Hypatia.Cones.PSDSparseDense, Float64, Float64}
-    K = KT(5, row_idxs, col_idxs, true)
-    m = JuMP.Model(opt)
-
-    JuMP.@variable(m, y[1:3], Int)
-    JuMP.@objective(m, Min, sum(y))
-    aff = [8, -2, -4, y[1], 7, y[2], 5, y[3], -6, 5]
-    JuMP.@constraint(m, y .>= 3)
-    JuMP.@constraint(m, aff in K)
-
-    JuMP.optimize!(m)
-    @test JuMP.termination_status(m) == MOI.OPTIMAL
-    @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
-    @test isapprox(JuMP.objective_value(m), 15, atol = TOL)
-    @test isapprox(JuMP.objective_bound(m), 15, atol = TOL)
-
-    JuMP.@constraint(m, y[3] == 3)
-    JuMP.optimize!(m)
-    @test JuMP.termination_status(m) == MOI.INFEASIBLE
-    @test JuMP.primal_status(m) == MOI.NO_SOLUTION
-    return
 end
