@@ -26,28 +26,7 @@ constraints:
 ∑ᵢ yᵢⱼ ≥ dⱼ, ∀j      meet demand at j
 =#
 
-# TODO move
-import LinearAlgebra
-import JuMP
-import Hypatia
 import Hypatia.PolyUtils
-import MOIPajarito
-import PajaritoExtras
-
-oa_solver = gurobi
-conic_solver = hypatia
-opt = JuMP.optimizer_with_attributes(
-    MOIPajarito.Optimizer,
-    "verbose" => true,
-    # "verbose" => false,
-    "oa_solver" => oa_solver,
-    "conic_solver" => conic_solver,
-    # "use_extended_form" => use_extended_form,
-    # "use_iterative_method" => use_iterative_method,
-    # "debug_cuts" => use_iterative_method,
-    # "iteration_limit" => 30,
-    # "time_limit" => 120.0,
-)
 
 struct PolyFacilityLocation #<: ExampleInstanceJuMP{Float64}
     n::Int
@@ -60,7 +39,6 @@ function build(inst::PolyFacilityLocation)
     dom = PolyUtils.BoxDomain{Float64}([0.0], [1.0])
     (U, pts, Ps, _, w) = PolyUtils.interpolate(dom, inst.deg, get_quadr = true)
     K = Hypatia.WSOSInterpNonnegativeCone{Float64, Float64}(U, Ps)
-    @show pts
 
     # generate parameter values
     (n, m) = (inst.n, inst.m)
@@ -97,6 +75,17 @@ function build(inst::PolyFacilityLocation)
     return model
 end
 
-# TODO
-inst = PolyFacilityLocation(2, 2, 2)
+function test_extra(inst::PolyFacilityLocation, model::JuMP.Model)
+    stat = JuMP.termination_status(model)
+    # TODO data generation doesn't guarantee feasibility
+    # @test stat == MOI.OPTIMAL
+    (stat == MOI.OPTIMAL) || return
+
+    # TODO at random points in domain, check positivity of wsos constraint functions
+    # maybe register them as expressions and cache those
+    return
+end
+
+# TODO try to visualize
+inst = PolyFacilityLocation(2, 3, 3)
 model = build(inst)
