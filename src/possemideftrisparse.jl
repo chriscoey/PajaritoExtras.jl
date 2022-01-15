@@ -6,7 +6,7 @@ dual cone is the PSD-completable matrices
 TODO use Arpack
 =#
 
-mutable struct PosSemidefTriSparse{D <: PrimDual, C <: RealCompF} <: Cone
+mutable struct PosSemidefTriSparse{D <: PrimDual, C <: RealCompF} <: Cache
     oa_s::Vector{AE}
     side::Int
     row_idxs::Vector{Int}
@@ -31,7 +31,7 @@ end
 
 function MOIPajarito.Cones.add_init_cuts(
     cache::PosSemidefTriSparse{<:PrimDual, C},
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 ) where {C}
     # diagonal nonnegative
     # TODO for each offdiag, add linearization of 2x2 principal matrix condition
@@ -40,7 +40,7 @@ function MOIPajarito.Cones.add_init_cuts(
     i = 1
     for (r, c) in zip(cache.row_idxs, cache.col_idxs)
         if r == c
-            JuMP.@constraint(oa_model, cache.oa_s[i] >= 0)
+            JuMP.@constraint(opt.oa_model, cache.oa_s[i] >= 0)
             num_cuts += 1
             i += 1
         else
@@ -56,40 +56,40 @@ end
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::PosSemidefTriSparse{Prim},
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 )
-    # TODO eig cuts
-    cut = dot_expr(z, cache.oa_s, oa_model)
+    # TODO eig cuts?
+    cut = dot_expr(z, cache.oa_s, opt)
     return [cut]
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
-    ::Vector{RealF},
-    ::PosSemidefTriSparse{Prim},
-    ::JuMP.Model,
-)
-    # TODO eig cuts
-    @warn("no separation oracle implemented for PosSemidefTriSparse", maxlog = 1)
-    return AE[]
-end
+# function MOIPajarito.Cones.get_sep_cuts(
+#     ::Vector{RealF},
+#     ::PosSemidefTriSparse{Prim},
+#     ::Optimizer,
+# )
+#     # TODO eig cuts
+#     @warn("no separation oracle implemented for PosSemidefTriSparse", maxlog = 1)
+#     return AE[]
+# end
 
 # dual cone functions
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::PosSemidefTriSparse{Dual},
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 )
-    cut = dot_expr(z, cache.oa_s, oa_model)
+    cut = dot_expr(z, cache.oa_s, opt)
     return [cut]
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
-    s::Vector{RealF},
-    cache::PosSemidefTriSparse{Dual},
-    oa_model::JuMP.Model,
-)
-    # TODO think about completion algorithms
-    @warn("no separation oracle implemented for dual PosSemidefTriSparse", maxlog = 1)
-    return AE[]
-end
+# function MOIPajarito.Cones.get_sep_cuts(
+#     s::Vector{RealF},
+#     cache::PosSemidefTriSparse{Dual},
+#     opt::Optimizer,
+# )
+#     # TODO think about completion algorithms
+#     @warn("no separation oracle implemented for dual PosSemidefTriSparse", maxlog = 1)
+#     return AE[]
+# end

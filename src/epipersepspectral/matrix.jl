@@ -2,7 +2,7 @@
 real symmetric or complex Hermitian (svec scaled triangle) domain 𝕊ᵈ₊
 =#
 
-mutable struct MatrixEpiPerSepSpectral{D <: PrimDual, C <: RealCompF} <: Cone
+mutable struct MatrixEpiPerSepSpectral{D <: PrimDual, C <: RealCompF} <: Cache
     oa_s::Vector{AE}
     h::SepSpectralFun
     d::Int
@@ -28,7 +28,7 @@ end
 
 function MOIPajarito.Cones.add_init_cuts(
     cache::MatrixEpiPerSepSpectral{D, C},
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 ) where {D, C}
     h = cache.h
     d = cache.d
@@ -37,9 +37,9 @@ function MOIPajarito.Cones.add_init_cuts(
     W_diag = [w[svec_idx(C, i, i)] for i in 1:d]
 
     # variable bounds
-    JuMP.@constraint(oa_model, v >= 0)
+    JuMP.@constraint(opt.oa_model, v >= 0)
     if dom_pos(D, h)
-        JuMP.@constraint(oa_model, W_diag .>= 0)
+        JuMP.@constraint(opt.oa_model, W_diag .>= 0)
     end
 
     # cuts using values of p = 1 and R = r₀ I
@@ -47,7 +47,7 @@ function MOIPajarito.Cones.add_init_cuts(
     for r0 in r_vals
         R_diag = fill(r0, d)
         q = per_sepspec(conj_or_val(D), h, 1.0, R_diag)
-        JuMP.@constraint(oa_model, u + q * v + JuMP.dot(R_diag, W_diag) >= 0)
+        JuMP.@constraint(opt.oa_model, u + q * v + JuMP.dot(R_diag, W_diag) >= 0)
     end
     return 1 + d + length(r_vals)
 end
@@ -55,7 +55,7 @@ end
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::MatrixEpiPerSepSpectral{D},
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 ) where {D}
     (p, q) = swap_epiper(D, z[1:2]...)
     R = cache.W_temp
@@ -71,11 +71,11 @@ function MOIPajarito.Cones.get_subp_cuts(
         num_pos = count(>(1e-7), ω)
         @views V_neg = V[:, 1:num_pos] * Diagonal(sqrt.(ω[1:num_pos]))
         @views w = cache.oa_s[3:end]
-        cuts = _get_psd_cuts(V_neg, w, cache, oa_model)
+        cuts = _get_psd_cuts(V_neg, w, cache, opt)
     end
 
     # add epigraph cut
-    cut = _get_cut(p, ω, V, cache, oa_model)
+    cut = _get_cut(p, ω, V, cache, opt)
     push!(cuts, cut)
     return cuts
 end
@@ -83,7 +83,7 @@ end
 function MOIPajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
     cache::MatrixEpiPerSepSpectral{D},
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 ) where {D}
     h = cache.h
     Ws = cache.W_temp
@@ -99,7 +99,7 @@ function MOIPajarito.Cones.get_sep_cuts(
             # add eigenvector cuts
             V_neg = V[:, 1:num_neg]
             @views w = cache.oa_s[3:end]
-            cuts = _get_psd_cuts(V_neg, w, cache, oa_model)
+            cuts = _get_psd_cuts(V_neg, w, cache, opt)
         end
 
         ω = max.(ω, 1e-7)
@@ -113,7 +113,7 @@ function MOIPajarito.Cones.get_sep_cuts(
 
     # gradient cut is (1, h⋆(rω), V * Diagonal(rω) * V') at rω = -h'(ω / vs)
     rω = -h_grad(D, h, ω / v_pos)
-    cut = _get_cut(1.0, rω, V, cache, oa_model)
+    cut = _get_cut(1.0, rω, V, cache, opt)
     push!(cuts, cut)
     return cuts
 end
@@ -123,7 +123,7 @@ function _get_cut(
     rω::Vector{RealF},
     V::Matrix{C},
     cache::MatrixEpiPerSepSpectral{D, C},
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 ) where {D, C}
     # strengthened cut is (p, p * h⋆(rω / p), V * Diagonal(rω) * V')
     q = per_sepspec(conj_or_val(D), cache.h, p, rω)
@@ -133,6 +133,6 @@ function _get_cut(
     r = smat_to_svec!(cache.w_temp, R, rt2)
 
     z = vcat(p, q, r)
-    cut = dot_expr(z, cache.oa_s, oa_model)
+    cut = dot_expr(z, cache.oa_s, opt)
     return cut
 end

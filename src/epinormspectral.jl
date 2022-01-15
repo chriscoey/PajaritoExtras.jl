@@ -12,7 +12,7 @@ subdifferential characterized by e.g.
 G.A. Watson, "Characterization of the Subdifferential of Some Matrix Norms"
 =#
 
-mutable struct EpiNormSpectral{D <: PrimDual, C <: RealCompF} <: Cone
+mutable struct EpiNormSpectral{D <: PrimDual, C <: RealCompF} <: Cache
     oa_s::Vector{AE}
     d1::Int
     d2::Int
@@ -43,7 +43,7 @@ function get_svd(sz::Vector{RealF}, cache::EpiNormSpectral)
     return svd(W, full = false)
 end
 
-function MOIPajarito.Cones.add_init_cuts(cache::EpiNormSpectral, oa_model::JuMP.Model)
+function MOIPajarito.Cones.add_init_cuts(cache::EpiNormSpectral, opt::Optimizer)
     # TODO use simple bounds to derive init cuts:
     # frob / rtd1 <= spec
     # opinf / rtd2 <= spec
@@ -52,7 +52,7 @@ function MOIPajarito.Cones.add_init_cuts(cache::EpiNormSpectral, oa_model::JuMP.
     # frob <= nuc
     # u ≥ 0
     u = cache.oa_s[1]
-    JuMP.@constraint(oa_model, u >= 0)
+    JuMP.@constraint(opt.oa_model, u >= 0)
     return 1
 end
 
@@ -61,13 +61,13 @@ end
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::EpiNormSpectral{Prim},
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 )
     F = get_svd(z, cache)
     cuts = AE[]
     for (i, σ_i) in enumerate(F.S)
         σ_i < 1e-7 && break
-        cut = _get_cut(σ_i, i, F.U, F.Vt, cache, oa_model)
+        cut = _get_cut(σ_i, i, F.U, F.Vt, cache, opt)
         push!(cuts, cut)
     end
     return cuts
@@ -76,7 +76,7 @@ end
 function MOIPajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
     cache::EpiNormSpectral{Prim},
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 )
     # decomposed gradient cut is (1, -Uᵢ * Vtᵢ)
     us = s[1]
@@ -86,7 +86,7 @@ function MOIPajarito.Cones.get_sep_cuts(
         if σ_i < 1e-7 || us - σ_i > -1e-7
             break
         end
-        cut = _get_cut(one(T), i, F.U, F.Vt, cache, oa_model)
+        cut = _get_cut(one(T), i, F.U, F.Vt, cache, opt)
         push!(cuts, cut)
     end
     return cuts
@@ -98,14 +98,14 @@ function _get_cut(
     U::Matrix{C},
     Vt::Matrix{C},
     cache::EpiNormSpectral{Prim, C},
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 ) where {C}
     u = cache.oa_s[1]
     w = cache.oa_s[2:end] # TODO cache
     R_i = cache.W_temp
     @views mul!(R_i, U[:, i], transpose(Vt[i, :]), σ_i, false)
     R_vec_i = vec_copyto!(cache.w_temp, R_i) # TODO maybe reinterpret
-    return JuMP.@expression(oa_model, σ_i * u + JuMP.dot(R_vec_i, w))
+    return JuMP.@expression(opt.oa_model, σ_i * u + JuMP.dot(R_vec_i, w))
 end
 
 # dual cone functions
@@ -113,7 +113,7 @@ end
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::EpiNormSpectral{Dual},
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 )
     # strengthened cut is (‖R‖∞, R)
     # TODO extreme ray decomposition?
@@ -121,14 +121,14 @@ function MOIPajarito.Cones.get_subp_cuts(
     p = F.S[1]
     p < 1e-7 && return AE[]
     z2 = vcat(p, z[2:end])
-    cut = dot_expr(z2, cache.oa_s, oa_model)
+    cut = dot_expr(z2, cache.oa_s, opt)
     return [cut]
 end
 
 function MOIPajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
     cache::EpiNormSpectral{Dual},
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 )
     # gradient cut is (1, -∑ᵢ Uᵢ * Vtᵢ)
     # TODO check math
@@ -137,6 +137,6 @@ function MOIPajarito.Cones.get_sep_cuts(
     R = -F.U * F.Vt
     R_vec = vec_copyto!(cache.w_temp, R) # TODO maybe reinterpret
     z2 = vcat(1, R_vec)
-    cut = dot_expr(z2, cache.oa_s, oa_model)
+    cut = dot_expr(z2, cache.oa_s, opt)
     return [cut]
 end

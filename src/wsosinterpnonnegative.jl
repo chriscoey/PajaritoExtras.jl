@@ -9,7 +9,7 @@ dual cone
 w : Pₗ' Diagonal(w) Pₗ ⪰ 0 ∀ l
 =#
 
-mutable struct WSOSInterpNonnegative{D <: PrimDual, C <: RealCompF} <: Cone
+mutable struct WSOSInterpNonnegative{D <: PrimDual, C <: RealCompF} <: Cache
     oa_s::Vector{AE}
     Ps::Vector{Matrix{C}}
     d::Int
@@ -33,46 +33,31 @@ end
 
 # primal cone functions
 
-function MOIPajarito.Cones.add_init_cuts(
-    cache::WSOSInterpNonnegative{Prim},
-    oa_model::JuMP.Model,
-)
+function MOIPajarito.Cones.add_init_cuts(cache::WSOSInterpNonnegative{Prim}, opt::Optimizer)
     # wᵢ ≥ 0
-    JuMP.@constraint(oa_model, cache.oa_s .>= 0)
+    JuMP.@constraint(opt.oa_model, cache.oa_s .>= 0)
     return cache.d
 end
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::WSOSInterpNonnegative{Prim},
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 )
-    cut = dot_expr(z, cache.oa_s, oa_model)
+    cut = dot_expr(z, cache.oa_s, opt)
     return [cut]
-end
-
-function MOIPajarito.Cones.get_sep_cuts(
-    ::Vector{RealF},
-    ::WSOSInterpNonnegative{Prim},
-    ::JuMP.Model,
-)
-    @warn("no separation oracle implemented for WSOSInterpNonnegative", maxlog = 1)
-    return AE[]
 end
 
 # dual cone functions
 
-function MOIPajarito.Cones.add_init_cuts(
-    cache::WSOSInterpNonnegative{Dual},
-    oa_model::JuMP.Model,
-)
+function MOIPajarito.Cones.add_init_cuts(cache::WSOSInterpNonnegative{Dual}, opt::Optimizer)
     # cuts enforce that diagonal of each Pₗ' Diagonal(w) Pₗ is nonnegative
     # TODO could add SOC cuts or linearizations for 2x2 principal matrix PSD condition
     w = cache.oa_s
     r = zeros(cache.d)
     for P in cache.Ps, P_i in eachcol(P)
         @. r = abs2(P_i)
-        JuMP.@constraint(oa_model, JuMP.dot(r, w) >= 0)
+        JuMP.@constraint(opt.oa_model, JuMP.dot(r, w) >= 0)
     end
     return sum(size(P, 2) for P in cache.Ps)
 end
@@ -80,18 +65,18 @@ end
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::WSOSInterpNonnegative{Dual},
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 )
     # TODO to get an extreme ray decomposition, use the technique from PY
     # that uses the primal-dual solution from Hypatia to get values for each Sₗ ⪰ 0
-    cut = dot_expr(z, cache.oa_s, oa_model)
+    cut = dot_expr(z, cache.oa_s, opt)
     return [cut]
 end
 
 function MOIPajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
     cache::WSOSInterpNonnegative{Dual},
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 )
     # extreme ray decomposition adds eigenvector cuts to make
     # each Pₗ' Diagonal(w) Pₗ PSD
@@ -105,7 +90,7 @@ function MOIPajarito.Cones.get_sep_cuts(
         PV = P * F.vectors
         for PV_i in eachcol(PV)
             @. r = abs2(PV_i)
-            cut = dot_expr(r, cache.oa_s, oa_model)
+            cut = dot_expr(r, cache.oa_s, opt)
             push!(cuts, cut)
         end
     end

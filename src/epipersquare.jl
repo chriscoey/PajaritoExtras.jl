@@ -8,7 +8,7 @@ extended formulation
 i.e. λᵢ ≥ 0, 2 λᵢ v ≥ wᵢ²
 =#
 
-mutable struct EpiPerSquare{E <: NatExt} <: Cone
+mutable struct EpiPerSquare{E <: NatExt} <: Cache
     oa_s::Vector{AE}
     d::Int
     λ::Vector{VR}
@@ -35,15 +35,15 @@ per_square(v::RealF, w::AbstractVector{RealF}) = sum(w_i / 2v * w_i for w_i in w
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::EpiPerSquare,
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 )
-    return _get_cuts(z[2], z[3:end], cache, oa_model)
+    return _get_cuts(z[2], z[3:end], cache, opt)
 end
 
 function MOIPajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
     cache::EpiPerSquare,
-    oa_model::JuMP.Model,
+    opt::Optimizer,
 )
     us = s[1]
     vs = s[2]
@@ -56,18 +56,18 @@ function MOIPajarito.Cones.get_sep_cuts(
     # gradient cut is (1, rhs / vs, -ws / vs)
     q = rhs / vs
     r = ws / -vs
-    return _get_cuts(q, r, cache, oa_model)
+    return _get_cuts(q, r, cache, opt)
 end
 
 # unextended formulation
 
-function MOIPajarito.Cones.add_init_cuts(cache::EpiPerSquare{Nat}, oa_model::JuMP.Model)
+function MOIPajarito.Cones.add_init_cuts(cache::EpiPerSquare{Nat}, opt::Optimizer)
     u = cache.oa_s[1]
     v = cache.oa_s[2]
     @views w = cache.oa_s[3:end] # TODO cache?
     d = cache.d
     # variable bounds u ≥ 0, v ≥ 0 and cut (1, 2, ±2eᵢ)
-    JuMP.@constraints(oa_model, begin
+    JuMP.@constraints(opt.oa_model, begin
         u >= 0
         v >= 0
         [i in 1:d], u + 2v + 2w[i] >= 0
@@ -76,19 +76,14 @@ function MOIPajarito.Cones.add_init_cuts(cache::EpiPerSquare{Nat}, oa_model::JuM
     return 2 + 2d
 end
 
-function _get_cuts(
-    q::RealF,
-    r::Vector{RealF},
-    cache::EpiPerSquare{Nat},
-    oa_model::JuMP.Model,
-)
+function _get_cuts(q::RealF, r::Vector{RealF}, cache::EpiPerSquare{Nat}, opt::Optimizer)
     clean_array!(r) && return AE[]
     # strengthened cut is (‖r‖² / 2q, q, r)
     p = per_square(q, r)
     u = cache.oa_s[1]
     v = cache.oa_s[2]
     @views w = cache.oa_s[3:end]
-    cut = JuMP.@expression(oa_model, p * u + q * v + JuMP.dot(r, w))
+    cut = JuMP.@expression(opt.oa_model, p * u + q * v + JuMP.dot(r, w))
     return [cut]
 end
 
@@ -107,15 +102,15 @@ function MOIPajarito.Cones.extend_start(cache::EpiPerSquare{Ext}, s_start::Vecto
     return [w_i / 2u_start * w_i for w_i in w_start]
 end
 
-function MOIPajarito.Cones.setup_auxiliary(cache::EpiPerSquare{Ext}, oa_model::JuMP.Model)
+function MOIPajarito.Cones.setup_auxiliary(cache::EpiPerSquare{Ext}, opt::Optimizer)
     @assert cache.d >= 2
-    λ = cache.λ = JuMP.@variable(oa_model, [1:(cache.d)], lower_bound = 0)
+    λ = cache.λ = JuMP.@variable(opt.oa_model, [1:(cache.d)], lower_bound = 0)
     u = cache.oa_s[1]
-    JuMP.@constraint(oa_model, u >= sum(λ))
+    JuMP.@constraint(opt.oa_model, u >= sum(λ))
     return λ
 end
 
-function MOIPajarito.Cones.add_init_cuts(cache::EpiPerSquare{Ext}, oa_model::JuMP.Model)
+function MOIPajarito.Cones.add_init_cuts(cache::EpiPerSquare{Ext}, opt::Optimizer)
     u = cache.oa_s[1]
     v = cache.oa_s[2]
     @views w = cache.oa_s[3:end]
@@ -123,7 +118,7 @@ function MOIPajarito.Cones.add_init_cuts(cache::EpiPerSquare{Ext}, oa_model::JuM
     λ = cache.λ
     # variable bounds u ≥ 0, v ≥ 0 and cut (1, 2, ±2eᵢ)
     # disaggregated cut on (λᵢ, v, wᵢ) is (1, 2, ±2) since u ≥ λᵢ
-    JuMP.@constraints(oa_model, begin
+    JuMP.@constraints(opt.oa_model, begin
         u >= 0
         v >= 0
         [i in 1:d], λ[i] + 2v + 2w[i] >= 0
@@ -132,12 +127,7 @@ function MOIPajarito.Cones.add_init_cuts(cache::EpiPerSquare{Ext}, oa_model::JuM
     return 1 + 2d
 end
 
-function _get_cuts(
-    q::RealF,
-    r::Vector{RealF},
-    cache::EpiPerSquare{Ext},
-    oa_model::JuMP.Model,
-)
+function _get_cuts(q::RealF, r::Vector{RealF}, cache::EpiPerSquare{Ext}, opt::Optimizer)
     clean_array!(r) && return AE[]
     p = per_square(q, r)
     v = cache.oa_s[2]
@@ -150,7 +140,7 @@ function _get_cuts(
         # p = ‖r‖² / 2q, strengthened disaggregated cut on (λᵢ, v, wᵢ) is (p, rᵢ² / 2p, rᵢ)
         # TODO check math
         q_i = r_i / 2p * r_i
-        cut = JuMP.@expression(oa_model, p * λ[i] + q_i * v + r_i * w[i])
+        cut = JuMP.@expression(opt.oa_model, p * λ[i] + q_i * v + r_i * w[i])
         push!(cuts, cut)
     end
     return cuts

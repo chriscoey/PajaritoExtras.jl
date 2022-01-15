@@ -13,8 +13,8 @@ import Hypatia.Cones: vec_length, vec_copyto!, svec_length, svec_side
 import Hypatia.Cones: smat_to_svec!, svec_to_smat!
 
 import MOIPajarito
-import MOIPajarito.Cones: NatExt, Nat, Ext, nat_or_ext
-import MOIPajarito.Cones: Cone, clean_array!, dot_expr
+import MOIPajarito: Cache, Optimizer
+import MOIPajarito.Cones: NatExt, Nat, Ext, nat_or_ext, clean_array!, dot_expr
 
 const RealF = Float64
 const CompF = ComplexF64
@@ -63,12 +63,34 @@ function MOI.supports_constraint(
     return MOI.supports_constraint(MOIPajarito.get_conic_opt(opt), F, S)
 end
 
+# fallback for separation cuts solves a separation subproblem
+function MOIPajarito.Cones.get_sep_cuts(s::Vector{RealF}, cache::Cache, opt::Optimizer)
+    # @warn("solving separation subproblem for $(typeof(cache))")
+    # TODO only update model, only make unique models
+    # TODO Hypatia options etc?
+    # sep_model = JuMP.Model(Hypatia.Optimizer)
+    # JuMP.set_optimizer_attribute(sep_model, MOI.Silent(), true)
+    # ci = JuMP.@constraint(sep_model, s in cache.cone)
+    # JuMP.optimize!(sep_model)
+
+    # stat = JuMP.termination_status(sep_model)
+    # @show stat
+    # if stat in (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL)
+    #     return AE[]
+    # elseif stat in (MOI.INFEASIBLE, MOI.ALMOST_INFEASIBLE)
+    #     z = JuMP.getdual(ci)
+    #     return MOIPajarito.Cones.get_subp_cuts(z, cache, opt)
+    # end
+    # @warn("separation subproblem status was $stat")
+    return AE[]
+end
+
 # eigenvector cuts for a PSD constraint W ⪰ 0
 function _get_psd_cuts(
     R_eig::Matrix{C},
     oa_w::AbstractVector{AE},
-    cache::Cone,
-    oa_model::JuMP.Model,
+    cache::Cache,
+    opt::Optimizer,
 ) where {C}
     cuts = AE[]
     R_vec_i = cache.w_temp
@@ -79,7 +101,7 @@ function _get_psd_cuts(
         mul!(R_i, r_i, r_i')
         clean_array!(R_i) && continue
         smat_to_svec!(R_vec_i, R_i, rt2)
-        cut = dot_expr(R_vec_i, oa_w, oa_model)
+        cut = dot_expr(R_vec_i, oa_w, opt)
         push!(cuts, cut)
     end
     return cuts

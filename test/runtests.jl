@@ -27,11 +27,11 @@ hypatia = MOI.OptimizerWithAttributes(
     "tol_inconsistent" => 1e-7,
 )
 
-# println("starting PajaritoExtras tests")
-# @testset "PajaritoExtras tests" begin
-#     include("JuMP_tests.jl")
-#     TestJuMP.runtests(gurobi, hypatia)
-# end
+println("starting PajaritoExtras tests")
+@testset "PajaritoExtras tests" begin
+    include("JuMP_tests.jl")
+    TestJuMP.runtests(gurobi, hypatia)
+end
 
 # TODO
 import LinearAlgebra
@@ -58,5 +58,5 @@ println("starting examples tests")
 @testset "examples tests" begin
     # include("../examples/polyfacilitylocation/JuMP.jl")
     # include("../examples/experimentdesign/JuMP.jl")
-    include("../examples/matrixdecomposition/JuMP.jl")
+    # include("../examples/matrixdecomposition/JuMP.jl")
 end
