@@ -2,8 +2,6 @@
 real symmetric or complex Hermitian sparse positive semidefinite cone (svec format)
 sparsity pattern given by lower triangle row and column indices, with all diagonal elements
 dual cone is the PSD-completable matrices
-
-TODO use Arpack
 =#
 
 mutable struct PosSemidefTriSparse{D <: PrimDual, C <: RealCompF} <: Cache
@@ -11,13 +9,14 @@ mutable struct PosSemidefTriSparse{D <: PrimDual, C <: RealCompF} <: Cache
     side::Int
     row_idxs::Vector{Int}
     col_idxs::Vector{Int}
+    sep_constr::CR
     PosSemidefTriSparse{D, C}() where {D <: PrimDual, C <: RealCompF} = new{D, C}()
 end
 
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.PosSemidefTriSparseCone{<:Hypatia.Cones.PSDSparseImpl, RealF, C},
-    ::Optimizer,
+    opt::Optimizer,
 ) where {C <: RealCompF}
     D = primal_or_dual(cone.use_dual)
     cache = PosSemidefTriSparse{D, C}()
@@ -26,7 +25,16 @@ function MOIPajarito.Cones.create_cache(
     @assert length(oa_s) == MOI.dimension(cone)
     cache.row_idxs = cone.row_idxs
     cache.col_idxs = cone.col_idxs
+    if D == Dual
+        cache.sep_constr = get_sep_constr(cone, opt)
+    end
     return cache
+end
+
+# TODO maybe define Hypatia MOI cone equal/hash in Hypatia
+function hash_cone(cone::Hypatia.PosSemidefTriSparseCone{I, RealF, C}) where {I, C}
+    @assert cone.use_dual
+    return hash(I) + hash(C) + hash(cone.side) + hash(cone.row_idxs) + hash(cone.col_idxs)
 end
 
 function MOIPajarito.Cones.add_init_cuts(
@@ -58,19 +66,33 @@ function MOIPajarito.Cones.get_subp_cuts(
     cache::PosSemidefTriSparse{Prim},
     opt::Optimizer,
 )
-    # TODO eig cuts?
     cut = dot_expr(z, cache.oa_s, opt)
     return [cut]
 end
 
 function MOIPajarito.Cones.get_sep_cuts(
-    ::Vector{RealF},
-    ::PosSemidefTriSparse{Prim},
-    ::Optimizer,
-)
-    # TODO eig cuts
-    @warn("no separation oracle implemented for PosSemidefTriSparse", maxlog = 1)
-    return AE[]
+    s::Vector{RealF},
+    cache::PosSemidefTriSparse{Prim, C},
+    opt::Optimizer,
+) where {C}
+    # TODO use Arpack for non-dense implementation
+    # @warn("no separation oracle implemented for PosSemidefTriSparse", maxlog = 1)
+    Λ = svec_to_smat_sparse(s, cache)
+    F = eigen!(Hermitian(Λ, :L), -Inf, -1e-7)
+    isempty(F.values) && return AE[]
+
+    cuts = AE[]
+    R_i = similar(Λ)
+    for i in 1:length(F.values)
+        @views r_i = F.vectors[:, i]
+        # cuts from eigendecomposition are svec(rᵢ * rᵢ')
+        mul!(R_i, r_i, r_i')
+        clean_array!(R_i) && continue
+        R_vec_i = smat_to_svec_sparse(R_i, cache)
+        cut = dot_expr(R_vec_i, oa_w, opt)
+        push!(cuts, cut)
+    end
+    return cuts
 end
 
 # dual cone functions
@@ -84,12 +106,77 @@ function MOIPajarito.Cones.get_subp_cuts(
     return [cut]
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
-    s::Vector{RealF},
-    cache::PosSemidefTriSparse{Dual},
-    opt::Optimizer,
+# helpers
+# TODO maybe refac with similar Hypatia functions (which should not have the cone as an argument)
+
+function svec_to_smat_sparse(
+    vec::AbstractVector{RealF},
+    cache::PosSemidefTriSparse{<:PrimDual, RealF},
 )
-    # TODO think about completion algorithms
-    @warn("no separation oracle implemented for dual PosSemidefTriSparse", maxlog = 1)
-    return AE[]
+    @assert length(vec) == length(cache.row_idxs)
+    mat = zeros(RealF, cache.side, cache.side)
+    @inbounds for (idx, (i, j)) in enumerate(zip(cache.row_idxs, cache.col_idxs))
+        x = vec[idx]
+        if i != j
+            x /= rt2
+        end
+        mat[i, j] = x
+    end
+    return mat
+end
+
+function svec_to_smat_sparse(
+    vec::AbstractVector{RealF},
+    cache::PosSemidefTriSparse{<:PrimDual, CompF},
+)
+    mat = zeros(CompF, cache.side, cache.side)
+    idx = 1
+    @inbounds for (i, j) in zip(cache.row_idxs, cache.col_idxs)
+        if i == j
+            mat[i, j] = vec[idx]
+            idx += 1
+        else
+            mat[i, j] = Complex(vec[idx], vec[idx + 1]) / rt2
+            idx += 2
+        end
+    end
+    @assert idx == length(vec) + 1
+    return mat
+end
+
+function smat_to_svec_sparse(
+    mat::AbstractMatrix{RealF},
+    cache::PosSemidefTriSparse{<:PrimDual, RealF},
+)
+    vec = zeros(length(cone.row_idxs))
+    @inbounds for (idx, (i, j)) in enumerate(zip(cache.row_idxs, cache.col_idxs))
+        x = mat[i, j]
+        if i != j
+            x *= rt2
+        end
+        vec[idx] = x
+    end
+    return vec
+end
+
+function smat_to_svec_sparse(
+    mat::AbstractMatrix{CompF},
+    cache::PosSemidefTriSparse{<:PrimDual, CompF},
+)
+    vec = zeros(2 * length(cache.row_idxs) - cache.side)
+    idx = 1
+    @inbounds for (i, j) in zip(cache.row_idxs, cache.col_idxs)
+        x = mat[i, j]
+        if i == j
+            vec[idx] = real(x)
+            idx += 1
+        else
+            x *= rt2
+            vec[idx] = real(x)
+            vec[idx + 1] = imag(x)
+            idx += 2
+        end
+    end
+    @assert idx == length(vec) + 1
+    return vec
 end

@@ -71,9 +71,8 @@ function get_sep_constr(cone::MOI.AbstractVectorSet, opt::Optimizer)
     haskey(opt.unique_cone_extras, id) && return opt.unique_cone_extras[id]
 
     # create unique separation model
-    sep_model = JuMP.Model(() -> opt.conic_opt)
-    dim = MOI.dimension(cone)
-    sep_constr = JuMP.@constraint(sep_model, ones(dim) in cone)
+    sep_model = JuMP.Model(opt.conic_solver)
+    sep_constr = JuMP.@constraint(sep_model, ones(MOI.dimension(cone)) in cone)
     opt.unique_cone_extras[id] = sep_constr
     return sep_constr
 end

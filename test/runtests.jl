@@ -14,6 +14,15 @@ gurobi = MOI.OptimizerWithAttributes(
     "DualReductions" => 0, # fixes infeasible or unbounded status
 )
 
+# import GLPK
+# glpk = MOI.OptimizerWithAttributes(
+#     GLPK.Optimizer,
+#     MOI.Silent() => true,
+#     "tol_int" => 1e-10,
+#     "tol_bnd" => 1e-10,
+#     "mip_gap" => 1e-10,
+# )
+
 import Hypatia
 hypatia = MOI.OptimizerWithAttributes(
     Hypatia.Optimizer,
@@ -31,6 +40,7 @@ println("starting PajaritoExtras tests")
 @testset "PajaritoExtras tests" begin
     include("JuMP_tests.jl")
     TestJuMP.runtests(gurobi, hypatia)
+    # TestJuMP.runtests(glpk, hypatia)
 end
 
 # TODO

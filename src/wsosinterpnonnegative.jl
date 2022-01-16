@@ -35,7 +35,7 @@ function MOIPajarito.Cones.create_cache(
     return cache
 end
 
-# for uniqueness of separation model TODO maybe define Hypatia MOI cone equal/hash in Hypatia
+# TODO maybe define Hypatia MOI cone equal/hash in Hypatia
 function hash_cone(cone::Hypatia.WSOSInterpNonnegativeCone{RealF})
     @assert !cone.use_dual
     return hash(cone.Ps)
@@ -57,15 +57,6 @@ function MOIPajarito.Cones.get_subp_cuts(
     cut = dot_expr(z, cache.oa_s, opt)
     return [cut]
 end
-
-# function MOIPajarito.Cones.get_sep_cuts(
-#     s::Vector{RealF},
-#     cache::WSOSInterpNonnegative{Prim},
-#     opt::Optimizer,
-# )
-#     @warn("no separation oracle implemented", maxlog = 1)
-#     return AE[]
-# end
 
 # dual cone functions
 
