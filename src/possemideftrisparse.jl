@@ -17,7 +17,7 @@ end
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.PosSemidefTriSparseCone{<:Hypatia.Cones.PSDSparseImpl, RealF, C},
-    ::Bool,
+    ::Optimizer,
 ) where {C <: RealCompF}
     D = primal_or_dual(cone.use_dual)
     cache = PosSemidefTriSparse{D, C}()
@@ -63,15 +63,15 @@ function MOIPajarito.Cones.get_subp_cuts(
     return [cut]
 end
 
-# function MOIPajarito.Cones.get_sep_cuts(
-#     ::Vector{RealF},
-#     ::PosSemidefTriSparse{Prim},
-#     ::Optimizer,
-# )
-#     # TODO eig cuts
-#     @warn("no separation oracle implemented for PosSemidefTriSparse", maxlog = 1)
-#     return AE[]
-# end
+function MOIPajarito.Cones.get_sep_cuts(
+    ::Vector{RealF},
+    ::PosSemidefTriSparse{Prim},
+    ::Optimizer,
+)
+    # TODO eig cuts
+    @warn("no separation oracle implemented for PosSemidefTriSparse", maxlog = 1)
+    return AE[]
+end
 
 # dual cone functions
 
@@ -84,12 +84,12 @@ function MOIPajarito.Cones.get_subp_cuts(
     return [cut]
 end
 
-# function MOIPajarito.Cones.get_sep_cuts(
-#     s::Vector{RealF},
-#     cache::PosSemidefTriSparse{Dual},
-#     opt::Optimizer,
-# )
-#     # TODO think about completion algorithms
-#     @warn("no separation oracle implemented for dual PosSemidefTriSparse", maxlog = 1)
-#     return AE[]
-# end
+function MOIPajarito.Cones.get_sep_cuts(
+    s::Vector{RealF},
+    cache::PosSemidefTriSparse{Dual},
+    opt::Optimizer,
+)
+    # TODO think about completion algorithms
+    @warn("no separation oracle implemented for dual PosSemidefTriSparse", maxlog = 1)
+    return AE[]
+end

@@ -17,7 +17,7 @@ function create_sepspectral_cache(
     ::Type{MatrixCSqr{RealF, C}},
     use_dual::Bool,
     d::Int,
-    ::Bool,
+    ::Optimizer,
 ) where {C <: RealCompF}
     D = primal_or_dual(use_dual)
     cache = MatrixEpiPerSepSpectral{D, C}()

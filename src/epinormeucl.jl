@@ -18,12 +18,12 @@ end
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.EpiNormEuclCone{RealF},
-    extend::Bool,
+    opt::Optimizer,
 )
     dim = MOI.dimension(cone)
     @assert dim == length(oa_s)
     d = dim - 1
-    E = nat_or_ext(extend, d)
+    E = nat_or_ext(opt, d)
     cache = EpiNormEucl{E}()
     cache.oa_s = oa_s
     cache.d = d

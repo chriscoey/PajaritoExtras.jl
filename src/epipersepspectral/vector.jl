@@ -19,10 +19,10 @@ function create_sepspectral_cache(
     ::Type{VectorCSqr{RealF}},
     use_dual::Bool,
     d::Int,
-    extend::Bool,
+    opt::Optimizer,
 )
     D = primal_or_dual(use_dual)
-    E = nat_or_ext(extend, d)
+    E = nat_or_ext(opt, d)
     return VectorEpiPerSepSpectral{D, E}()
 end
 

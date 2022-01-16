@@ -24,7 +24,7 @@ end
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.EpiNormSpectralCone{RealF, C},
-    ::Bool,
+    ::Optimizer,
 ) where {C <: RealCompF}
     D = primal_or_dual(cone.use_dual)
     cache = EpiNormSpectral{D, C}()

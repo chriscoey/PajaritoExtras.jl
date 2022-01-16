@@ -16,10 +16,10 @@ include("matrix.jl")
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.EpiPerSepSpectralCone{RealF},
-    extend::Bool,
+    opt::Optimizer,
 )
     @assert MOI.dimension(cone) == length(oa_s)
-    cache = create_sepspectral_cache(cone.Q, cone.use_dual, cone.d, extend)
+    cache = create_sepspectral_cache(cone.Q, cone.use_dual, cone.d, opt)
     cache.oa_s = oa_s
     cache.d = cone.d
     cache.h = cone.h

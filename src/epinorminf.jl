@@ -25,12 +25,12 @@ end
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.EpiNormInfCone{RealF, C},
-    extend::Bool,
+    opt::Optimizer,
 ) where {C <: RealCompF}
     dim = MOI.dimension(cone)
     @assert dim == length(oa_s)
     d = (C == CompF ? div(dim - 1, 2) : dim - 1)
-    E = (cone.use_dual ? nat_or_ext(extend, d) : Nat)
+    E = (cone.use_dual ? nat_or_ext(opt, d) : Nat)
     D = primal_or_dual(cone.use_dual)
     cache = EpiNormInf{D, C, E}()
     cache.oa_s = oa_s

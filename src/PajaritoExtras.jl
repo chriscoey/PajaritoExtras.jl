@@ -6,6 +6,7 @@ using LinearAlgebra
 import JuMP
 const MOI = JuMP.MOI
 const VR = JuMP.VariableRef
+const CR = JuMP.ConstraintRef
 const AE = JuMP.AffExpr
 
 import Hypatia
@@ -63,25 +64,38 @@ function MOI.supports_constraint(
     return MOI.supports_constraint(MOIPajarito.get_conic_opt(opt), F, S)
 end
 
-# fallback for separation cuts solves a separation subproblem
-function MOIPajarito.Cones.get_sep_cuts(s::Vector{RealF}, cache::Cache, opt::Optimizer)
-    # @warn("solving separation subproblem for $(typeof(cache))")
-    # TODO only update model, only make unique models
-    # TODO Hypatia options etc?
-    # sep_model = JuMP.Model(Hypatia.Optimizer)
-    # JuMP.set_optimizer_attribute(sep_model, MOI.Silent(), true)
-    # ci = JuMP.@constraint(sep_model, s in cache.cone)
-    # JuMP.optimize!(sep_model)
+function get_sep_constr(cone::MOI.AbstractVectorSet, opt::Optimizer)
+    # check whether cone is unique
+    id = hash_cone(cone)
+    # @show opt.unique_cone_extras
+    haskey(opt.unique_cone_extras, id) && return opt.unique_cone_extras[id]
 
-    # stat = JuMP.termination_status(sep_model)
-    # @show stat
-    # if stat in (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL)
-    #     return AE[]
-    # elseif stat in (MOI.INFEASIBLE, MOI.ALMOST_INFEASIBLE)
-    #     z = JuMP.getdual(ci)
-    #     return MOIPajarito.Cones.get_subp_cuts(z, cache, opt)
-    # end
-    # @warn("separation subproblem status was $stat")
+    # create unique separation model
+    sep_model = JuMP.Model(() -> opt.conic_opt)
+    dim = MOI.dimension(cone)
+    sep_constr = JuMP.@constraint(sep_model, ones(dim) in cone)
+    opt.unique_cone_extras[id] = sep_constr
+    return sep_constr
+end
+
+# fallback for separation cuts solves the separation subproblem
+function MOIPajarito.Cones.get_sep_cuts(s::Vector{RealF}, cache::Cache, opt::Optimizer)
+    constr = cache.sep_constr
+    model = JuMP.owner_model(constr)
+    MOI.modify(JuMP.backend(model), JuMP.index(constr), MOI.VectorConstantChange(s))
+
+    # @warn("solving separation subproblem for $(typeof(cache))")
+    JuMP.optimize!(model)
+    stat = JuMP.termination_status(model)
+    @show stat
+
+    if stat in (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL)
+        return AE[]
+    elseif stat in (MOI.INFEASIBLE, MOI.ALMOST_INFEASIBLE) && JuMP.has_duals(model)
+        z = JuMP.dual(constr)
+        return MOIPajarito.Cones.get_subp_cuts(z, cache, opt)
+    end
+    @warn("separation subproblem status was $stat")
     return AE[]
 end
 

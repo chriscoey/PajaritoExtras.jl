@@ -19,7 +19,7 @@ end
 function MOIPajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.HypoRootdetTriCone{RealF, C},
-    ::Bool,
+    ::Optimizer,
 ) where {C <: RealCompF}
     cache = HypoRootdetTri{C}()
     cache.oa_s = oa_s
