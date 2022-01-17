@@ -92,6 +92,8 @@ function MOIPajarito.Cones.get_sep_cuts(s::Vector{RealF}, cache::Cache, opt::Opt
         return AE[]
     elseif stat in (MOI.INFEASIBLE, MOI.ALMOST_INFEASIBLE) && JuMP.has_duals(model)
         z = JuMP.dual(constr)
+        @show norm(z)
+        # TODO maybe rescale by norm, like for subproblem rays?
         return MOIPajarito.Cones.get_subp_cuts(z, cache, opt)
     end
     @warn("separation subproblem status was $stat")

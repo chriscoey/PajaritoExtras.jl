@@ -42,31 +42,3 @@ println("starting PajaritoExtras tests")
     TestJuMP.runtests(gurobi, hypatia)
     # TestJuMP.runtests(glpk, hypatia)
 end
-
-# TODO
-import LinearAlgebra
-import JuMP
-import Hypatia
-import MOIPajarito
-import PajaritoExtras
-# TODO include spectral_functions_JuMP.jl file from Hypatia examples
-
-opt = JuMP.optimizer_with_attributes(
-    MOIPajarito.Optimizer,
-    "verbose" => true,
-    # "verbose" => false,
-    "oa_solver" => gurobi,
-    "conic_solver" => hypatia,
-    "use_extended_form" => true,
-    "use_iterative_method" => true,
-    # "debug_cuts" => use_iterative_method,
-    # "iteration_limit" => 30,
-    # "time_limit" => 120.0,
-)
-
-println("starting examples tests")
-@testset "examples tests" begin
-    # include("../examples/polyfacilitylocation/JuMP.jl")
-    # include("../examples/experimentdesign/JuMP.jl")
-    # include("../examples/matrixdecomposition/JuMP.jl")
-end

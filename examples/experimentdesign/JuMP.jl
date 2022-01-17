@@ -14,7 +14,7 @@ number of experiments to run, the columns of V ∈ ℝ^(d × k) correspond to ea
 experiment, and f is a convex spectral function
 =#
 
-struct ExperimentDesign #<: ExampleInstanceJuMP{Float64}
+struct ExperimentDesign <: ExampleInstance
     d::Int
     ext::MatSpecExt # formulation specifier
 end
@@ -25,7 +25,7 @@ function build(inst::ExperimentDesign)
     @assert is_domain_pos(inst.ext)
     k = 2 * d
 
-    V = randn(T, d, k)
+    V = randn(d, k)
     V .*= sqrt(d / sum(eigvals(Symmetric(V * V'))))
 
     model = JuMP.Model()
@@ -34,11 +34,11 @@ function build(inst::ExperimentDesign)
     JuMP.@constraint(model, sum(x) == k)
 
     # vectorized information matrix
-    rt2 = sqrt(T(2))
+    rt2 = sqrt(2)
     Q_vec = [
         JuMP.@expression(
             model,
-            (i == j ? one(T) : rt2) * sum(V[i, k] * x[k] * V[j, k] for k in 1:k)
+            (i == j ? 1.0 : rt2) * sum(V[i, k] * x[k] * V[j, k] for k in 1:k)
         ) for i in 1:d for j in 1:i
     ]
 
@@ -54,13 +54,13 @@ function build(inst::ExperimentDesign)
     return model
 end
 
-function test_extra(inst::ExperimentDesignJuMP{T}, model::JuMP.Model) where {T}
+function test_extra(inst::ExperimentDesign, model::JuMP.Model)
     stat = JuMP.termination_status(model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
     # check objective
-    tol = eps(T)^0.2
+    tol = eps()^0.2
     V = model.ext[:V]
     x_opt = JuMP.value.(model.ext[:x])
     λ = eigvals(Symmetric(V * Diagonal(x_opt) * V', :U))
@@ -69,6 +69,3 @@ function test_extra(inst::ExperimentDesignJuMP{T}, model::JuMP.Model) where {T}
     @test JuMP.objective_value(model) ≈ obj_result atol = tol rtol = tol
     return
 end
-
-inst = ExperimentDesign(3, MatNegRtdet())
-model = build(inst)

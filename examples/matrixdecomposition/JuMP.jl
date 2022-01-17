@@ -13,7 +13,7 @@ see http://www.mit.edu/~parrilo/pubs/talkfiles/ISMP2009.pdf
 
 import SparseArrays
 
-struct MatrixDecomposition #<: ExampleInstanceJuMP{Float64}
+struct MatrixDecomposition <: ExampleInstance
     d1::Int
     d2::Int
     A_sparsity::Float64
@@ -31,8 +31,7 @@ function build(inst::MatrixDecomposition)
     γ = 0.02 # TODO?
 
     # build model
-    model = JuMP.Model(opt)
-    # model = JuMP.Model()
+    model = JuMP.Model()
 
     JuMP.@variable(model, X[1:d1, 1:d2], Bin)
     JuMP.@variable(model, A[1:d1, 1:d2] >= 0)
@@ -46,17 +45,17 @@ function build(inst::MatrixDecomposition)
     JuMP.@constraint(model, A + B .== C)
     JuMP.@objective(model, Min, γ * sum(X) + u)
 
-    # TODO
-    JuMP.optimize!(model)
-    @show JuMP.objective_value(model)
-    A = JuMP.value.(A)
-    @show A
-    @show A0 - A
-    B = JuMP.value.(B)
-    @show LinearAlgebra.svdvals(B)
-    @show B
-    @show B0 - B
-    @show JuMP.value(u)
+    # # TODO
+    # JuMP.optimize!(model)
+    # @show JuMP.objective_value(model)
+    # A = JuMP.value.(A)
+    # @show A
+    # @show A0 - A
+    # B = JuMP.value.(B)
+    # @show LinearAlgebra.svdvals(B)
+    # @show B
+    # @show B0 - B
+    # @show JuMP.value(u)
 
     return model
 end
@@ -68,6 +67,3 @@ function test_extra(inst::MatrixDecomposition, model::JuMP.Model)
     # TODO
     return
 end
-
-inst = MatrixDecomposition(3, 4, 0.3, 2)
-model = build(inst)

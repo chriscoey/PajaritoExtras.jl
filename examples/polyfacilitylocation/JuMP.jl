@@ -26,9 +26,7 @@ constraints:
 ∑ᵢ yᵢⱼ ≥ dⱼ, ∀j      meet demand at j
 =#
 
-import Hypatia.PolyUtils
-
-struct PolyFacilityLocation #<: ExampleInstanceJuMP{Float64}
+struct PolyFacilityLocation <: ExampleInstance
     n::Int
     m::Int
     deg::Int
@@ -51,8 +49,7 @@ function build(inst::PolyFacilityLocation)
     u = [5 * ones(U) for _ in 1:n]
 
     # build model
-    model = JuMP.Model(opt)
-    # model = JuMP.Model()
+    model = JuMP.Model()
     JuMP.@variable(model, x[1:n], Bin)
     JuMP.@variable(model, y[1:n, 1:m, 1:U])
     JuMP.@constraint(model, [i in 1:n, j in 1:m], y[i, j, :] in K)
@@ -66,11 +63,11 @@ function build(inst::PolyFacilityLocation)
     JuMP.@constraint(model, [i in 1:n], u[i] * x[i] - sum(y[i, j, :] for j in 1:m) in K)
     JuMP.@constraint(model, [j in 1:m], sum(y[i, j, :] for i in 1:n) - d[j] in K)
 
-    # TODO
-    JuMP.optimize!(model)
-    @show JuMP.objective_value(model)
-    @show JuMP.value.(x)
-    @show JuMP.value.(y)
+    # # TODO
+    # JuMP.optimize!(model)
+    # @show JuMP.objective_value(model)
+    # @show JuMP.value.(x)
+    # @show JuMP.value.(y)
 
     return model
 end
@@ -86,6 +83,9 @@ function test_extra(inst::PolyFacilityLocation, model::JuMP.Model)
     return
 end
 
-# TODO try to visualize
-inst = PolyFacilityLocation(2, 3, 3)
-model = build(inst)
+# # TODO try to visualize
+# inst = PolyFacilityLocation(10, 10, 3)
+# model = build(inst)
+
+# TODO for sep model, want hypatia to use dense qrchol.
+# but for relax/subp, sparse symmetric
