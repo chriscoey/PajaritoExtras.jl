@@ -55,7 +55,6 @@ function run_instance_set(
     perf::DataFrames.DataFrame,
     results_path::Union{String, Nothing} = nothing,
 )
-    @show inst_subset
     for (inst_num, inst) in enumerate(inst_subset)
         test_info = "inst $inst_num: $(inst[1])"
 
@@ -73,4 +72,42 @@ function run_instance_set(
         end
     end
     return
+end
+
+function run_examples(
+    inst_sets::Vector{String},
+    default_options::NamedTuple,
+    results_path::Union{String, Nothing} = nothing,
+)
+    perf = setup_benchmark_dataframe()
+    isnothing(results_path) || CSV.write(results_path, perf)
+
+    @testset "examples tests" begin
+        @testset "$ex" for (ex, (ex_type, ex_insts)) in get_test_instances()
+            @testset "$inst_set" for inst_set in inst_sets
+                haskey(ex_insts, inst_set) || continue
+                inst_subset = ex_insts[inst_set]
+                isempty(inst_subset) && continue
+
+                info_perf = (; inst_set, :example => ex)
+                str = "$ex $inst_set"
+                println("\nstarting $str tests")
+                @testset "$str" begin
+                    run_instance_set(
+                        inst_subset,
+                        ex_type,
+                        info_perf,
+                        default_options,
+                        perf,
+                        results_path,
+                    )
+                end
+            end
+        end
+    end
+
+    println("\n")
+    DataFrames.show(perf, allrows = true, allcols = true)
+    println("\n")
+    return perf
 end

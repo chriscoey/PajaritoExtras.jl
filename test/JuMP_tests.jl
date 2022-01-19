@@ -54,18 +54,18 @@ inst_noextend = String[
     "vector_epipersepspectral2",
 ]
 
-function runtests(oa_solver, conic_solver)
+function runtests(oa_solver)
     @testset "iterative" begin
         @info "iterative, all"
-        run_jump_tests(inst_all, true, true, oa_solver, conic_solver)
+        run_jump_tests(inst_all, true, true, oa_solver)
         @info "iterative, not extended"
-        run_jump_tests(inst_noextend, false, true, oa_solver, conic_solver)
+        run_jump_tests(inst_noextend, false, true, oa_solver)
     end
     @testset "one tree" begin
         @info "one tree, all"
-        run_jump_tests(inst_all, true, false, oa_solver, conic_solver)
+        run_jump_tests(inst_all, true, false, oa_solver)
         @info "one tree, not extended"
-        run_jump_tests(inst_noextend, false, false, oa_solver, conic_solver)
+        run_jump_tests(inst_noextend, false, false, oa_solver)
     end
     return
 end
@@ -75,20 +75,32 @@ function run_jump_tests(
     use_extended_form::Bool,
     use_iterative_method::Bool,
     oa_solver,
-    conic_solver,
 )
+    hypatia = MOI.OptimizerWithAttributes(
+        Hypatia.Optimizer,
+        MOI.Silent() => true,
+        "near_factor" => 1000,
+        "tol_feas" => 1e-10,
+        "tol_rel_opt" => 1e-9,
+        "tol_abs_opt" => 1e-8,
+        "tol_illposed" => 1e-9,
+        "tol_slow" => 2e-2,
+        "tol_inconsistent" => 1e-7,
+    )
+
     opt = JuMP.optimizer_with_attributes(
         MOIPajarito.Optimizer,
         # "verbose" => true,
         "oa_solver" => oa_solver,
-        "conic_solver" => conic_solver,
-        "sep_solver" => conic_solver,
+        "conic_solver" => hypatia,
+        "sep_solver" => hypatia,
         "use_extended_form" => use_extended_form,
         "use_iterative_method" => use_iterative_method,
         "debug_cuts" => use_iterative_method,
         "iteration_limit" => 30,
         # "time_limit" => 120.0,
     )
+
     @testset "$inst" for inst in insts
         @info inst
         eval(Symbol(inst))(opt)

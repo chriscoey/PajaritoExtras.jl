@@ -34,7 +34,7 @@ function build(inst::ExperimentDesign)
     JuMP.@constraint(model, sum(x) == k)
 
     # vectorized information matrix
-    rt2 = sqrt(2)
+    rt2 = sqrt(2.0)
     Q_vec = [
         JuMP.@expression(
             model,
@@ -59,10 +59,12 @@ function test_extra(inst::ExperimentDesign, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    # check objective
     tol = eps()^0.2
-    V = model.ext[:V]
     x_opt = JuMP.value.(model.ext[:x])
+    @test x_opt ≈ round.(Int, x_opt) atol = tol rtol = tol
+
+    # check objective
+    V = model.ext[:V]
     λ = eigvals(Symmetric(V * Diagonal(x_opt) * V', :U))
     @test minimum(λ) >= -tol
     obj_result = get_val(pos_only(λ), inst.ext)

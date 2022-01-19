@@ -2,9 +2,12 @@
 run examples tests from the examples folder
 =#
 
+# uncomment path for writing to results CSV
+# results_path = joinpath(mkpath(joinpath(@__DIR__, "..", "benchmarks", "raw")), "bench.csv")
+results_path = nothing
+
 import MathOptInterface
 const MOI = MathOptInterface
-
 import Gurobi
 gurobi = MOI.OptimizerWithAttributes(
     Gurobi.Optimizer,
@@ -28,39 +31,11 @@ default_options = (;
 
 # instance sets to run
 inst_sets = [
-    "minimal",
-    # "various",
+    "test",
+    # benchmarks:
+    # "nat",
+    # "ext",
 ]
 
-using Test
-import DataFrames
 include(joinpath(@__DIR__, "Examples.jl"))
-
-perf = Examples.setup_benchmark_dataframe()
-
-@testset "examples tests" begin
-    @testset "$ex" for (ex, (ex_type, ex_insts)) in Examples.get_test_instances()
-        @testset "$inst_set" for inst_set in inst_sets
-            haskey(ex_insts, inst_set) || continue
-            inst_subset = ex_insts[inst_set]
-            isempty(inst_subset) && continue
-
-            info_perf = (; inst_set, :example => ex)
-            str = "$ex $inst_set"
-            println("\nstarting $str tests")
-            @testset "$str" begin
-                Examples.run_instance_set(
-                    inst_subset,
-                    ex_type,
-                    info_perf,
-                    default_options,
-                    perf,
-                )
-            end
-        end
-    end
-
-    println("\n")
-    DataFrames.show(perf, allrows = true, allcols = true)
-    println("\n")
-end;
+perf = Examples.run_examples(inst_sets, default_options, results_path);

@@ -42,18 +42,23 @@ include("benchmark_utils.jl")
 include(joinpath(pkgdir(Hypatia), "examples", "spectral_functions_JuMP.jl"))
 
 # list of names of JuMP examples to run
-const JuMP_examples = ["experimentdesign", "matrixdecomposition", "polyfacilitylocation"]
+const JuMP_examples = [
+    "experimentdesign",
+    "matrixdecomposition",
+    "polyfacilitylocation",
+    # TODO
+]
 
 # load all examples
 for ex in JuMP_examples
-    include(joinpath(@__DIR__, ex, "JuMP.jl"))
+    include(joinpath(@__DIR__, ex, "model.jl"))
 end
 
 # build ordered dictionary of all test instances
 function get_test_instances()
     test_insts = OrderedDict()
     for ex in JuMP_examples
-        test_insts[ex] = include(joinpath(@__DIR__, ex, "JuMP_test.jl"))
+        test_insts[ex] = include(joinpath(@__DIR__, ex, "instances.jl"))
     end
     return test_insts
 end
