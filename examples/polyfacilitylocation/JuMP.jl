@@ -24,6 +24,8 @@ min ∑ᵢⱼ cᵢⱼ ∫ yᵢⱼ + ∑ᵢ fᵢ xᵢ   minimize total cost
 constraints:
 ∑ⱼ yᵢⱼ ≤ uᵢ xᵢ, ∀i   limit production at i
 ∑ᵢ yᵢⱼ ≥ dⱼ, ∀j      meet demand at j
+
+TODO try to plot polynomial solutions
 =#
 
 struct PolyFacilityLocation <: ExampleInstance
@@ -63,12 +65,6 @@ function build(inst::PolyFacilityLocation)
     JuMP.@constraint(model, [i in 1:n], u[i] * x[i] - sum(y[i, j, :] for j in 1:m) in K)
     JuMP.@constraint(model, [j in 1:m], sum(y[i, j, :] for i in 1:n) - d[j] in K)
 
-    # # TODO
-    # JuMP.optimize!(model)
-    # @show JuMP.objective_value(model)
-    # @show JuMP.value.(x)
-    # @show JuMP.value.(y)
-
     return model
 end
 
@@ -82,10 +78,3 @@ function test_extra(inst::PolyFacilityLocation, model::JuMP.Model)
     # maybe register them as expressions and cache those
     return
 end
-
-# # TODO try to visualize
-# inst = PolyFacilityLocation(10, 10, 3)
-# model = build(inst)
-
-# TODO for sep model, want hypatia to use dense qrchol.
-# but for relax/subp, sparse symmetric

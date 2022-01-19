@@ -80,9 +80,9 @@ function run_jump_tests(
     opt = JuMP.optimizer_with_attributes(
         MOIPajarito.Optimizer,
         # "verbose" => true,
-        # "verbose" => false,
         "oa_solver" => oa_solver,
         "conic_solver" => conic_solver,
+        "sep_solver" => conic_solver,
         "use_extended_form" => use_extended_form,
         "use_iterative_method" => use_iterative_method,
         "debug_cuts" => use_iterative_method,

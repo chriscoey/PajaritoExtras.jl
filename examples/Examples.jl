@@ -26,7 +26,7 @@ import Hypatia
 import Hypatia.PolyUtils
 import Hypatia.Cones
 # import Hypatia.Models
-# import Hypatia.Solvers
+import Hypatia.Solvers
 
 import MOIPajarito
 import PajaritoExtras
@@ -42,12 +42,7 @@ include("benchmark_utils.jl")
 include(joinpath(pkgdir(Hypatia), "examples", "spectral_functions_JuMP.jl"))
 
 # list of names of JuMP examples to run
-const JuMP_examples = [
-    "experimentdesign",
-    # "matrixcompletion",
-    "matrixdecomposition",
-    "polyfacilitylocation",
-]
+const JuMP_examples = ["experimentdesign", "matrixdecomposition", "polyfacilitylocation"]
 
 # load all examples
 for ex in JuMP_examples
