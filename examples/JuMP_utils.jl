@@ -34,6 +34,24 @@ const dense_hypatia = MOI.OptimizerWithAttributes(
     "reduce" => true,
 )
 
+# TODO experiment with best options and optimize path in Hypatia
+const sep_hypatia = MOI.OptimizerWithAttributes(
+    Hypatia.Optimizer,
+    MOI.Silent() => true,
+    "near_factor" => 1000,
+    "tol_feas" => 1e-10,
+    "tol_rel_opt" => 1e-9,
+    "tol_abs_opt" => 1e-8,
+    "tol_illposed" => 1e-9,
+    "tol_slow" => 2e-2,
+    "tol_inconsistent" => 1e-7,
+    "syssolver" => Solvers.QRCholDenseSystemSolver{Float64}(),
+    "init_use_indirect" => false,
+    "preprocess" => true,
+    "reduce" => true,
+    "stepper" => Solvers.PredOrCentStepper{Float64}(),
+)
+
 function run_instance(
     ex_type::Type{<:ExampleInstance},
     inst_data::Tuple,
@@ -55,7 +73,7 @@ function run_instance(
     for (option, value) in pairs(options)
         JuMP.set_optimizer_attribute(model, string(option), value)
     end
-    JuMP.set_optimizer_attribute(model, "sep_solver", dense_hypatia)
+    JuMP.set_optimizer_attribute(model, "sep_solver", sep_hypatia)
 
     println("solve")
     flush(stdout)

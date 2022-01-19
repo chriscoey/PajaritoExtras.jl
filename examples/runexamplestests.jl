@@ -3,8 +3,8 @@ run examples tests from the examples folder
 =#
 
 # uncomment path for writing to results CSV
-# results_path = joinpath(mkpath(joinpath(@__DIR__, "..", "benchmarks", "raw")), "bench.csv")
-results_path = nothing
+results_path = joinpath(mkpath(joinpath(@__DIR__, "..", "benchmarks", "raw")), "bench.csv")
+# results_path = nothing
 
 import MathOptInterface
 const MOI = MathOptInterface
@@ -24,9 +24,10 @@ default_options = (;
     oa_solver = gurobi,
     use_extended_form = true,
     use_iterative_method = true,
-    # debug_cuts = use_iterative_method,
+    # use_iterative_method = false,
     # iteration_limit = 30,
     # time_limit = 120.0,
+    # debug_cuts = use_iterative_method,
 )
 
 # instance sets to run
@@ -38,4 +39,5 @@ inst_sets = [
 ]
 
 include(joinpath(@__DIR__, "Examples.jl"))
-perf = Examples.run_examples(inst_sets, default_options, results_path);
+perf = Examples.run_examples(inst_sets, default_options, results_path)
+println()

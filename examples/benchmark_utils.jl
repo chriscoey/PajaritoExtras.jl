@@ -106,8 +106,8 @@ function run_examples(
         end
     end
 
-    println("\n")
+    println()
     DataFrames.show(perf, allrows = true, allcols = true)
-    println("\n")
+    println()
     return perf
 end
