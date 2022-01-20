@@ -11,7 +11,7 @@ j ∈ 1..m   customers
 parameters:
 fᵢ  ∈ ℝ₊  fixed cost of opening i
 cᵢⱼ ∈ ℝ₊  cost (per unit of flow) to ship from i to j
-dⱼ  ∈ P   demand at j
+dⱼ  ∈ P₊  demand at j
 uᵢ  ∈ P₊  maximum output of i
 
 variables:
@@ -42,14 +42,17 @@ function build(inst::PolyFacilityLocation)
     (n, m) = (inst.n, inst.m)
     f = rand(n)
     c = rand(n, m)
-    L = 1 + div(inst.deg, 2)
-    P1L = Ps[1][:, 1:L]
-    d = [P1L * rand(L) for _ in 1:m]
-    # u = [ones(U) for _ in 1:n]
-    u = [5 * ones(U) for _ in 1:n]
-
-    # TODO to generate nonnegative polys, generate random poly with largest degree even and positive coef, and add minimum value of poly
-    # or generate from random PSD matrix with linear algebra
+    d = make_nonneg_polys(m, Ps)
+    u = make_nonneg_polys(n, Ps)
+    # make feasible by ensuring sum(u) > 2 * sum(d)
+    excess = find_poly_min(sum(u) - 2 * sum(d), Ps)
+    incr = 0.1 - excess / n
+    for i in 1:n
+        u[i] .+= incr + 5 * rand() + 1
+    end
+    @show excess
+    excess = find_poly_min(sum(u) - 2 * sum(d), Ps)
+    @assert excess > 0
 
     # build model
     model = JuMP.Model()
@@ -73,15 +76,18 @@ function build(inst::PolyFacilityLocation)
         add_wsos(JuMP.@expression(model, sum(y[i, j, :] for i in 1:n) - d[j]))
     end
 
+    # save for use in tests
+    model.ext[:x] = x
+
     return model
 end
 
 function test_extra(inst::PolyFacilityLocation, model::JuMP.Model)
     stat = JuMP.termination_status(model)
-    # TODO data generation doesn't guarantee feasibility
-    # @test stat == MOI.OPTIMAL
+    @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
+    @show JuMP.value.(model.ext[:x])
     # TODO check nonnegativity of wsos constraint functions
     # can just solve the separation problem to check feasibility
     # maybe also plot to check visually

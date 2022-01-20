@@ -39,7 +39,7 @@ abstract type ExampleInstance end
 
 include("JuMP_utils.jl")
 include("benchmark_utils.jl")
-include("WSOS_JuMP.jl") # TODO maybe move to Hypatia
+include("WSOS_utils.jl") # TODO maybe move to Hypatia
 include(joinpath(pkgdir(Hypatia), "examples", "spectral_functions_JuMP.jl"))
 
 # list of names of JuMP examples to run
