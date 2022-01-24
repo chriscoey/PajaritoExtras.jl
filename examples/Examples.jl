@@ -46,7 +46,8 @@ include(joinpath(pkgdir(Hypatia), "examples", "spectral_functions_JuMP.jl"))
 const JuMP_examples = [
     # "experimentdesign",
     # "matrixdecomposition",
-    "polyfacilitylocation",
+    # "polyfacilitylocation",
+    "twostagestochastic",
     # TODO
 ]
 

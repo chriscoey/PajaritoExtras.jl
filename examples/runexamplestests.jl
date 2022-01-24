@@ -21,6 +21,7 @@ gurobi = MOI.OptimizerWithAttributes(
 # default MOIPajarito options
 default_options = (;
     verbose = true,
+    # verbose = false,
     oa_solver = gurobi,
     use_extended_form = true,
     use_iterative_method = true,
