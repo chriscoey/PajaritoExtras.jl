@@ -97,34 +97,29 @@ function run_instance(
 end
 
 function get_solve_stats(model::JuMP.Model)
-    # options
-    paj_ext = JuMP.get_optimizer_attribute(model, "use_extended_form")
-    paj_iter = JuMP.get_optimizer_attribute(model, "use_iterative_method")
-
-    # solve stats
     solve_time = JuMP.solve_time(model)
     primal_obj = JuMP.objective_value(model)
     rel_gap = JuMP.relative_gap(model)
     status = JuMP.termination_status(model)
-    num_subp = length(JuMP.get_optimizer_attribute(model, "int_sols_cuts"))
-    num_cuts = JuMP.get_optimizer_attribute(model, "num_cuts")
 
-    iters_nodes = if paj_iter
-        JuMP.get_optimizer_attribute(model, "num_iters")
+    opt = MOI.get(JuMP.backend(model), MOI.RawSolver())
+    num_subp = length(opt.int_sols_cuts)
+    iters_nodes = if opt.use_iterative_method
+        opt.num_iters
     else
         # JuMP.node_count(model) # TODO see https://github.com/jump-dev/Gurobi.jl/issues/444
-        oa_model = JuMP.get_optimizer_attribute(model, "oa_model")
-        Int(MOI.get(MOI.get(oa_model, MOI.RawSolver()), MOI.NodeCount()))
+        # Int(MOI.get(MOI.get(opt.oa_model, MOI.RawSolver()), MOI.NodeCount()))
+        Int(MOI.get(opt.oa_opt, MOI.NodeCount()))
     end
 
     solve_stats = (;
-        paj_ext,
-        paj_iter,
+        opt.use_extended_form,
+        opt.use_iterative_method,
         status,
         solve_time,
         iters_nodes,
         num_subp,
-        num_cuts,
+        opt.num_cuts,
         primal_obj,
         rel_gap,
     )

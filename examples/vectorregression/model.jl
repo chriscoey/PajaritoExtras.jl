@@ -9,36 +9,64 @@ l ∈ 1..L   prior constraints
 parameters:
 Xᵢⱼ ∈ ℝ   jth element of independent variables for observation i
 Yᵢ  ∈ ℝ   dependent variable for observation i
-f   loss function
-g   regularization function
-hₗ  lth prior function
-Hₗ  lth prior affine transformation
+λ   ∈ ℝ₊  regularization parameter
+f   loss function (domain ℝ)
+hₗ   lth prior function (domain ℝ₊)
 aₗ  ∈ ℝ   lth prior constant
 
 variables:
-βⱼ ∈ ℝ   jth parameter
+βⱼ ∈ ℝ₊   jth parameter (assumed nonnegative)
 
 objective:
-min ∑ᵢ f(Yᵢ - Xᵢ' β) + g(β)
+min f(Y - X β) + λ L₀(β)   minimize loss plus L₀ regularization
 
 constraints:
-hₗ (Hₗ β) ≤ aₗ, ∀l   lth prior
+hₗ(β) ≤ aₗ, ∀l   lth prior
 =#
-
-abstract type RegrFun end
-
 
 struct VectorRegression <: ExampleInstance
     n::Int
     m::Int
-    f::RegrFun
-    g::RegrFun
-    hs::Vector{<:RegrFun}
+    f_l2::Bool # if true, f is L2 norm, else L1 norm
+    hs::Vector{<:VecSpecExt}
 end
 
 function build(inst::VectorRegression)
+    (n, m) = (inst.n, inst.m)
+    hs = inst.hs
 
+    # generate parameters
+    βmax = 3
+    β0 = βmax * rand(m) # random solution used to construct data
+    X = randn(n, m)
+    Y = X * β0 + 0.1 * randn(n)
+    λ = 0.1 # ?
+    a = [get_val(β0, h_l) for h_l in hs]
 
+    # TODO maybe need something like specext functions but for all the norm cones
+    K_f = if inst.f_l2
+        Hypatia.EpiNormEuclCone{Float64}(1 + n)
+    else
+        Hypatia.EpiNormInfCone{Float64, Float64}(1 + n, true)
+    end
+
+    # build model
+    model = JuMP.Model()
+    JuMP.@variable(model, β[1:m])
+    JuMP.@variable(model, z[1:m], Bin)
+    JuMP.@constraint(model, β .<= βmax * z)
+
+    JuMP.@variable(model, f_epi)
+    JuMP.@constraint(model, vcat(f_epi, Y - X * β) in K_f)
+
+    JuMP.@objective(model, Min, f_epi + λ * sum(z))
+
+    for (h_l, a_l) in zip(hs, a)
+        add_homog_spectral(h_l, m, vcat(a_l, β), model)
+    end
+
+    # save for use in tests
+    model.ext[:β] = β
 
     return model
 end
@@ -48,5 +76,8 @@ function test_extra(inst::VectorRegression, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
     # TODO
+
+    β_opt = JuMP.value.(model.ext[:β])
+    @show β_opt
     return
 end

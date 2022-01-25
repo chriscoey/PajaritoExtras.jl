@@ -101,7 +101,7 @@ function MOIPajarito.Cones.extend_start(cache::HypoGeoMean{Ext}, s_start::Vector
         return zeros(1 + cache.d)
     end
     λ_start = [u_start * log(w_i / u_start) for w_i in w_start]
-    @assert sum(λ_start) >= -eps()
+    @assert sum(λ_start) >= -1e-7
     return vcat(u_start, λ_start)
 end
 

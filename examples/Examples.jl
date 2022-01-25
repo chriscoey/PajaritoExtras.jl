@@ -25,7 +25,6 @@ import DataStructures: OrderedDict
 import Hypatia
 import Hypatia.PolyUtils
 import Hypatia.Cones
-# import Hypatia.Models
 import Hypatia.Solvers
 
 import MOIPajarito
@@ -44,11 +43,11 @@ include(joinpath(pkgdir(Hypatia), "examples", "spectral_functions_JuMP.jl"))
 
 # list of names of JuMP examples to run
 const JuMP_examples = [
-    # "experimentdesign",
-    # "matrixdecomposition",
-    # "polyfacilitylocation",
+    "experimentdesign",
+    "matrixdecomposition",
+    "polyfacilitylocation",
     "twostagestochastic",
-    # TODO
+    "vectorregression",
 ]
 
 # load all examples
