@@ -43,6 +43,7 @@ include(joinpath(pkgdir(Hypatia), "examples", "spectral_functions_JuMP.jl"))
 
 # list of names of JuMP examples to run
 const JuMP_examples = [
+    "completablepsd",
     "experimentdesign",
     "matrixcompletion",
     "matrixdecomposition",

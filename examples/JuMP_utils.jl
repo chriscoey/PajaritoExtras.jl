@@ -4,7 +4,7 @@ common code for JuMP examples
 
 const sparse_hypatia = MOI.OptimizerWithAttributes(
     Hypatia.Optimizer,
-    # MOI.Silent() => true,
+    MOI.Silent() => true,
     "near_factor" => 1000,
     "tol_feas" => 1e-10,
     "tol_rel_opt" => 1e-9,
@@ -20,7 +20,7 @@ const sparse_hypatia = MOI.OptimizerWithAttributes(
 
 const dense_hypatia = MOI.OptimizerWithAttributes(
     Hypatia.Optimizer,
-    # MOI.Silent() => true,
+    MOI.Silent() => true,
     "near_factor" => 1000,
     "tol_feas" => 1e-10,
     "tol_rel_opt" => 1e-9,
@@ -100,26 +100,30 @@ function get_solve_stats(model::JuMP.Model)
     solve_time = JuMP.solve_time(model)
     primal_obj = JuMP.objective_value(model)
     rel_gap = JuMP.relative_gap(model)
-    status = JuMP.termination_status(model)
+    status = string(JuMP.termination_status(model))
 
     opt = MOI.get(JuMP.backend(model), MOI.RawSolver())
-    num_subp = length(opt.int_sols_cuts)
-    iters_nodes = if opt.use_iterative_method
+    paj_ext = opt.use_extended_form
+    paj_iter = opt.use_iterative_method
+
+    iters_nodes = if paj_iter
         opt.num_iters
     else
         # JuMP.node_count(model) # TODO see https://github.com/jump-dev/Gurobi.jl/issues/444
         # Int(MOI.get(MOI.get(opt.oa_model, MOI.RawSolver()), MOI.NodeCount()))
         Int(MOI.get(opt.oa_opt, MOI.NodeCount()))
     end
+    num_subp = length(opt.int_sols_cuts)
+    num_cuts = opt.num_cuts
 
     solve_stats = (;
-        opt.use_extended_form,
-        opt.use_iterative_method,
+        paj_ext,
+        paj_iter,
         status,
         solve_time,
         iters_nodes,
         num_subp,
-        opt.num_cuts,
+        num_cuts,
         primal_obj,
         rel_gap,
     )
