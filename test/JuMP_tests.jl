@@ -26,6 +26,8 @@ inst_all = String[
     "epipersquare2",
     "epinorminf1",
     "epinorminf2",
+    "epinormspectraltri1",
+    "epinormspectraltri2",
     "epinormspectral1",
     "epinormspectral2",
     "hypogeomean1",
@@ -132,6 +134,26 @@ function smat(::Type{ComplexF64}, vec::AbstractVector{T}) where {T}
     side = Hypatia.Cones.svec_side(ComplexF64, length(vec))
     mat = zeros(Complex{T}, side, side)
     return Hypatia.Cones.svec_to_smat!(mat, vec, rt2)
+end
+
+function scale_svec(
+    R::Type{<:Union{Float64, ComplexF64}},
+    vec::AbstractVector{T},
+    scal::Float64,
+) where {T}
+    incr = (R == Float64 ? 1 : 2)
+    svec = copy(vec)
+    k = 1
+    for j in 1:Hypatia.Cones.svec_side(R, length(vec))
+        for _ in 1:(incr * (j - 1))
+            # scale off-diagonal
+            svec[k] *= scal
+            k += 1
+        end
+        k += 1
+    end
+    @assert k == length(vec) + 1
+    return svec
 end
 
 include("JuMP_instances.jl")

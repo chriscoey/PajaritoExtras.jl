@@ -35,6 +35,7 @@ include("epinormeucl.jl")
 include("epipersquare.jl")
 include("epinorminf.jl")
 include("epinormspectral.jl")
+include("epinormspectraltri.jl")
 include("hypogeomean.jl")
 include("hyporootdettri.jl")
 include("epipersepspectral/epipersepspectral.jl")
@@ -48,6 +49,7 @@ const OACone = Union{
     Hypatia.EpiNormEuclCone{RealF},
     Hypatia.EpiPerSquareCone{RealF},
     Hypatia.EpiNormInfCone{RealF, <:RealCompF},
+    Hypatia.EpiNormSpectralTriCone{RealF, <:RealCompF},
     Hypatia.EpiNormSpectralCone{RealF, <:RealCompF},
     Hypatia.HypoGeoMeanCone{RealF},
     Hypatia.HypoRootdetTriCone{RealF, <:RealCompF},

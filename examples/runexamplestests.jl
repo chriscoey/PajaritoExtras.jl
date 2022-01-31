@@ -3,8 +3,8 @@ run examples tests from the examples folder
 =#
 
 # uncomment path for writing to results CSV
-results_path = joinpath(mkpath(joinpath(@__DIR__, "..", "benchmarks", "raw")), "bench.csv")
-# results_path = nothing
+results_path = nothing
+# results_path = joinpath(mkpath(joinpath(@__DIR__, "..", "benchmarks", "raw")), "bench.csv")
 
 import MathOptInterface
 const MOI = MathOptInterface

@@ -86,7 +86,7 @@ function MOIPajarito.Cones.get_sep_cuts(
         if σ_i < 1e-7 || us - σ_i > -1e-7
             break
         end
-        cut = _get_cut(one(T), i, F.U, F.Vt, cache, opt)
+        cut = _get_cut(1.0, i, F.U, F.Vt, cache, opt)
         push!(cuts, cut)
     end
     return cuts

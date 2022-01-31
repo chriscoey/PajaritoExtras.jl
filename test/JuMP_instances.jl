@@ -292,6 +292,61 @@ function epinorminf2(opt)
     return
 end
 
+function epinormspectraltri1(opt)
+    TOL = 1e-4
+    d = 3
+    for use_dual in (false, true), is_complex in (false, true)
+        R = (is_complex ? ComplexF64 : Float64)
+        dim = svec_length(R, d)
+        vec = collect(1:dim)
+        mat = smat(R, fill(0.1, dim))
+        σ = eigvals(Hermitian(mat, :U))
+        opt_val = (use_dual ? sum(abs, σ) : maximum(abs, σ))
+        m = JuMP.Model(opt)
+
+        JuMP.@variable(m, y)
+        x = JuMP.@variable(m, [1:dim], Int)
+        JuMP.@constraint(m, [i in 1:dim], i - 1 <= x[i] <= i + 1)
+        K = Hypatia.EpiNormSpectralTriCone{Float64, R}(1 + dim, use_dual)
+        x_vec = scale_svec(R, vec - x, rt2)
+        JuMP.@constraint(m, vcat(y, x_vec .+ 0.1) in K)
+        JuMP.@objective(m, Min, y)
+        JuMP.optimize!(m)
+
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.value.(x), vec, atol = TOL)
+    end
+    return
+end
+
+function epinormspectraltri2(opt)
+    TOL = 1e-4
+    d = 3
+    for use_dual in (false, true), is_complex in (false, true)
+        R = (is_complex ? ComplexF64 : Float64)
+        dim = svec_length(R, d)
+        opt_val = (use_dual ? 1 : d)
+        m = JuMP.Model(opt)
+
+        x = JuMP.@variable(m, [1:dim], Bin)
+        K = Hypatia.EpiNormSpectralTriCone{Float64, R}(1 + dim, use_dual)
+        x_vec = scale_svec(R, 1.0 * x, rt2)
+        JuMP.@constraint(m, vcat(1, x_vec) in K)
+        JuMP.@objective(m, Max, sum(x))
+        JuMP.optimize!(m)
+
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        @test isapprox(JuMP.objective_value(m), opt_val, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), opt_val, atol = TOL)
+        @test isapprox(sum(JuMP.value.(x)), opt_val, atol = TOL)
+    end
+    return
+end
+
 function epinormspectral1(opt)
     TOL = 1e-4
     d1 = 2
@@ -589,7 +644,7 @@ function matrix_epipersepspectral2(opt)
         Q = Hypatia.Cones.MatrixCSqr{Float64, Float64}
         K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 2, use_dual)
         (m, x, Q, opt_x, opt_Q) = _setup_expdesign(opt)
-        opt_val = PajaritoExtras.val_or_conj(D)(eigvals(Symmetric(opt_Q, :U)), h_fun)
+        opt_val = PajaritoExtras.val_or_conj(D)(eigvals(Hermitian(opt_Q, :U)), h_fun)
 
         JuMP.@variable(m, y)
         JuMP.@objective(m, Min, y)
@@ -616,7 +671,7 @@ function _setup_expdesign(opt)
     V = [1 1 -0.2 -0.5; 1 -1 0.5 -0.2]
     Q = V * diagm(x) * V'
     opt_x = [4, 4, 0, 0]
-    opt_Q = Symmetric(V * Diagonal(opt_x) * V')
+    opt_Q = Hermitian(V * Diagonal(opt_x) * V')
     return (m, x, Q, opt_x, opt_Q)
 end
 

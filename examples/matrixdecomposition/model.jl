@@ -11,7 +11,7 @@ TODO add continuous variant to Hypatia: relax sparsity to L1
 see http://www.mit.edu/~parrilo/pubs/talkfiles/ISMP2009.pdf
 =#
 
-import SparseArrays
+using SparseArrays
 
 struct MatrixDecomposition <: ExampleInstance
     d1::Int
@@ -25,7 +25,7 @@ function build(inst::MatrixDecomposition)
     (d1, d2) = (inst.d1, inst.d2)
     B_rank = inst.B_rank
     @assert 1 <= B_rank <= d1 <= d2
-    A0 = SparseArrays.sprand(d1, d2, inst.A_sparsity)
+    A0 = sprand(d1, d2, inst.A_sparsity)
     B0 = randn(d1, B_rank) * randn(B_rank, d2)
     C = A0 + B0
     γ = 0.02 # TODO?
