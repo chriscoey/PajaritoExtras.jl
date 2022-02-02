@@ -1,10 +1,11 @@
 #=
-given a symmetric sparsity pattern with some sparse entries unknown, find integer values for
-the unknowns such that the matrix is PSD-completable, maximimizing the minimum eigenvalue
+given a symmetric sparsity pattern with some sparse entries unknown, find integer values
+(within some bounds) for the unknowns such that the matrix is PSD-completable,
+maximimizing the minimum eigenvalue
 
 maximize    y
 subject to  S + X - y I ∈ SparsePSD⋆
-            Xᵢⱼ ∈ ℤ, ∀ (i,j) unknown
+            Xᵢⱼ ∈ ℤ, -M ≤ Xᵢⱼ ≤ M, ∀ (i,j) unknown
 =#
 
 using SparseArrays
@@ -20,8 +21,8 @@ function build(inst::CompletablePSD)
     @assert d >= 2
 
     # generate data
-    S0 = inv(sqrt(d)) * rand(-3:3, d, d)
-    S0 = S0 * S0'
+    S0 = sprand(Bool, d, d, inst.sparsity)
+    S0 = Matrix{Float64}(S0 * S0' + I)
     pattern = tril!(sprand(Bool, d, d, inst.sparsity) + I)
     (rows, cols, _) = findnz(pattern)
     S0vals = [S0[r, c] for (r, c) in zip(rows, cols)]
@@ -30,13 +31,15 @@ function build(inst::CompletablePSD)
     known_pattern[1] = known_pattern[end] = true
     num_unknown = num_sparse - sum(known_pattern)
     @assert num_unknown >= 1
-    # @show num_sparse, num_unknown
+    M = maximum(abs, S0vals[.!known_pattern])
 
     # build model
     model = JuMP.Model()
     JuMP.@variable(model, y)
     JuMP.@objective(model, Max, y)
+
     JuMP.@variable(model, x[1:num_unknown], Int)
+    JuMP.@constraint(model, -M .<= x .<= M)
 
     rt2 = sqrt(2.0)
     aff = zeros(JuMP.AffExpr, num_sparse)
@@ -75,6 +78,7 @@ function test_extra(inst::CompletablePSD, model::JuMP.Model)
     tol = eps()^0.2
     x_opt = JuMP.value.(model.ext[:x])
     @test x_opt ≈ round.(Int, x_opt) atol = tol rtol = tol
+    @show x_opt
 
     S_eigmin = model.ext[:S_eigmin]
     @test JuMP.objective_value(model) >= S_eigmin - tol
