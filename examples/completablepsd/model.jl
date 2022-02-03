@@ -41,7 +41,6 @@ function build(inst::CompletablePSD)
     JuMP.@variable(model, x[1:num_unknown], Int)
     JuMP.@constraint(model, -M .<= x .<= M)
 
-    rt2 = sqrt(2.0)
     aff = zeros(JuMP.AffExpr, num_sparse)
     k = 1
     for i in eachindex(known_pattern)

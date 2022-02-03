@@ -41,6 +41,8 @@ include("benchmark_utils.jl")
 include("WSOS_utils.jl") # TODO maybe move to Hypatia
 include(joinpath(pkgdir(Hypatia), "examples", "spectral_functions_JuMP.jl"))
 
+include(joinpath(@__DIR__, "..", "test", "model_utils.jl"))
+
 # list of names of JuMP examples to run
 const JuMP_examples = [
     "completablepsd",
@@ -48,6 +50,7 @@ const JuMP_examples = [
     "matrixcompletion",
     "matrixdecomposition",
     "polyfacilitylocation",
+    "inversecovariance",
     "twostagestochastic",
     "vectorregression",
 ]

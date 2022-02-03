@@ -88,7 +88,7 @@ function build(inst::MatrixCompletion)
         else
             K = Hypatia.EpiNormSpectralTriCone{Float64, Float64}(1 + len, nuclear_obj)
             Xvec = Vector{JuMP.AffExpr}(undef, len)
-            Cones.smat_to_svec!(Xvec, X, sqrt(2.0))
+            Cones.smat_to_svec!(Xvec, X, rt2)
             JuMP.@constraint(model, vcat(t, Xvec) in K)
         end
     else

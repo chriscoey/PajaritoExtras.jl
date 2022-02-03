@@ -34,7 +34,6 @@ function build(inst::ExperimentDesign)
     JuMP.@constraint(model, sum(x) == k)
 
     # vectorized information matrix
-    rt2 = sqrt(2.0)
     Q_vec = [
         JuMP.@expression(
             model,

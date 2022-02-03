@@ -26,7 +26,7 @@ struct Prim <: PrimDual end
 struct Dual <: PrimDual end
 primal_or_dual(use_dual::Bool) = (use_dual ? Dual : Prim)
 
-const rt2 = sqrt(2.0)
+const rt2 = sqrt(2)
 const irt2 = inv(rt2)
 
 include("possemideftri.jl")
@@ -127,6 +127,8 @@ end
 
 # TODO move to Hypatia array utilities?
 svec_idx(::Type{RealF}, row::Int, col::Int) = Hypatia.Cones.svec_idx(row, col)
+
+svec_idx(row::Int, col::Int) = svec_idx(RealF, row, col)
 
 function svec_idx(::Type{CompF}, row::Int, col::Int)
     if row < col
