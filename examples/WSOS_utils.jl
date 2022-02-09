@@ -6,7 +6,7 @@ JuMP helpers for constructing formulations for WSOS constraints
 function make_nonneg_polys(num::Int, Ps::Vector{Matrix{Float64}})
     # build JuMP model for finding minima (primal polymin)
     U = size(Ps[1], 1)
-    K = Hypatia.WSOSInterpNonnegativeCone{Float64, Float64}(U, Ps, true)
+    K = Hypatia.WSOSInterpNonnegativeCone{Float64, Float64}(U, Ps)
     model = JuMP.Model(sep_hypatia)
     JuMP.@variable(model, a)
     JuMP.@objective(model, Max, a)
@@ -29,7 +29,7 @@ function make_nonneg_poly(U::Int, model::JuMP.Model, con::JuMP.ConstraintRef)
         min_val = JuMP.dual_objective_value(model)
         @show min_val
         if min_val < 1e-5
-            vals .+= min_val
+            vals .+= abs(min_val)
         end
         return vals
     else
@@ -42,7 +42,7 @@ end
 # find minimum value of a polynomial (solve primal polymin)
 function find_poly_min(vals::Vector{Float64}, Ps::Vector{Matrix{Float64}})
     U = size(Ps[1], 1)
-    K = Hypatia.WSOSInterpNonnegativeCone{Float64, Float64}(U, Ps, true)
+    K = Hypatia.WSOSInterpNonnegativeCone{Float64, Float64}(U, Ps)
     model = JuMP.Model(sep_hypatia)
     JuMP.@variable(model, a)
     JuMP.@objective(model, Max, a)
@@ -53,20 +53,22 @@ function find_poly_min(vals::Vector{Float64}, Ps::Vector{Matrix{Float64}})
     return JuMP.dual_objective_value(model)
 end
 
-const AffVec = Vector{<:Union{JuMP.VariableRef, JuMP.AffExpr}}
-
 # add a WSOS constraint
 function add_wsos(
     use_nat::Bool,
     Ps::Vector{Matrix{Float64}},
-    aff::AffVec,
+    aff::AbstractVector{<:JuMPScalar},
     model::JuMP.Model,
 )
     return (use_nat ? add_wsos_nat : add_wsos_ext)(Ps, aff, model)
 end
 
 # WSOS cone formulation
-function add_wsos_nat(Ps::Vector{Matrix{Float64}}, aff::AffVec, model::JuMP.Model)
+function add_wsos_nat(
+    Ps::Vector{Matrix{Float64}},
+    aff::AbstractVector{<:JuMPScalar},
+    model::JuMP.Model,
+)
     U = size(Ps[1], 1)
     @assert length(aff) == U
     K = Hypatia.WSOSInterpNonnegativeCone{Float64, Float64}(U, Ps)
@@ -75,7 +77,11 @@ function add_wsos_nat(Ps::Vector{Matrix{Float64}}, aff::AffVec, model::JuMP.Mode
 end
 
 # PSD extended formulation
-function add_wsos_ext(Ps::Vector{Matrix{Float64}}, aff::AffVec, model::JuMP.Model)
+function add_wsos_ext(
+    Ps::Vector{Matrix{Float64}},
+    aff::AbstractVector{<:JuMPScalar},
+    model::JuMP.Model,
+)
     U = size(Ps[1], 1)
     @assert length(aff) == U
 

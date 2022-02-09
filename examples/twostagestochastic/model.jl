@@ -40,7 +40,7 @@ struct TwoStageStochastic <: ExampleInstance
     n::Int
     deg::Int
     linked::Bool # whether stage two decisions are linked or independent
-    use_nat::Bool
+    use_wsos::Bool
 end
 
 function build(inst::TwoStageStochastic)
@@ -76,7 +76,7 @@ function build(inst::TwoStageStochastic)
     JuMP.@constraint(model, x .>= 0)
     JuMP.@constraint(model, sum(x) <= m)
 
-    add_wsos(aff) = (inst.use_nat ? add_wsos_nat : add_wsos_ext)(Ps, aff, model)
+    add_wsos(aff) = (inst.use_wsos ? add_wsos_nat : add_wsos_ext)(Ps, aff, model)
 
     for i in 1:n
         add_wsos(y[i, :])

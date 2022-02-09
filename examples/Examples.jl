@@ -8,6 +8,7 @@ using LinearAlgebra
 if VERSION < v"1.7.0-DEV.1188"
     const ColumnNorm = Val{true}
 end
+using SparseArrays
 
 import Random
 # this is a workaround for randn's lack of support for BigFloat
@@ -33,12 +34,17 @@ import PajaritoExtras
 import JuMP
 const MOI = JuMP.MOI
 const MOIU = MOI.Utilities
+const JuMPScalar = JuMP.AbstractJuMPScalar
 
 abstract type ExampleInstance end
 
 include("JuMP_utils.jl")
 include("benchmark_utils.jl")
-include("WSOS_utils.jl") # TODO maybe move to Hypatia
+
+# TODO maybe move to Hypatia
+include("WSOS_utils.jl")
+include("specnuc_utils.jl")
+
 include(joinpath(pkgdir(Hypatia), "examples", "spectral_functions_JuMP.jl"))
 
 include(joinpath(@__DIR__, "..", "test", "model_utils.jl"))
@@ -47,10 +53,12 @@ include(joinpath(@__DIR__, "..", "test", "model_utils.jl"))
 const JuMP_examples = [
     "completablepsd",
     "experimentdesign",
+    "inversecovariance",
     "matrixcompletion",
     "matrixdecomposition",
+    "matrixregression",
     "polyfacilitylocation",
-    "inversecovariance",
+    "polyregression",
     "twostagestochastic",
     "vectorregression",
 ]

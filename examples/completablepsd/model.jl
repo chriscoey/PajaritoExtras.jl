@@ -8,8 +8,6 @@ subject to  S + X - y I ∈ SparsePSD⋆
             Xᵢⱼ ∈ ℤ, -M ≤ Xᵢⱼ ≤ M, ∀ (i,j) unknown
 =#
 
-using SparseArrays
-
 struct CompletablePSD <: ExampleInstance
     d::Int # side dimension
     sparsity::Real # fraction of elements in the pattern
