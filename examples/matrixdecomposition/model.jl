@@ -44,6 +44,7 @@ function build(inst::MatrixDecomposition)
     JuMP.@objective(model, Min, λ * sum(X) + u)
 
     # save for use in tests
+    model.ext[:X] = X
     model.ext[:u] = u
     model.ext[:B] = B
 
@@ -54,6 +55,12 @@ function test_extra(inst::MatrixDecomposition, model::JuMP.Model)
     stat = JuMP.termination_status(model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
+
+    # check integer feasibility
+    tol = eps()^0.2
+    X = JuMP.value.(model.ext[:X])
+    @test X ≈ round.(Int, X) atol = tol rtol = tol
+    @test all(-tol .<= X .<= 1 + tol)
 
     # check nuclear norm value
     tol = eps()^0.2

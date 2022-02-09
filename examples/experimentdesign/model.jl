@@ -25,9 +25,11 @@ function build(inst::ExperimentDesign)
     @assert is_domain_pos(inst.ext)
     k = 2 * d
 
+    # generate data
     V = randn(d, k)
     V .*= sqrt(d / sum(eigvals(Symmetric(V * V'))))
 
+    # build model
     model = JuMP.Model()
     JuMP.@variable(model, x[1:k] >= 0)
     JuMP.set_integer.(x)
@@ -58,13 +60,14 @@ function test_extra(inst::ExperimentDesign, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
+    # check integer feasibility
     tol = eps()^0.2
-    x_opt = JuMP.value.(model.ext[:x])
-    @test x_opt ≈ round.(Int, x_opt) atol = tol rtol = tol
+    x = JuMP.value.(model.ext[:x])
+    @test x ≈ round.(Int, x) atol = tol rtol = tol
 
     # check objective
     V = model.ext[:V]
-    λ = eigvals(Symmetric(V * Diagonal(x_opt) * V', :U))
+    λ = eigvals(Symmetric(V * Diagonal(x) * V', :U))
     @test minimum(λ) >= -tol
     obj_result = get_val(pos_only(λ), inst.ext)
     @test JuMP.objective_value(model) ≈ obj_result atol = tol rtol = tol

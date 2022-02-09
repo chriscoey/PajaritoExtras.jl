@@ -18,7 +18,7 @@ struct PolyRegression <: ExampleInstance
     n::Int # dimension of independent variables / polynomial domain
     halfdeg::Int # polynomial regressor half-degree
     m::Int # number of observations
-    use_wsos::Bool # use WSOS cone formulation, else SDP formulation
+    use_nat::Bool # use WSOS cone formulation, else SDP formulation
 end
 
 function build(inst::PolyRegression)
@@ -28,9 +28,8 @@ function build(inst::PolyRegression)
 
     # setup interpolation
     D = PolyUtils.BoxDomain{Float64}(zeros(n), ones(n))
-    (U, pts, Ps, V) = PolyUtils.interpolate(D, inst.halfdeg, calc_V = true)
+    (U, _, Ps, V) = PolyUtils.interpolate(D, inst.halfdeg, calc_V = true)
     @assert m > 2U
-    # @show m, U
     F = qr!(Array(V'), ColumnNorm())
 
     # generate noisy data in D = [0, 1]ⁿ from two underlying functions
@@ -49,8 +48,6 @@ function build(inst::PolyRegression)
     @assert f1_max >= -1e-4
     f1 ./= f1_max
     f2 ./= f1_max
-    # @show f1
-    # @show f2
 
     m1 = div(m, 2)
     Y1 = p_X' * f1
@@ -69,7 +66,6 @@ function build(inst::PolyRegression)
         Y = max.(Y, 0.0)
         Y = min.(Y, 1.0)
     end
-    # @show Y
     @assert all(0 .<= Y .<= 1)
 
     # build model
@@ -98,15 +94,13 @@ function build(inst::PolyRegression)
     end)
 
     # shape constraints
-    add_wsos(aff) = (inst.use_wsos ? add_wsos_nat : add_wsos_ext)(Ps, aff, model)
+    add_wsos(aff) = (inst.use_nat ? add_wsos_nat : add_wsos_ext)(Ps, aff, model)
     add_wsos(p2)
     add_wsos(p1 - p2)
     add_wsos(1 .- p1)
 
     # save for use in tests
-    model.ext[:p1_var] = p1
-    model.ext[:p2_var] = p2
-    model.ext[:b_var] = b
+    model.ext[:b] = b
 
     return model
 end
@@ -116,10 +110,10 @@ function test_extra(inst::PolyRegression, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    p1_opt = JuMP.value.(model.ext[:p1_var])
-    p2_opt = JuMP.value.(model.ext[:p2_var])
-    return b_opt = JuMP.value.(model.ext[:b_var])
-    # @show p1_opt
-    # @show p2_opt
-    # @show b_opt
+    # check integer feasibility
+    tol = eps()^0.2
+    b = JuMP.value.(model.ext[:b])
+    @test b ≈ round.(Int, b) atol = tol rtol = tol
+    @test all(-tol .<= b .<= 1 + tol)
+    return
 end

@@ -3,15 +3,16 @@ given a symmetric sparsity pattern with some sparse entries unknown, find intege
 (within some bounds) for the unknowns such that the matrix is PSD-completable,
 maximimizing the minimum eigenvalue
 
-maximize    y
-subject to  S + X - y I ∈ SparsePSD⋆
-            Xᵢⱼ ∈ ℤ, -M ≤ Xᵢⱼ ≤ M, ∀ (i,j) unknown
+max y :
+S + X - y I ∈ SparsePSD⋆
+Xᵢⱼ ∈ ℤ, -M ≤ Xᵢⱼ ≤ M, ∀ (i,j) unknown
 =#
 
 struct CompletablePSD <: ExampleInstance
     d::Int # side dimension
     sparsity::Real # fraction of elements in the pattern
     frac_known::Real # fraction of sparse entries known
+    use_nat::Bool # use sparse PSD cone, else PSD cone formulation
 end
 
 function build(inst::CompletablePSD)
@@ -41,6 +42,7 @@ function build(inst::CompletablePSD)
 
     aff = zeros(JuMP.AffExpr, num_sparse)
     k = 1
+    scal = (inst.use_nat ? rt2 : 1.0)
     for i in eachindex(known_pattern)
         if known_pattern[i]
             aff[i] = S0vals[i]
@@ -51,14 +53,25 @@ function build(inst::CompletablePSD)
         if rows[i] == cols[i]
             aff[i] = aff[i] - y
         else
-            aff[i] = rt2 * aff[i]
+            aff[i] = scal * aff[i]
         end
     end
     @assert k == num_unknown + 1
 
-    KT = Hypatia.PosSemidefTriSparseCone{Hypatia.Cones.PSDSparseDense, Float64, Float64}
-    K = KT(d, rows, cols, true)
-    JuMP.@constraint(model, aff in K)
+    if inst.use_nat
+        KT = Hypatia.PosSemidefTriSparseCone{Hypatia.Cones.PSDSparseDense, Float64, Float64}
+        K = KT(d, rows, cols, true)
+        JuMP.@constraint(model, aff in K)
+    else
+        mat = Matrix(sparse(rows, cols, aff))
+        for i in 1:d, j in 1:i
+            if iszero(mat[i, j])
+                mat[i, j] = JuMP.@variable(model)
+            end
+        end
+        LinearAlgebra.copytri!(mat, 'L')
+        JuMP.@constraint(model, Symmetric(mat) in JuMP.PSDCone())
+    end
 
     # save for use in tests
     model.ext[:x] = x
@@ -72,11 +85,10 @@ function test_extra(inst::CompletablePSD, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
+    # check feasibility
     tol = eps()^0.2
-    x_opt = JuMP.value.(model.ext[:x])
-    @test x_opt ≈ round.(Int, x_opt) atol = tol rtol = tol
-    @show x_opt
-
+    x = JuMP.value.(model.ext[:x])
+    @test x ≈ round.(Int, x) atol = tol rtol = tol
     S_eigmin = model.ext[:S_eigmin]
     @test JuMP.objective_value(model) >= S_eigmin - tol
     return

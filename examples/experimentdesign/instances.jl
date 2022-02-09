@@ -7,9 +7,8 @@ insts["test"] = [
     ((3, MatNegRtdetEFExp()),),
     ((3, MatNegRtdetEFPow()),),
     # tr neglog
-    # ((2, MatLogdetCone()),),
-    ((2, MatNegLog()),),
-    ((2, MatNegLogDirect()),),
+    ((4, MatNegLog()),),
+    ((4, MatNegLogDirect()),),
     # tr negentropy
     ((3, MatNegEntropy()),),
     ((3, MatNegEntropyEigOrd()),),
@@ -17,8 +16,8 @@ insts["test"] = [
     ((3, MatNegSqrt()),),
     ((3, MatNegSqrtEigOrd()),),
     # tr negpower01
-    ((3, MatNegPower01(0.7)),),
-    ((3, MatNegPower01EigOrd(0.7)),),
+    ((4, MatNegPower01(0.7)),),
+    ((4, MatNegPower01EigOrd(0.7)),),
     # tr power12
     ((3, MatPower12(1.3)),),
     ((3, MatPower12EigOrd(1.3)),),

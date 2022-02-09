@@ -66,7 +66,7 @@ function build(inst::VectorRegression)
     end
 
     # save for use in tests
-    model.ext[:β] = β
+    model.ext[:z] = z
 
     return model
 end
@@ -75,9 +75,11 @@ function test_extra(inst::VectorRegression, model::JuMP.Model)
     stat = JuMP.termination_status(model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
-    # TODO
 
-    β_opt = JuMP.value.(model.ext[:β])
-    @show β_opt
+    # check integer feasibility
+    tol = eps()^0.2
+    z = JuMP.value.(model.ext[:z])
+    @test z ≈ round.(Int, z) atol = tol rtol = tol
+    @test all(-tol .<= z .<= 1 + tol)
     return
 end

@@ -22,12 +22,10 @@ function make_nonneg_poly(U::Int, model::JuMP.Model, con::JuMP.ConstraintRef)
 
     JuMP.optimize!(model)
     stat = JuMP.termination_status(model)
-    @show stat
 
     if stat in (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL)
         # make poly nonnegative if minimum is negative
         min_val = JuMP.dual_objective_value(model)
-        @show min_val
         if min_val < 1e-5
             vals .+= abs(min_val)
         end

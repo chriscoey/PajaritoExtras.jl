@@ -4,12 +4,10 @@ convex spectral function f, a constraint on the L0 norm of the lower triangle to
 sparsity, constraints on the sparsity structure, and optionally a convex regularizer g
 =#
 
-import PajaritoExtras.svec_idx
-
 struct InverseCovariance <: ExampleInstance
     d::Int
-    f::MatSpecExt # formulation specifier
     g_l2::Union{Nothing, Bool} # g is L2 norm (true), L1 norm (false), or zero
+    f::MatSpecExt # formulation specifier
 end
 
 function build(inst::InverseCovariance)
@@ -77,6 +75,9 @@ function build(inst::InverseCovariance)
 
     # save for use in tests
     model.ext[:z] = z
+    model.ext[:P_vec] = P_vec
+    model.ext[:f_epi] = f_epi
+    model.ext[:g_epi] = g_epi
 
     return model
 end
@@ -86,8 +87,25 @@ function test_extra(inst::InverseCovariance, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
+    # check integer feasibility
     tol = eps()^0.2
-    z_opt = JuMP.value.(model.ext[:z])
-    @test z_opt ≈ round.(Int, z_opt) atol = tol rtol = tol
+    z = JuMP.value.(model.ext[:z])
+    @test z ≈ round.(Int, z) atol = tol rtol = tol
+    @test all(-tol .<= z .<= 1 + tol)
+
+    # check conic feasibility
+    P_vec = JuMP.value.(model.ext[:P_vec])
+    P = Cones.svec_to_smat!(zeros(inst.d, inst.d), P_vec, rt2)
+    λ = eigvals(Hermitian(P, :U))
+    @test minimum(λ) >= -tol
+    f_val = get_val(pos_only(λ), inst.f)
+    f_epi = JuMP.value(model.ext[:f_epi])
+    @test f_val ≈ f_epi atol = tol rtol = tol
+    if !isnothing(inst.g_l2)
+        P_tri = scale_svec(Float64, 1.0 * P_vec, inv(rt2))
+        g_val = norm(P_tri, (inst.g_l2 ? 2 : 1))
+        g_epi = JuMP.value(model.ext[:g_epi])
+        @test g_val ≈ g_epi atol = tol rtol = tol
+    end
     return
 end

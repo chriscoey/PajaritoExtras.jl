@@ -69,8 +69,8 @@ function build(inst::MatrixCompletion)
     add_specnuc(inst.use_nat, inst.nuclear_obj, t, X, model)
 
     # save for use in tests
-    model.ext[:x_var] = x
-    model.ext[:X_var] = X
+    model.ext[:x] = x
+    model.ext[:X] = X
 
     return model
 end
@@ -80,11 +80,13 @@ function test_extra(inst::MatrixCompletion, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    # check objective and feasibility
+    # check integer feasibility
     tol = eps()^0.2
-    x = JuMP.value.(model.ext[:x_var])
+    x = JuMP.value.(model.ext[:x])
     @test x ≈ round.(Int, x) atol = tol rtol = tol
-    X = JuMP.value.(model.ext[:X_var])
+
+    # check objective
+    X = JuMP.value.(model.ext[:X])
     s = (inst.symmetric ? abs.(eigvals(Symmetric(X, :U))) : svdvals(X))
     snorm = (inst.nuclear_obj ? sum(s) : maximum(s))
     @test JuMP.objective_value(model) * inst.nrow ≈ snorm atol = tol rtol = tol

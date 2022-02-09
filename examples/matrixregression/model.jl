@@ -81,6 +81,7 @@ function test_extra(inst::MatrixRegression, model::JuMP.Model)
     # check feasibility
     row_on = JuMP.value.(model.ext[:row_on])
     @test row_on ≈ round.(Int, row_on) atol = tol rtol = tol
+    @test all(-tol .<= row_on .<= 1 + tol)
     for i in 1:size(A, 1)
         if abs(row_on[i]) < tol
             @assert norm(A[i, :]) < tol

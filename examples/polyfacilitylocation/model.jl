@@ -30,13 +30,13 @@ struct PolyFacilityLocation <: ExampleInstance
     n::Int
     m::Int
     deg::Int
-    use_nat::Bool
+    use_nat::Bool # use WSOS cone formulation, else SDP formulation
 end
 
 function build(inst::PolyFacilityLocation)
     # setup polynomial interpolation
     dom = PolyUtils.BoxDomain{Float64}([0.0], [1.0])
-    (U, pts, Ps, _, w) = PolyUtils.interpolate(dom, inst.deg, get_quadr = true)
+    (U, _, Ps, _, w) = PolyUtils.interpolate(dom, inst.deg, get_quadr = true)
 
     # generate parameter values
     (n, m) = (inst.n, inst.m)
@@ -50,7 +50,6 @@ function build(inst::PolyFacilityLocation)
     for i in 1:n
         u[i] .+= incr + 5 * rand() + 1
     end
-    @show excess
     excess = find_poly_min(sum(u) - 2 * sum(d), Ps)
     @assert excess > 0
 
@@ -87,7 +86,12 @@ function test_extra(inst::PolyFacilityLocation, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    @show JuMP.value.(model.ext[:x])
+    # check integer feasibility
+    tol = eps()^0.2
+    x = JuMP.value.(model.ext[:x])
+    @test x ≈ round.(Int, x) atol = tol rtol = tol
+    @test all(-tol .<= x .<= 1 + tol)
+
     # TODO check nonnegativity of wsos constraint functions
     # can just solve the separation problem to check feasibility
     # maybe also plot to check visually

@@ -40,7 +40,7 @@ struct TwoStageStochastic <: ExampleInstance
     n::Int
     deg::Int
     linked::Bool # whether stage two decisions are linked or independent
-    use_wsos::Bool
+    use_nat::Bool # use WSOS cone formulation, else SDP formulation
 end
 
 function build(inst::TwoStageStochastic)
@@ -76,7 +76,7 @@ function build(inst::TwoStageStochastic)
     JuMP.@constraint(model, x .>= 0)
     JuMP.@constraint(model, sum(x) <= m)
 
-    add_wsos(aff) = (inst.use_wsos ? add_wsos_nat : add_wsos_ext)(Ps, aff, model)
+    add_wsos(aff) = (inst.use_nat ? add_wsos_nat : add_wsos_ext)(Ps, aff, model)
 
     for i in 1:n
         add_wsos(y[i, :])
@@ -91,8 +91,6 @@ function build(inst::TwoStageStochastic)
 
     # save for use in tests
     model.ext[:x] = x
-    model.ext[:y] = y
-    model.ext[:z] = z
 
     return model
 end
@@ -102,10 +100,9 @@ function test_extra(inst::TwoStageStochastic, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    # @show JuMP.value.(model.ext[:x])
-    # @show JuMP.value.(model.ext[:y])
-    # @show JuMP.value.(model.ext[:z])
-    @show JuMP.objective_value(model)
-    # TODO plot to check visually
+    # check integer feasibility
+    tol = eps()^0.2
+    x = JuMP.value.(model.ext[:x])
+    @test x ≈ round.(Int, x) atol = tol rtol = tol
     return
 end
