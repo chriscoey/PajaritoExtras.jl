@@ -94,7 +94,7 @@ function h_grad(::Type{Dual}, h::Power12SSF, w::Vector{RealF})
     g = zero(w)
     for (i, w_i) in enumerate(w)
         if w_i < 0
-            g[i] = c * w_i^qm1
+            g[i] = c * abs(w_i)^qm1
         end
     end
     return g

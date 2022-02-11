@@ -159,8 +159,12 @@ function MOIPajarito.Cones.get_sep_cuts(
     end
 
     # gradient cut is (1, (-Wsᵢ / ‖Wsᵢ‖)ᵢ)
-    # TODO incorrect, check math
-    R = [-Ws_i / abs(Ws_i) for Ws_i in Ws]
+    R = zero(Ws)
+    for (i, Ws_i) in enumerate(Ws)
+        if abs(Ws_i) > 1e-12
+            R[i] = -Ws_i / abs(Ws_i)
+        end
+    end
     return _get_cuts(R, cache, opt)
 end
 
@@ -177,8 +181,10 @@ function MOIPajarito.Cones.add_init_cuts(
         u >= 0
         u >= sum(w)
         u >= -sum(w)
+        [w_i in w], u >= w_i
+        [w_i in w], u >= -w_i
     end)
-    return 3
+    return 3 + 2 * cache.d
 end
 
 function MOIPajarito.Cones.add_init_cuts(
@@ -188,17 +194,16 @@ function MOIPajarito.Cones.add_init_cuts(
     u = cache.oa_s[1]
     @views w = cache.oa_s[2:end]
     d = cache.d
-    JuMP.@constraints(
-        opt.oa_model,
-        begin
-            u >= 0
-            u >= irt2 * sum(w)
-            u >= -irt2 * sum(w)
-            u >= sum(irt2 * w[2i - 1] - irt2 * w[2i] for i in 1:d)
-            u >= sum(-irt2 * w[2i - 1] + irt2 * w[2i] for i in 1:d)
-        end
-    )
-    return 5
+    JuMP.@constraints(opt.oa_model, begin
+        u >= 0
+        u >= irt2 * sum(w)
+        u >= -irt2 * sum(w)
+        [i in 1:d], u >= irt2 * (w[2i - 1] + w[2i])
+        [i in 1:d], u >= -irt2 * (w[2i - 1] + w[2i])
+        [i in 1:d], u >= irt2 * (w[2i - 1] - w[2i])
+        [i in 1:d], u >= -irt2 * (w[2i - 1] - w[2i])
+    end)
+    return 3 + 4 * cache.d
 end
 
 function _get_cuts(R::Vector{C}, cache::EpiNormInf{Dual, C, Nat}, opt::Optimizer) where {C}

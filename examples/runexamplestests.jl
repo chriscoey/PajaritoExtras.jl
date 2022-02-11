@@ -28,7 +28,6 @@ default_options = (;
     # use_iterative_method = false,
     # iteration_limit = 30,
     # time_limit = 120.0,
-    # debug_cuts = use_iterative_method,
 )
 
 # instance sets to run

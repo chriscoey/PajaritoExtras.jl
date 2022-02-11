@@ -134,7 +134,7 @@ function svec_idx(::Type{CompF}, row::Int, col::Int)
     if row < col
         (row, col) = (col, row)
     end
-    return (row - 1) * row + col
+    return (row - 2) * row + 2 * col
 end
 
 function geomean(w::AbstractVector{RealF}; min_val::RealF = 1e-12)

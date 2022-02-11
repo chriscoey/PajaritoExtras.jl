@@ -583,8 +583,6 @@ function matrix_epipersepspectral1(opt)
     sep_spectral_funs = [
         Hypatia.Cones.NegLogSSF(),
         Hypatia.Cones.NegEntropySSF(),
-        Hypatia.Cones.NegSqrtSSF(),
-        Hypatia.Cones.NegPower01SSF(0.8),
         Hypatia.Cones.Power12SSF(1.2),
     ]
 
@@ -592,17 +590,17 @@ function matrix_epipersepspectral1(opt)
         R = (is_complex ? ComplexF64 : Float64)
         D = (use_dual ? Dual : Prim)
         Q = Hypatia.Cones.MatrixCSqr{Float64, R}
-        K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 3, use_dual)
-        w_dim = svec_length(R, 3)
-        vec_diag = svec(Matrix{R}(Diagonal([1.2, 2.5, 0.9])))
+        K = Hypatia.EpiPerSepSpectralCone{Float64}(h_fun, Q, 2, use_dual)
+        w_dim = svec_length(R, 2)
+        vec_diag = svec(Matrix{R}(Diagonal([1.2, 2.5])))
         m = JuMP.Model(opt)
 
         JuMP.@variable(m, u)
         JuMP.@variable(m, w[1:w_dim])
-        W_diag = [w[svec_idx(R, i, i)] for i in 1:3]
+        W_diag = [w[svec_idx(R, i, i)] for i in 1:2]
         JuMP.set_integer.(W_diag)
-        JuMP.@constraint(m, sum(W_diag) == 8)
-        JuMP.@constraint(m, sum(w) >= 9)
+        JuMP.@constraint(m, sum(W_diag) == 6)
+        JuMP.@constraint(m, sum(w) >= 7)
         JuMP.@objective(m, Min, u)
         K_vec = w - vec_diag
         epiper = PajaritoExtras.swap_epiper(D, [u, 1]...)
@@ -630,10 +628,8 @@ function matrix_epipersepspectral2(opt)
     TOL = 1e-4
     # only functions that are decreasing
     dual_and_h = [
-        (false, Hypatia.Cones.NegLogSSF()),
         (false, Hypatia.Cones.NegSqrtSSF()),
         (false, Hypatia.Cones.NegPower01SSF(3 // 10)),
-        (true, Hypatia.Cones.NegLogSSF()),
         (true, Hypatia.Cones.NegEntropySSF()),
         (true, Hypatia.Cones.NegSqrtSSF()),
         (true, Hypatia.Cones.NegPower01SSF(0.5)),

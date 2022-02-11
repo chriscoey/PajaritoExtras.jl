@@ -18,9 +18,9 @@ oa_solver = MOI.OptimizerWithAttributes(
 # oa_solver = MOI.OptimizerWithAttributes(
 #     GLPK.Optimizer,
 #     MOI.Silent() => true,
-#     "tol_int" => 1e-10,
-#     "tol_bnd" => 1e-10,
-#     "mip_gap" => 1e-10,
+#     "tol_int" => 1e-9,
+#     "tol_bnd" => 1e-9,
+#     "mip_gap" => 1e-9,
 # )
 
 println("starting PajaritoExtras tests")

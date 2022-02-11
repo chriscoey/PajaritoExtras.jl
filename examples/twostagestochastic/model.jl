@@ -56,7 +56,6 @@ function build(inst::TwoStageStochastic)
 
     # setup polynomial interpolation
     n0 = (inst.linked ? n : 1)
-    @show binomial(n0 + 2 * inst.deg, n0)
     dom = PolyUtils.BoxDomain{Float64}(zeros(n0), ones(n0))
     (U, pts, Ps, _, w) = PolyUtils.interpolate(dom, inst.deg, get_quadr = true)
     w .*= (inst.linked ? 1 : 2^(n - 1))

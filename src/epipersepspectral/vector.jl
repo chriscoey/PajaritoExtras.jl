@@ -72,7 +72,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     end
 
     (us, vs) = swap_epiper(D, s[1:2]...)
-    v_pos = max(vs, 1e-7)
+    v_pos = max(vs, 1e-9)
     if us - per_sepspec(val_or_conj(D), h, v_pos, ws) > -1e-7
         return AE[]
     end

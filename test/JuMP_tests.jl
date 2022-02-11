@@ -59,17 +59,41 @@ inst_noextend = String[
 ]
 
 function runtests(oa_solver)
-    @testset "iterative" begin
-        @info "iterative, all"
-        run_jump_tests(inst_all, true, true, oa_solver)
-        @info "iterative, not extended"
-        run_jump_tests(inst_noextend, false, true, oa_solver)
+    @testset "solve conic" begin
+        @testset "iterative" begin
+            @testset "all" begin
+                run_jump_tests(inst_all, true, true, true, oa_solver)
+            end
+            @testset "no ext" begin
+                run_jump_tests(inst_noextend, false, true, true, oa_solver)
+            end
+        end
+        @testset "one tree" begin
+            @testset "all" begin
+                run_jump_tests(inst_all, true, false, true, oa_solver)
+            end
+            @testset "no ext" begin
+                run_jump_tests(inst_noextend, false, false, true, oa_solver)
+            end
+        end
     end
-    @testset "one tree" begin
-        @info "one tree, all"
-        run_jump_tests(inst_all, true, false, oa_solver)
-        @info "one tree, not extended"
-        run_jump_tests(inst_noextend, false, false, oa_solver)
+    @testset "sep only" begin
+        @testset "iterative" begin
+            @testset "all" begin
+                run_jump_tests(inst_all, true, true, false, oa_solver)
+            end
+            @testset "no ext" begin
+                run_jump_tests(inst_noextend, false, true, false, oa_solver)
+            end
+        end
+        @testset "one tree" begin
+            @testset "all" begin
+                run_jump_tests(inst_all, true, false, false, oa_solver)
+            end
+            @testset "no ext" begin
+                run_jump_tests(inst_noextend, false, false, false, oa_solver)
+            end
+        end
     end
     return
 end
@@ -78,6 +102,7 @@ function run_jump_tests(
     insts::Vector{String},
     use_extended_form::Bool,
     use_iterative_method::Bool,
+    solve_relax_subp::Bool,
     oa_solver,
 )
     hypatia = MOI.OptimizerWithAttributes(
@@ -100,8 +125,9 @@ function run_jump_tests(
         "sep_solver" => hypatia,
         "use_extended_form" => use_extended_form,
         "use_iterative_method" => use_iterative_method,
-        "debug_cuts" => use_iterative_method,
-        "iteration_limit" => 30,
+        "solve_relaxation" => solve_relax_subp,
+        "solve_subproblems" => solve_relax_subp,
+        "iteration_limit" => 200,
         # "time_limit" => 120.0,
     )
 
