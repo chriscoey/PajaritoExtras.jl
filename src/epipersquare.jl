@@ -30,7 +30,10 @@ function MOIPajarito.Cones.create_cache(
     return cache
 end
 
-per_square(v::RealF, w::AbstractVector{RealF}) = sum(w_i / 2v * w_i for w_i in w)
+function per_square(v::RealF, w::AbstractVector{RealF})
+    den = 2 * max(v, 1e-9)
+    return sum(w_i / den * w_i for w_i in w)
+end
 
 function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
@@ -48,14 +51,13 @@ function MOIPajarito.Cones.get_sep_cuts(
     us = s[1]
     vs = s[2]
     @views ws = s[3:end]
-    rhs = per_square(vs, ws)
-    if us - rhs > -1e-7 # TODO option
+    if us - per_square(vs, ws) > -1e-7 # TODO option
         return AE[]
     end
 
-    # gradient cut is (1, rhs / vs, -ws / vs)
-    q = rhs / vs
-    r = ws / -vs
+    # gradient cut is (1, ‖w‖² / (2 * vs²), -ws / vs)
+    r = ws / -max(vs, 1e-9)
+    q = 0.5 * sum(abs2, r)
     return _get_cuts(q, r, cache, opt)
 end
 

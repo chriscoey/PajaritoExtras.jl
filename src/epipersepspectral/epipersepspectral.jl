@@ -27,7 +27,7 @@ function MOIPajarito.Cones.create_cache(
 end
 
 function per_sepspec(f::Function, h::SepSpectralFun, v::RealF, w::AbstractVector{RealF})
-    v < 1e-12 && return 0.0
+    v < 1e-12 && return 0.0 # TODO?
     if v == 1
         return f(w, h)
     end

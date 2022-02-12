@@ -85,21 +85,22 @@ function MOIPajarito.Cones.get_sep_cuts(s::Vector{RealF}, cache::Cache, opt::Opt
     constr = cache.sep_constr
     model = JuMP.owner_model(constr)
     MOI.modify(JuMP.backend(model), JuMP.index(constr), MOI.VectorConstantChange(s))
-
-    # @warn("solving separation subproblem for $(typeof(cache))")
     JuMP.optimize!(model)
-    stat = JuMP.termination_status(model)
-    @show stat
 
+    stat = JuMP.termination_status(model)
     if stat in (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL)
         return AE[]
     elseif stat in (MOI.INFEASIBLE, MOI.ALMOST_INFEASIBLE) && JuMP.has_duals(model)
         z = JuMP.dual(constr)
         @show norm(z)
-        # TODO maybe rescale by norm, like for subproblem rays?
-        return MOIPajarito.Cones.get_subp_cuts(z, cache, opt)
+        @show LinearAlgebra.dot(s, z)
+        if LinearAlgebra.dot(s, z) < -1e-7
+            # TODO maybe rescale by norm, like for subproblem rays?
+            return MOIPajarito.Cones.get_subp_cuts(z, cache, opt)
+        end
+    else
+        @warn("separation subproblem status was $stat")
     end
-    @warn("separation subproblem status was $stat")
     return AE[]
 end
 

@@ -95,7 +95,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     for P in cache.Ps
         Λ = P' * Diagonal(s) * P
         F = eigen!(Hermitian(Λ, :U), -Inf, -1e-7)
-        isempty(F.values) && return AE[]
+        isempty(F.values) && continue
 
         PV = P * F.vectors
         for PV_i in eachcol(PV)

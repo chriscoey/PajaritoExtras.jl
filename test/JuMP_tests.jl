@@ -110,6 +110,7 @@ function run_jump_tests(
         MOI.Silent() => true,
         "near_factor" => 1000,
         "tol_feas" => 1e-10,
+        "tol_infeas" => 1e-12,
         "tol_rel_opt" => 1e-9,
         "tol_abs_opt" => 1e-8,
         "tol_illposed" => 1e-9,
@@ -119,7 +120,7 @@ function run_jump_tests(
 
     opt = JuMP.optimizer_with_attributes(
         MOIPajarito.Optimizer,
-        # "verbose" => true,
+        "verbose" => true,
         "oa_solver" => oa_solver,
         "conic_solver" => hypatia,
         "sep_solver" => hypatia,
@@ -132,9 +133,11 @@ function run_jump_tests(
     )
 
     @testset "$inst" for inst in insts
+        println()
         @info inst
         eval(Symbol(inst))(opt)
     end
+    println()
     return
 end
 

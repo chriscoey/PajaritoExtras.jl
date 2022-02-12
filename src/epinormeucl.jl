@@ -51,7 +51,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     end
 
     # gradient cut is (1, -ws / ‖ws‖)
-    r = -inv(ws_norm) * ws
+    r = ws / -ws_norm
     return _get_cuts(r, cache, opt)
 end
 

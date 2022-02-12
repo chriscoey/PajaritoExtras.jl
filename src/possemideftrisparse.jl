@@ -89,7 +89,7 @@ function MOIPajarito.Cones.get_sep_cuts(
         mul!(R_i, r_i, r_i')
         clean_array!(R_i) && continue
         R_vec_i = smat_to_svec_sparse(R_i, cache)
-        cut = dot_expr(R_vec_i, oa_w, opt)
+        cut = dot_expr(R_vec_i, cache.oa_s, opt)
         push!(cuts, cut)
     end
     return cuts
@@ -148,7 +148,7 @@ function smat_to_svec_sparse(
     mat::AbstractMatrix{RealF},
     cache::PosSemidefTriSparse{<:PrimDual, RealF},
 )
-    vec = zeros(length(cone.row_idxs))
+    vec = zeros(length(cache.row_idxs))
     @inbounds for (idx, (i, j)) in enumerate(zip(cache.row_idxs, cache.col_idxs))
         x = mat[i, j]
         if i != j

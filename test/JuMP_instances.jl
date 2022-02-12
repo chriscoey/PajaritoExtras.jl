@@ -119,6 +119,7 @@ function possemideftrisparse2(opt)
     m = JuMP.Model(opt)
 
     JuMP.@variable(m, y[1:3], Int)
+    JuMP.@constraint(m, y .<= 20)
     JuMP.@objective(m, Min, sum(y))
     aff = [8, -2, -4, y[1], 7, y[2], 5, y[3], -6, 5]
     JuMP.@constraint(m, y .>= 3)

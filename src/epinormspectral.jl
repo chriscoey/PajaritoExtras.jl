@@ -78,7 +78,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     cache::EpiNormSpectral{Prim},
     opt::Optimizer,
 )
-    # decomposed gradient cut is (1, -Uᵢ * Vtᵢ)
+    # decomposed gradient cut is (1, -Uᵢ Vtᵢ)
     us = s[1]
     F = get_svd(s, cache)
     cuts = AE[]
@@ -86,7 +86,7 @@ function MOIPajarito.Cones.get_sep_cuts(
         if σ_i < 1e-7 || us - σ_i > -1e-7
             break
         end
-        cut = _get_cut(1.0, i, F.U, F.Vt, cache, opt)
+        cut = _get_cut(-1.0, i, F.U, F.Vt, cache, opt)
         push!(cuts, cut)
     end
     return cuts
@@ -105,7 +105,7 @@ function _get_cut(
     R_i = cache.W_temp
     @views mul!(R_i, U[:, i], transpose(Vt[i, :]), σ_i, false)
     R_vec_i = vec_copyto!(cache.w_temp, R_i) # TODO maybe reinterpret
-    return JuMP.@expression(opt.oa_model, σ_i * u + JuMP.dot(R_vec_i, w))
+    return JuMP.@expression(opt.oa_model, abs(σ_i) * u + JuMP.dot(R_vec_i, w))
 end
 
 # dual cone functions
@@ -130,7 +130,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     cache::EpiNormSpectral{Dual},
     opt::Optimizer,
 )
-    # gradient cut is (1, -∑ᵢ Uᵢ * Vtᵢ)
+    # gradient cut is (1, -∑ᵢ Uᵢ Vtᵢ)
     # TODO check math
     F = get_svd(s, cache)
     (s[1] - sum(F.S) > -1e-7) && return AE[]
