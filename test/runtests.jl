@@ -11,7 +11,8 @@ gurobi = MOI.OptimizerWithAttributes(
     "IntFeasTol" => 1e-9,
     "FeasibilityTol" => 1e-9,
     "MIPGap" => 1e-9,
-    "DualReductions" => 0, # fixes infeasible or unbounded status
+    "DualReductions" => 0, # fix infeasible or unbounded statuses
+    "InfUnbdInfo" => 1, # get ray of the primal OA continuous relaxation
 )
 
 # import GLPK
