@@ -55,8 +55,6 @@ function MOIPajarito.Cones.get_subp_cuts(
     F = eigen(Hermitian(R, :U))
     V = F.vectors
     ω = F.values
-    @assert all(>(-1e-7), ω)
-    @assert geomean(ω) - p > -1e-7
 
     cuts = AE[]
     if p > -1e-7
@@ -85,8 +83,10 @@ function MOIPajarito.Cones.get_sep_cuts(
     F = eigen(Hermitian(Ws, :U))
     V = F.vectors
     ω = F.values
-    num_neg = count(<(-1e-7), ω)
-    iszero(num_neg) && us < 1e-7 && return AE[]
+    num_neg = count(<(-opt.tol_feas), ω)
+    if iszero(num_neg) && us < opt.tol_feas
+        return AE[]
+    end
     @assert issorted(ω)
 
     cuts = AE[]
@@ -97,7 +97,7 @@ function MOIPajarito.Cones.get_sep_cuts(
         cuts = _get_psd_cuts(V_neg, w, cache, opt)
     end
 
-    geomean(ω) - us > -1e-7 && return AE[]
+    geomean(ω) - us > -opt.tol_feas && return AE[]
     # gradient cut is (-1, V * Diagonal(geom(ω) / d ./ ω) * V')
     ω_pos = max.(ω, 1e-7)
     rω = (geomean(ω_pos) / cache.d) ./ ω_pos

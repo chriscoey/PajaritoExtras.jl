@@ -3,12 +3,12 @@ insts = OrderedDict()
 
 insts["test"] = [
     # rootdet
-    ((3, MatNegRtdet()),),
-    ((3, MatNegRtdetEFExp()),),
-    ((3, MatNegRtdetEFPow()),),
+    ((4, MatNegRtdet()),),
+    ((4, MatNegRtdetEFExp()),),
+    ((4, MatNegRtdetEFPow()),),
     # tr neglog
-    ((4, MatNegLog()),),
-    ((4, MatNegLogDirect()),),
+    ((5, MatNegLog()),),
+    ((5, MatNegLogDirect()),),
     # tr negentropy
     ((3, MatNegEntropy()),),
     ((3, MatNegEntropyEigOrd()),),
@@ -16,8 +16,8 @@ insts["test"] = [
     ((3, MatNegSqrt()),),
     ((3, MatNegSqrtEigOrd()),),
     # tr negpower01
-    ((4, MatNegPower01(0.7)),),
-    ((4, MatNegPower01EigOrd(0.7)),),
+    ((3, MatNegPower01(0.7)),),
+    ((3, MatNegPower01EigOrd(0.7)),),
     # tr power12
     ((3, MatPower12(1.3)),),
     ((3, MatPower12EigOrd(1.3)),),

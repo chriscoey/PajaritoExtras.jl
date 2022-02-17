@@ -73,7 +73,7 @@ function MOIPajarito.Cones.get_sep_cuts(
 
     (us, vs) = swap_epiper(D, s[1:2]...)
     v_pos = max(vs, 1e-9)
-    if us - per_sepspec(val_or_conj(D), h, v_pos, ws) > -1e-7
+    if us - per_sepspec(val_or_conj(D), h, v_pos, ws) > -opt.tol_feas
         return AE[]
     end
 
@@ -110,6 +110,7 @@ end
 function MOIPajarito.Cones.extend_start(
     cache::VectorEpiPerSepSpectral{D, Ext},
     s_start::Vector{RealF},
+    opt::Optimizer,
 ) where {D}
     (_, v_start) = swap_epiper(D, s_start[1:2]...)
     @views w_start = s_start[3:end]
@@ -140,7 +141,7 @@ function _get_cuts(
     cuts = AE[]
     for i in 1:(cache.d)
         r_i = r[i]
-        # r_i = min(r[i], 1e-7) # iszero(r_i) && continue
+        # r_i = min(r[i], 1e-7) # iszero(r_i) && continue # TODO?
         # strengthened disaggregated cut on (λᵢ, v, wᵢ) is (p, p * h⋆(rᵢ / p), rᵢ)
         # TODO check math
         q = per_sepspec(conj_or_val(D), cache.h, p, [r_i])

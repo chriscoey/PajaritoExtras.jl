@@ -93,11 +93,14 @@ end
 
 MOIPajarito.Cones.num_ext_variables(cache::EpiPerSquare{Ext}) = cache.d
 
-function MOIPajarito.Cones.extend_start(cache::EpiPerSquare{Ext}, s_start::Vector{RealF})
+function MOIPajarito.Cones.extend_start(
+    cache::EpiPerSquare{Ext},
+    s_start::Vector{RealF},
+    opt::Optimizer,
+)
     u_start = s_start[1]
     v_start = s_start[2]
     w_start = s_start[3:end]
-    @assert u_start - per_square(v_start, w_start) >= -1e-7 # TODO
     if max(u_start, v_start) < 1e-8
         return zeros(cache.d)
     end

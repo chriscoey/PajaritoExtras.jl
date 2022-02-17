@@ -78,7 +78,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     # TODO use Arpack for non-dense implementation
     # @warn("no separation oracle implemented for PosSemidefTriSparse", maxlog = 1)
     Λ = svec_to_smat_sparse(s, cache)
-    F = eigen!(Hermitian(Λ, :L), -Inf, -1e-7)
+    F = eigen!(Hermitian(Λ, :L), -Inf, -opt.tol_feas)
     isempty(F.values) && return AE[]
 
     cuts = AE[]

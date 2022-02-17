@@ -68,7 +68,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     if dom_pos(D, cache.h) && abs(q) < 1e-7
         # TODO decide when to add
         # add eigenvector cuts
-        num_pos = count(>(1e-7), ω)
+        num_pos = count(>(1e-8), ω)
         @views V_neg = V[:, 1:num_pos] * Diagonal(sqrt.(ω[1:num_pos]))
         @views w = cache.oa_s[3:end]
         cuts = _get_psd_cuts(V_neg, w, cache, opt)
@@ -94,7 +94,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     cuts = AE[]
 
     if dom_pos(D, h)
-        num_neg = count(<(-1e-7), ω)
+        num_neg = count(<(-opt.tol_feas), ω)
         if !iszero(num_neg)
             # add eigenvector cuts
             V_neg = V[:, 1:num_neg]
@@ -107,7 +107,7 @@ function MOIPajarito.Cones.get_sep_cuts(
 
     (us, vs) = swap_epiper(D, s[1:2]...)
     v_pos = max(vs, 1e-7)
-    if us - per_sepspec(val_or_conj(D), h, v_pos, ω) > -1e-7
+    if us - per_sepspec(val_or_conj(D), h, v_pos, ω) > -opt.tol_feas
         return cuts
     end
 

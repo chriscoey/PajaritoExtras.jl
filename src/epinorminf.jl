@@ -88,7 +88,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     @views vec_copyto!(R, z[2:end])
     cuts = AE[]
     for (i, R_i) in enumerate(R)
-        abs(R_i) < 1e-7 && continue
+        abs(R_i) < 1e-9 && continue
         cut = _get_cut(R_i, i, cache, opt)
         push!(cuts, cut)
     end
@@ -114,7 +114,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     cuts = AE[]
     for (i, Ws_i) in enumerate(Ws)
         abs_i = abs(Ws_i)
-        if abs_i < 1e-7 || us - abs_i > -1e-7
+        if abs_i < opt.tol_feas || us - abs_i > -opt.tol_feas
             continue
         end
         R_i = Ws_i / -abs_i
@@ -154,14 +154,14 @@ function MOIPajarito.Cones.get_sep_cuts(
     us = s[1]
     Ws = cache.W_temp
     @views vec_copyto!(Ws, s[2:end])
-    if us - norm(Ws, 1) > -1e-7
+    if us - norm(Ws, 1) > -opt.tol_feas
         return AE[]
     end
 
     # gradient cut is (1, (-Wsᵢ / ‖Wsᵢ‖)ᵢ)
     R = zero(Ws)
     for (i, Ws_i) in enumerate(Ws)
-        if abs(Ws_i) > 1e-12
+        if abs(Ws_i) > 1e-10
             R[i] = -Ws_i / abs(Ws_i)
         end
     end
@@ -226,8 +226,11 @@ end
 function MOIPajarito.Cones.extend_start(
     cache::EpiNormInf{Dual, C, Ext},
     s_start::Vector{RealF},
+    opt::Optimizer,
 ) where {C}
-    s_start[1] < 1e-7 && return zeros(cache.d)
+    if s_start[1] < 1e-9
+        return zeros(cache.d)
+    end
     w_start = s_start[2:end]
     λ_start = abs.(reinterpret(C, w_start))
     return λ_start
@@ -301,7 +304,7 @@ function _get_cuts(R::Vector{CompF}, cache::EpiNormInf{Dual, CompF, Ext}, opt::O
     cuts = AE[]
     for (i, R_i) in enumerate(R)
         # strengthened disaggregated cut on (λᵢ, re(Wᵢ), im(Wᵢ)) is (‖Rᵢ‖, re(Rᵢ), im(Rᵢ))
-        abs(R_i) < 1e-7 && continue
+        abs(R_i) < 1e-9 && continue
         cut = _get_cut(R_i, i, cache, opt)
         push!(cuts, cut)
     end

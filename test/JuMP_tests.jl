@@ -116,6 +116,7 @@ function run_jump_tests(
         "tol_illposed" => 1e-9,
         "tol_slow" => 2e-2,
         "tol_inconsistent" => 1e-7,
+        "tol_tau_infeas" => 1e-7, # TODO tune
     )
 
     opt = JuMP.optimizer_with_attributes(

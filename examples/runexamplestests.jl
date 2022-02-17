@@ -3,22 +3,25 @@ run examples tests from the examples folder
 =#
 
 # uncomment path for writing to results CSV
-results_path = nothing
-# results_path = joinpath(mkpath(joinpath(@__DIR__, "..", "benchmarks", "raw")), "bench.csv")
+# results_path = nothing
+results_path = joinpath(mkpath(joinpath(@__DIR__, "..", "benchmarks", "raw")), "bench.csv")
 
 import MathOptInterface
 const MOI = MathOptInterface
+
 import Gurobi
 gurobi = MOI.OptimizerWithAttributes(
     Gurobi.Optimizer,
     MOI.Silent() => true,
     "IntFeasTol" => 1e-9,
     "FeasibilityTol" => 1e-9,
-    "MIPGap" => 1e-10,
-    "DualReductions" => 0, # fixes infeasible or unbounded status
+    "MIPGap" => 1e-9,
+    "DualReductions" => 0, # fix infeasible or unbounded statuses
+    "InfUnbdInfo" => 1, # get ray of the primal OA continuous relaxation
 )
 
 # default MOIPajarito options
+
 default_options = (;
     verbose = true,
     # verbose = false,
@@ -26,8 +29,10 @@ default_options = (;
     use_extended_form = true,
     use_iterative_method = true,
     # use_iterative_method = false,
-    # iteration_limit = 30,
-    # time_limit = 120.0,
+    solve_relaxation = true,
+    solve_subproblems = true,
+    iteration_limit = 500,
+    time_limit = 120.0,
 )
 
 # instance sets to run

@@ -54,7 +54,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     F = get_eig(z, cache)
     cuts = AE[]
     for (i, σ_i) in enumerate(F.values)
-        abs(σ_i) < 1e-7 && continue
+        abs(σ_i) < 1e-8 && continue
         cut = _get_cut(σ_i, i, F.vectors, cache, opt)
         push!(cuts, cut)
     end
@@ -72,7 +72,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     F = get_eig(s, cache)
     cuts = AE[]
     for (i, σ_i) in enumerate(F.values)
-        if abs(σ_i) < 1e-7 || us - abs(σ_i) > -1e-7
+        if abs(σ_i) < opt.tol_feas || us - abs(σ_i) > -opt.tol_feas
             continue
         end
         cut = _get_cut(-sign(σ_i), i, F.vectors, cache, opt)
@@ -108,7 +108,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     # TODO extreme ray decomposition?
     F = get_eig(z, cache)
     p = maximum(abs, F.values)
-    p < 1e-7 && return AE[]
+    p < 1e-8 && return AE[]
     z2 = vcat(p, z[2:end])
     cut = dot_expr(z2, cache.oa_s, opt)
     return [cut]
@@ -122,7 +122,9 @@ function MOIPajarito.Cones.get_sep_cuts(
     # gradient cut is (1, -∑ᵢ sign(σ_i) Vᵢ Vᵢ')
     # TODO check math
     F = get_eig(s, cache)
-    (s[1] - sum(abs, F.values) > -1e-7) && return AE[]
+    if s[1] - sum(abs, F.values) > -opt.tol_feas
+        return AE[]
+    end
     R = F.vectors * Diagonal(-sign.(F.values)) * F.vectors'
     R_vec = smat_to_svec!(cache.w_temp, R, rt2)
     z2 = vcat(1, R_vec)

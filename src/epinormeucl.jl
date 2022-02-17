@@ -46,7 +46,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     us = s[1]
     @views ws = s[2:end]
     ws_norm = LinearAlgebra.norm(ws)
-    if us - ws_norm > -1e-7 # TODO option
+    if us - ws_norm > -opt.tol_feas
         return AE[]
     end
 
@@ -84,11 +84,14 @@ end
 
 MOIPajarito.Cones.num_ext_variables(cache::EpiNormEucl{Ext}) = cache.d
 
-function MOIPajarito.Cones.extend_start(cache::EpiNormEucl{Ext}, s_start::Vector{RealF})
+function MOIPajarito.Cones.extend_start(
+    cache::EpiNormEucl{Ext},
+    s_start::Vector{RealF},
+    opt::Optimizer,
+)
     u_start = s_start[1]
     w_start = s_start[2:end]
-    @assert u_start - LinearAlgebra.norm(w_start) >= -1e-7 # TODO
-    if u_start < 1e-8
+    if u_start < 1e-9
         return zeros(cache.d)
     end
     return [w_i / 2u_start * w_i for w_i in w_start]

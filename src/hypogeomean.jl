@@ -52,8 +52,7 @@ function MOIPajarito.Cones.get_sep_cuts(
 )
     us = s[1]
     @views ws = s[2:end]
-    @assert all(>(-1e-7), ws)
-    if us < 1e-7 || geomean(ws) - us > -1e-7
+    if us < opt.tol_feas || geomean(ws) - us > -opt.tol_feas
         return AE[]
     end
 
@@ -92,16 +91,17 @@ end
 
 MOIPajarito.Cones.num_ext_variables(cache::HypoGeoMean{Ext}) = 1 + cache.d
 
-function MOIPajarito.Cones.extend_start(cache::HypoGeoMean{Ext}, s_start::Vector{RealF})
+function MOIPajarito.Cones.extend_start(
+    cache::HypoGeoMean{Ext},
+    s_start::Vector{RealF},
+    opt::Optimizer,
+)
     u_start = s_start[1]
     w_start = s_start[2:end]
-    w_geom = geomean(w_start)
-    @assert w_geom - u_start >= -1e-7 # TODO
     if u_start < 1e-8
         return zeros(1 + cache.d)
     end
     λ_start = [u_start * log(w_i / u_start) for w_i in w_start]
-    @assert sum(λ_start) >= -1e-7
     return vcat(u_start, λ_start)
 end
 

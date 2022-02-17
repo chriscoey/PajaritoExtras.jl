@@ -94,7 +94,7 @@ function MOIPajarito.Cones.get_sep_cuts(s::Vector{RealF}, cache::Cache, opt::Opt
         z = JuMP.dual(constr)
         @show norm(z)
         @show LinearAlgebra.dot(s, z)
-        if LinearAlgebra.dot(s, z) < -1e-7
+        if LinearAlgebra.dot(s, z) < -opt.tol_feas
             # TODO maybe rescale by norm, like for subproblem rays?
             return MOIPajarito.Cones.get_subp_cuts(z, cache, opt)
         end

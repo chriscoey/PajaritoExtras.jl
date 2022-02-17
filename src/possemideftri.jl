@@ -90,7 +90,7 @@ function MOIPajarito.Cones.get_sep_cuts(
 )
     Ws = cache.W_temp
     svec_to_smat!(Ws, s, rt2)
-    F = eigen(Hermitian(Ws, :U), -Inf, -1e-7)
+    F = eigen(Hermitian(Ws, :U), -Inf, -opt.tol_feas)
     isempty(F.values) && return AE[]
     return _get_psd_cuts(F.vectors, cache.oa_s, cache, opt)
 end

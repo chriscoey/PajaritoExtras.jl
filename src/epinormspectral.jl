@@ -66,7 +66,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     F = get_svd(z, cache)
     cuts = AE[]
     for (i, σ_i) in enumerate(F.S)
-        σ_i < 1e-7 && break
+        σ_i < 1e-8 && break
         cut = _get_cut(σ_i, i, F.U, F.Vt, cache, opt)
         push!(cuts, cut)
     end
@@ -83,7 +83,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     F = get_svd(s, cache)
     cuts = AE[]
     for (i, σ_i) in enumerate(F.S)
-        if σ_i < 1e-7 || us - σ_i > -1e-7
+        if σ_i < opt.tol_feas || us - σ_i > -opt.tol_feas
             break
         end
         cut = _get_cut(-1.0, i, F.U, F.Vt, cache, opt)
@@ -119,7 +119,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     # TODO extreme ray decomposition?
     F = get_svd(z, cache)
     p = F.S[1]
-    p < 1e-7 && return AE[]
+    p < 1e-8 && return AE[]
     z2 = vcat(p, z[2:end])
     cut = dot_expr(z2, cache.oa_s, opt)
     return [cut]
@@ -133,7 +133,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     # gradient cut is (1, -∑ᵢ Uᵢ Vtᵢ)
     # TODO check math
     F = get_svd(s, cache)
-    (s[1] - sum(F.S) > -1e-7) && return AE[]
+    (s[1] - sum(F.S) > -opt.tol_feas) && return AE[]
     R = -F.U * F.Vt
     R_vec = vec_copyto!(cache.w_temp, R) # TODO maybe reinterpret
     z2 = vcat(1, R_vec)
