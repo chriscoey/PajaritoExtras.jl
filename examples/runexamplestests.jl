@@ -9,6 +9,15 @@ results_path = joinpath(mkpath(joinpath(@__DIR__, "..", "benchmarks", "raw")), "
 import MathOptInterface
 const MOI = MathOptInterface
 
+# import GLPK
+# glpk = MOI.OptimizerWithAttributes(
+#     GLPK.Optimizer,
+#     MOI.Silent() => true,
+#     "tol_int" => 1e-10,
+#     "tol_bnd" => 1e-10,
+#     "mip_gap" => 1e-10,
+# )
+
 import Gurobi
 gurobi = MOI.OptimizerWithAttributes(
     Gurobi.Optimizer,
@@ -26,11 +35,14 @@ default_options = (;
     verbose = true,
     # verbose = false,
     oa_solver = gurobi,
+    # oa_solver = glpk,
     use_extended_form = true,
     use_iterative_method = true,
     # use_iterative_method = false,
     solve_relaxation = true,
     solve_subproblems = true,
+    # solve_relaxation = false,
+    # solve_subproblems = false,
     iteration_limit = 500,
     time_limit = 120.0,
 )
