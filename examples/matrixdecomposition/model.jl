@@ -56,12 +56,10 @@ function test_extra(inst::MatrixDecomposition, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    # check integer feasibility
     tol = eps()^0.2
     X = JuMP.value.(model.ext[:X])
     @test X ≈ round.(Int, X) atol = tol rtol = tol
     @test all(-tol .<= X .<= 1 + tol)
-
     # check nuclear norm value
     tol = eps()^0.2
     u = JuMP.value.(model.ext[:u])

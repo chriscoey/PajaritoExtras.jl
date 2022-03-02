@@ -87,12 +87,10 @@ function test_extra(inst::InverseCovariance, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    # check integer feasibility
     tol = eps()^0.2
     z = JuMP.value.(model.ext[:z])
     @test z ≈ round.(Int, z) atol = tol rtol = tol
     @test all(-tol .<= z .<= 1 + tol)
-
     # check conic feasibility
     P_vec = JuMP.value.(model.ext[:P_vec])
     P = Cones.svec_to_smat!(zeros(inst.d, inst.d), P_vec, rt2)

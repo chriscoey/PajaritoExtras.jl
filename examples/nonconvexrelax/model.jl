@@ -1,17 +1,10 @@
 #=
-In the original nonconvex problem, there are disjunctions over nonconvex constraints,
-where the nonconvex constraints are like cone boundary or outside-cone conditions, with cones
-for which we have extended formulations involving only 3-dimensional cones. We relax this
-disjunctive nonconvex problem to a mixed-integer convex problem using efficient `effectively
-univariate` piecewise linear formulations of the 3-dimensional cone boundaries in the
-extended formulation.
-
-We can think of designing a modular device using parts from a catalog. For each module we
-pick one corresponding part from the catalog, satisfying a constraint associated with the
-part. These constraints involve certain global design variables (e.g. weight, size,
-lifetime, battery power). We minimize the cost of the parts plus a linear function of the
-global design variables. We could handle more complex constraints linking parts/modules and
-design variables, but we keep this model simple.
+design a modular device using parts from a catalog:
+- for each module we pick one corresponding part from the catalog, satisfying a constraint
+associated with the part
+- these constraints involve certain global design variables (e.g. weight, size,
+lifetime, battery power)
+- we minimize the cost of the parts plus a linear function of the global design variables
 
 sets:
 i ∈ 1..m          modules
@@ -53,7 +46,6 @@ function build(inst::NonconvexRelax)
     # generate random solution to ensure feasibility
     x0 = rand(Bool, m, jmax)
     y0 = 2 * rand(n)
-    @show y0
 
     # generate parameters
     c = 10 * rand(m, jmax)
@@ -64,7 +56,7 @@ function build(inst::NonconvexRelax)
     model = JuMP.Model()
     y = JuMP.@variable(model, [1:n])
     x = JuMP.@variable(model, [1:m, 1:jmax], Bin)
-    # JuMP.@objective(model, Min, dot(c, x) + dot(d, y))
+    # JuMP.@objective(model, Min, dot(c, x) + dot(d, y)) # TODO
     JuMP.@objective(model, Min, dot(c, x) - sum(y))
 
     # disjunctive copies-of-variables formulation
@@ -90,15 +82,6 @@ function build(inst::NonconvexRelax)
     model.ext[:y] = y
     model.ext[:z] = z
 
-    # JuMP.set_optimizer(model, Gurobi.Optimizer)
-    # JuMP.optimize!(model)
-
-    # @show JuMP.value.(x)
-    # @show JuMP.value.(y)
-    # @show sum(abs2, JuMP.value.(y)) / 2
-    # @show JuMP.value.(z)
-    # error()
-
     return model
 end
 
@@ -107,17 +90,12 @@ function test_extra(inst::NonconvexRelax, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    # check integer feasibility
     tol = eps()^0.2
     x = JuMP.value.(model.ext[:x])
-    @show x
     @test x ≈ round.(Int, x) atol = tol rtol = tol
     @test all(-tol .<= x .<= 1 + tol)
-
     y = JuMP.value.(model.ext[:y])
     z = JuMP.value.(model.ext[:z])
-    @show y
-    @show z
     # TODO
 
     return

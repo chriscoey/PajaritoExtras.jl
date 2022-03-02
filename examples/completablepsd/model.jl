@@ -85,7 +85,6 @@ function test_extra(inst::CompletablePSD, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    # check feasibility
     tol = eps()^0.2
     x = JuMP.value.(model.ext[:x])
     @test x ≈ round.(Int, x) atol = tol rtol = tol

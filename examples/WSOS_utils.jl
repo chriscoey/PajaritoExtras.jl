@@ -37,7 +37,7 @@ function make_nonneg_poly(U::Int, model::JuMP.Model, con::JuMP.ConstraintRef)
     end
 end
 
-# find minimum value of a polynomial (solve primal polymin)
+# find minimum value of a polynomial - solve primal polymin
 function find_poly_min(vals::Vector{Float64}, Ps::Vector{Matrix{Float64}})
     U = size(Ps[1], 1)
     K = Hypatia.WSOSInterpNonnegativeCone{Float64, Float64}(U, Ps)
@@ -49,6 +49,18 @@ function find_poly_min(vals::Vector{Float64}, Ps::Vector{Matrix{Float64}})
     JuMP.optimize!(model)
     @assert JuMP.termination_status(model) in (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL)
     return JuMP.dual_objective_value(model)
+end
+
+# check whether polynomial is nonnegative (actually SOS) - solve separation problem
+function check_nonneg(vals::Vector{Float64}, Ps::Vector{Matrix{Float64}})
+    U = size(Ps[1], 1)
+    K = Hypatia.WSOSInterpNonnegativeCone{Float64, Float64}(U, Ps)
+    model = JuMP.Model(sep_hypatia)
+    JuMP.@constraint(model, vals in K)
+
+    JuMP.optimize!(model)
+    @show JuMP.termination_status(model)
+    return (JuMP.termination_status(model) in (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL))
 end
 
 # add a WSOS constraint

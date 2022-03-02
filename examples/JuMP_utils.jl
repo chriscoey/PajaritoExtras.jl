@@ -109,13 +109,14 @@ function get_solve_stats(model::JuMP.Model)
     paj_ext = opt.use_extended_form
     paj_iter = opt.use_iterative_method
 
-    iters_nodes = if paj_iter
-        opt.num_iters
-    else
-        # JuMP.node_count(model) # TODO see https://github.com/jump-dev/Gurobi.jl/issues/444
-        # Int(MOI.get(MOI.get(opt.oa_model, MOI.RawSolver()), MOI.NodeCount()))
-        Int(MOI.get(opt.oa_opt, MOI.NodeCount()))
+    nodes = -1
+    try
+        nodes = MOI.get(opt.oa_opt, MOI.NodeCount())
+    catch e
+        @warn "could not get nodecount"
+        println(e, "\n")
     end
+    iters = opt.num_iters
     num_subp = length(opt.int_sols_cuts)
     num_cuts = opt.num_cuts
 
@@ -124,7 +125,8 @@ function get_solve_stats(model::JuMP.Model)
         paj_iter,
         status,
         solve_time,
-        iters_nodes,
+        nodes,
+        iters,
         num_subp,
         num_cuts,
         primal_obj,

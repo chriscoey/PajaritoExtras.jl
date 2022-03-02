@@ -44,6 +44,7 @@ function build(inst::PolyFacilityLocation)
     c = rand(n, m)
     d = make_nonneg_polys(m, Ps)
     u = make_nonneg_polys(n, Ps)
+
     # make feasible by ensuring sum(u) > 2 * sum(d)
     excess = find_poly_min(sum(u) - 2 * sum(d), Ps)
     incr = 0.1 - excess / n
@@ -65,18 +66,27 @@ function build(inst::PolyFacilityLocation)
     )
 
     add_wsos(aff) = (inst.use_nat ? add_wsos_nat : add_wsos_ext)(Ps, aff, model)
+
     for i in 1:n, j in 1:m
         add_wsos(y[i, j, :])
     end
+
+    JuMP.@expression(model, prod[i in 1:n], u[i] * x[i] - sum(y[i, j, :] for j in 1:m))
     for i in 1:n
-        add_wsos(JuMP.@expression(model, u[i] * x[i] - sum(y[i, j, :] for j in 1:m)))
+        add_wsos(prod[i])
     end
+
+    JuMP.@expression(model, dem[j in 1:m], sum(y[i, j, :] for i in 1:n) - d[j])
     for j in 1:m
-        add_wsos(JuMP.@expression(model, sum(y[i, j, :] for i in 1:n) - d[j]))
+        add_wsos(dem[j])
     end
 
     # save for use in tests
     model.ext[:x] = x
+    model.ext[:y] = y
+    model.ext[:prod] = prod
+    model.ext[:dem] = dem
+    model.ext[:Ps] = Ps
 
     return model
 end
@@ -86,14 +96,15 @@ function test_extra(inst::PolyFacilityLocation, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    # check integer feasibility
     tol = eps()^0.2
     x = JuMP.value.(model.ext[:x])
     @test x ≈ round.(Int, x) atol = tol rtol = tol
     @test all(-tol .<= x .<= 1 + tol)
-
-    # TODO check nonnegativity of wsos constraint functions
-    # can just solve the separation problem to check feasibility
-    # maybe also plot to check visually
+    # check WSOS feasibility
+    Ps = model.ext[:Ps]
+    y = JuMP.value.(model.ext[:y])
+    @test all(check_nonneg(y[i, j, :] .+ tol, Ps) for i in 1:(inst.n), j in 1:(inst.m))
+    @test all(check_nonneg(JuMP.value.(p_i) .+ tol, Ps) for p_i in model.ext[:prod])
+    @test all(check_nonneg(JuMP.value.(d_j) .+ tol, Ps) for d_j in model.ext[:dem])
     return
 end

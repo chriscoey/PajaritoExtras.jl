@@ -7,20 +7,20 @@ insts["test"] = [
     ((4, MatNegRtdetEFExp()),),
     ((4, MatNegRtdetEFPow()),),
     # tr neglog
-    ((5, MatNegLog()),),
-    ((5, MatNegLogDirect()),),
+    ((4, MatNegLog()),),
+    ((4, MatNegLogDirect()),),
     # tr negentropy
     ((3, MatNegEntropy()),),
     ((3, MatNegEntropyEigOrd()),),
     # tr negsqrt
-    ((3, MatNegSqrt()),),
-    ((3, MatNegSqrtEigOrd()),),
+    ((2, MatNegSqrt()),),
+    ((2, MatNegSqrtEigOrd()),),
     # tr negpower01
     ((3, MatNegPower01(0.7)),),
     ((3, MatNegPower01EigOrd(0.7)),),
     # tr power12
-    ((3, MatPower12(1.3)),),
-    ((3, MatPower12EigOrd(1.3)),),
+    ((2, MatPower12(1.3)),),
+    ((2, MatPower12EigOrd(1.3)),),
 ]
 
 experimentdesign_insts(ext::MatSpecExt) = [((d, ext),) for d in vcat(3, 10:10:10)]

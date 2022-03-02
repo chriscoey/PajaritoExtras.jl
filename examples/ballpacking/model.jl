@@ -1,8 +1,8 @@
 #=
-A ball-packing type problem: choose centers and radii of m 2-norm balls into a box [0, 1]ⁿ in
-n-dimensional space, maximizing the sum of the radii. Constraints are nonconvex, so use
-piecewise linear techniques with extended formulations. Unbounded SOS2 formulations use
-second-order conic constraints.
+a ball-packing type problem: choose centers and radii of m 2-norm balls into a box [0, 1]ⁿ in
+n-dimensional space, maximizing the sum of the radii
+
+constraints are nonconvex, so use SOS2 or PWL techniques with extended formulations
 =#
 
 struct BallPacking <: ExampleInstance
@@ -59,13 +59,6 @@ function build(inst::BallPacking)
     model.ext[:R] = R
     model.ext[:C] = C
 
-    # JuMP.set_optimizer(model, Gurobi.Optimizer)
-    # JuMP.optimize!(model)
-
-    # @show JuMP.value.(R)
-    # @show JuMP.value.(C)
-    # error()
-
     return model
 end
 
@@ -76,12 +69,14 @@ function test_extra(inst::BallPacking, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    tol = eps()^0.2
+    tol_tight = eps()^0.4
+    tol_loose = eps()^0.1
     R = JuMP.value.(model.ext[:R])
     C = JuMP.value.(model.ext[:C])
-    @show R
-    @show C
-    # TODO verify condition (almost) for each pair of balls
-
+    @test all(-tol_tight .<= R .<= 0.5 + tol_tight)
+    @test all(-tol_tight .<= C .<= 1 + tol_tight)
+    for i in 1:(inst.m), j in 1:(i - 1)
+        @test R[i] + R[j] <= norm(C[i, :] - C[j, :]) + tol_loose
+    end
     return
 end

@@ -69,15 +69,14 @@ function test_extra(inst::MatrixRegression, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    # check objective
     tol = eps()^0.2
     A = JuMP.value.(model.ext[:A])
     (Y, X) = (model.ext[:Y], model.ext[:X])
+    # check objective
     loss = norm(Y - X * A)
     nuc = sum(svdvals(A))
     obj_result = loss + model.ext[:λ] * nuc
     @test JuMP.objective_value(model) ≈ obj_result atol = tol rtol = tol
-
     # check feasibility
     row_on = JuMP.value.(model.ext[:row_on])
     @test row_on ≈ round.(Int, row_on) atol = tol rtol = tol

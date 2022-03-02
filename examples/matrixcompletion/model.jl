@@ -80,11 +80,9 @@ function test_extra(inst::MatrixCompletion, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    # check integer feasibility
     tol = eps()^0.2
     x = JuMP.value.(model.ext[:x])
     @test x ≈ round.(Int, x) atol = tol rtol = tol
-
     # check objective
     X = JuMP.value.(model.ext[:X])
     s = (inst.symmetric ? abs.(eigvals(Symmetric(X, :U))) : svdvals(X))

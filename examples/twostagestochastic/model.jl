@@ -33,7 +33,7 @@ f - ∑ᵢ (yᵢ + zᵢ) ∈ P₊  capacity limit for all crops (f ∈ ℝ₊ is
 
 TODO
 - CVaR objective or other
-- if unlinked, variables can be partitioned when x is fixed, so could solve subproblems faster?
+- if unlinked, variables can be partitioned when x is fixed, so solve separate subproblems
 =#
 
 struct TwoStageStochastic <: ExampleInstance
@@ -85,11 +85,18 @@ function build(inst::TwoStageStochastic)
     end
 
     if inst.linked
-        add_wsos(f .- sum(y[i, :] + z[i, :] for i in 1:n))
+        fyz = JuMP.@expression(model, f .- sum(y[i, :] + z[i, :] for i in 1:n))
+        add_wsos(fyz)
     end
 
     # save for use in tests
     model.ext[:x] = x
+    model.ext[:y] = y
+    model.ext[:z] = z
+    if inst.linked
+        model.ext[:fyz] = fyz
+    end
+    model.ext[:Ps] = Ps
 
     return model
 end
@@ -99,9 +106,18 @@ function test_extra(inst::TwoStageStochastic, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    # check integer feasibility
     tol = eps()^0.2
     x = JuMP.value.(model.ext[:x])
     @test x ≈ round.(Int, x) atol = tol rtol = tol
+    # check WSOS feasibility
+    Ps = model.ext[:Ps]
+    y = JuMP.value.(model.ext[:y])
+    z = JuMP.value.(model.ext[:z])
+    @test all(check_nonneg(y[i, :] .+ tol, Ps) for i in 1:(inst.n))
+    @test all(check_nonneg(z[i, :] .+ tol, Ps) for i in 1:(inst.n))
+    if inst.linked
+        fyz = JuMP.value.(model.ext[:fyz])
+        @test check_nonneg(fyz .+ tol, Ps)
+    end
     return
 end

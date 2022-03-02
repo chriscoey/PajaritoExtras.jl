@@ -60,11 +60,9 @@ function test_extra(inst::ExperimentDesign, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    # check integer feasibility
     tol = eps()^0.2
     x = JuMP.value.(model.ext[:x])
     @test x ≈ round.(Int, x) atol = tol rtol = tol
-
     # check objective
     V = model.ext[:V]
     λ = eigvals(Symmetric(V * Diagonal(x) * V', :U))
