@@ -52,7 +52,7 @@ include(joinpath(@__DIR__, "..", "test", "model_utils.jl"))
 
 # list of names of JuMP examples to run
 const JuMP_examples = [
-    # "ballpacking",
+    "ballpacking",
     # "completablepsd",
     # "experimentdesign",
     # "inversecovariance",

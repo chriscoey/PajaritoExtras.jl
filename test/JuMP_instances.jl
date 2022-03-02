@@ -758,3 +758,42 @@ function _setup_polymin(opt, use_dual, K, f_pts, bound)
     end
     return (m, x, y)
 end
+
+function specialorderedset(opt)
+    TOL = 1e-4
+    for (S, sol) in [(MOI.SOS1, [1, 0, 0]), (MOI.SOS2, [1, 1, 0])]
+        if !MOI.supports_constraint(MOI.instantiate(opt), MOI.VectorOfVariables, S{Float64})
+            # only test if MOIPajarito supports SOS1/2
+            continue
+        end
+        m = JuMP.Model(opt)
+
+        JuMP.@variable(m, u)
+        JuMP.@variable(m, w[1:3])
+        w0 = w + [1.1, 2.3, 3.5]
+        JuMP.@constraint(m, vcat(u, w0) in Hypatia.HypoGeoMeanCone{Float64}(4))
+        JuMP.@objective(m, Max, u)
+        JuMP.@constraint(m, w .<= 1.5)
+        JuMP.@constraint(m, w in S([1.0, 2, 3]))
+        JuMP.optimize!(m)
+
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        opt_obj = PajaritoExtras.geomean(JuMP.value.(w0))
+        @test isapprox(JuMP.objective_value(m), opt_obj, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), opt_obj, atol = TOL)
+        @test isapprox(JuMP.value(u), opt_obj, atol = TOL)
+        @test isapprox(JuMP.value.(w), 1.5 * sol, atol = TOL)
+
+        JuMP.set_integer.(w)
+        JuMP.optimize!(m)
+        @test JuMP.termination_status(m) == MOI.OPTIMAL
+        @test JuMP.primal_status(m) == MOI.FEASIBLE_POINT
+        opt_obj = PajaritoExtras.geomean(JuMP.value.(w0))
+        @test isapprox(JuMP.objective_value(m), opt_obj, atol = TOL)
+        @test isapprox(JuMP.objective_bound(m), opt_obj, atol = TOL)
+        @test isapprox(JuMP.value(u), opt_obj, atol = TOL)
+        @test isapprox(JuMP.value.(w), sol, atol = TOL)
+    end
+    return
+end

@@ -40,9 +40,9 @@ default_options = (;
     use_iterative_method = true,
     # use_iterative_method = false,
     solve_relaxation = true,
-    solve_subproblems = true,
+    # solve_subproblems = true,
     # solve_relaxation = false,
-    # solve_subproblems = false,
+    solve_subproblems = false,
     iteration_limit = 500,
     time_limit = 120.0,
 )

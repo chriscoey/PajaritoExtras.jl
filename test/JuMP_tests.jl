@@ -42,6 +42,7 @@ inst_all = String[
     "matrix_epipersepspectral2",
     "wsosinterpnonnegative1",
     "wsosinterpnonnegative2",
+    "specialorderedset",
 ]
 
 # instances to test with extended formulations option off
@@ -138,7 +139,6 @@ function run_jump_tests(
         @info inst
         eval(Symbol(inst))(opt)
     end
-    println()
     return
 end
 
