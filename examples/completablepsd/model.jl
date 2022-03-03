@@ -6,6 +6,11 @@ maximimizing the minimum eigenvalue
 max y :
 S + X - y I ∈ SparsePSD⋆
 Xᵢⱼ ∈ ℤ, -M ≤ Xᵢⱼ ≤ M, ∀ (i,j) unknown
+
+where:
+- sparse parameter matrix S contains is the known entries
+- sparse variable matrix X contains the unknown entries
+- M is a bound on the absolute value of all unknown entries
 =#
 
 struct CompletablePSD <: ExampleInstance
@@ -19,13 +24,15 @@ function build(inst::CompletablePSD)
     d = inst.d
     @assert d >= 2
 
-    # generate data
+    # generate underlying positive definite matrix S0
     S0 = sprand(Bool, d, d, inst.sparsity)
     S0 = Matrix{Float64}(S0 * S0' + I)
     pattern = tril!(sprand(Bool, d, d, inst.sparsity) + I)
     (rows, cols, _) = findnz(pattern)
     S0vals = [S0[r, c] for (r, c) in zip(rows, cols)]
     num_sparse = length(S0vals)
+
+    # select which entries of S0 will be known/unknown
     known_pattern = sprand(Bool, num_sparse, inst.frac_known)
     known_pattern[1] = known_pattern[end] = true
     num_unknown = num_sparse - sum(known_pattern)
@@ -75,7 +82,7 @@ function build(inst::CompletablePSD)
 
     # save for use in tests
     model.ext[:x] = x
-    model.ext[:S_eigmin] = eigmin(Hermitian(S0))
+    model.ext[:S0_eigmin] = eigmin(Hermitian(S0))
 
     return model
 end
@@ -88,7 +95,8 @@ function test_extra(inst::CompletablePSD, model::JuMP.Model)
     tol = eps()^0.2
     x = JuMP.value.(model.ext[:x])
     @test x ≈ round.(Int, x) atol = tol rtol = tol
-    S_eigmin = model.ext[:S_eigmin]
-    @test JuMP.objective_value(model) >= S_eigmin - tol
+    # check eigmin(S + X) >= eigmin(S0)
+    S0_eigmin = model.ext[:S0_eigmin]
+    @test JuMP.objective_value(model) >= S0_eigmin - tol
     return
 end

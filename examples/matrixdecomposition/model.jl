@@ -64,7 +64,6 @@ function test_extra(inst::MatrixDecomposition, model::JuMP.Model)
     tol = eps()^0.2
     u = JuMP.value.(model.ext[:u])
     B = JuMP.value.(model.ext[:B])
-    nuc = sum(svdvals(B))
-    @test u ≈ nuc atol = tol rtol = tol
+    @test u ≈ sum(svdvals(B)) atol = tol rtol = tol
     return
 end

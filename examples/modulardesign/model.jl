@@ -26,7 +26,7 @@ where Sᵢⱼ ⊂ ℝⁿ
 use conic copies-of-variables formulation for the disjunctions
 =#
 
-struct NonconvexRelax <: ExampleInstance
+struct ModularDesign <: ExampleInstance
     m::Int # number of modules
     jmax::Int # number of part options per module
     n::Int # number of design variables
@@ -35,9 +35,9 @@ struct NonconvexRelax <: ExampleInstance
     num_pts::Int # number of points per piecewise linearization
 end
 
-NonconvexRelax(m::Int, jmax::Int, n::Int) = NonconvexRelax(m, jmax, n, false, SOS2(), 0)
+ModularDesign(m::Int, jmax::Int, n::Int) = ModularDesign(m, jmax, n, false, SOS2(), 0)
 
-function build(inst::NonconvexRelax)
+function build(inst::ModularDesign)
     (m, jmax, n, num_pts) = (inst.m, inst.jmax, inst.n, inst.num_pts)
     @assert m >= 1
     @assert jmax >= 1
@@ -85,7 +85,7 @@ function build(inst::NonconvexRelax)
     return model
 end
 
-function test_extra(inst::NonconvexRelax, model::JuMP.Model)
+function test_extra(inst::ModularDesign, model::JuMP.Model)
     stat = JuMP.termination_status(model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
@@ -96,7 +96,12 @@ function test_extra(inst::NonconvexRelax, model::JuMP.Model)
     @test all(-tol .<= x .<= 1 + tol)
     y = JuMP.value.(model.ext[:y])
     z = JuMP.value.(model.ext[:z])
-    # TODO
-
+    # check feasibility for disjunctive constraints
+    # TODO .... only 1 turned on
+    if inst.use_nonconvex
+        # check approximate feasibility for nonconvex constraints
+    else
+        # check feasibility for convex constraints
+    end
     return
 end

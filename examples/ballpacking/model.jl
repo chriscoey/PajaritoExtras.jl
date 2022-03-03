@@ -69,12 +69,14 @@ function test_extra(inst::BallPacking, model::JuMP.Model)
     @test stat == MOI.OPTIMAL
     (stat == MOI.OPTIMAL) || return
 
-    tol_tight = eps()^0.4
-    tol_loose = eps()^0.1
     R = JuMP.value.(model.ext[:R])
     C = JuMP.value.(model.ext[:C])
+    # check feasibility for linear constraints
+    tol_tight = eps()^0.4
     @test all(-tol_tight .<= R .<= 0.5 + tol_tight)
     @test all(-tol_tight .<= C .<= 1 + tol_tight)
+    # check near-feasibility for nonconvex constraints
+    tol_loose = eps()^0.1
     for i in 1:(inst.m), j in 1:(i - 1)
         @test R[i] + R[j] <= norm(C[i, :] - C[j, :]) + tol_loose
     end

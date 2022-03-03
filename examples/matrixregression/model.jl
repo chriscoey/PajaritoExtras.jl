@@ -23,7 +23,7 @@ function build(inst::MatrixRegression)
     @assert n >= p >= m > 1
     k = ceil(Int, p * 2 / 3)
 
-    # generate data
+    # generate noisy data
     A0 = 2 * rand(p, m) .- 1
     A0[(k + 1):end, :] .= 0
     X = randn(n, p)
@@ -77,7 +77,7 @@ function test_extra(inst::MatrixRegression, model::JuMP.Model)
     nuc = sum(svdvals(A))
     obj_result = loss + model.ext[:λ] * nuc
     @test JuMP.objective_value(model) ≈ obj_result atol = tol rtol = tol
-    # check feasibility
+    # check integer feasibility
     row_on = JuMP.value.(model.ext[:row_on])
     @test row_on ≈ round.(Int, row_on) atol = tol rtol = tol
     @test all(-tol .<= row_on .<= 1 + tol)

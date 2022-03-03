@@ -16,4 +16,4 @@ insts["test"] = [
     # ((1, 3, 3, true, ZigZag(), 10),),
 ]
 
-return (NonconvexRelax, insts)
+return (ModularDesign, insts)

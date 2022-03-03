@@ -53,22 +53,22 @@ include(joinpath(@__DIR__, "..", "test", "model_utils.jl"))
 # list of names of JuMP examples to run
 const JuMP_examples = [
     # PSD:
-    "completablepsd",
+    # "completablepsd",
     # WSOS:
-    "polyfacilitylocation",
-    "polyregression",
-    "twostagestochastic",
+    # "polyfacilitylocation",
+    # "polyregression",
+    # "twostagestochastic",
     # norm:
-    "matrixcompletion",
-    "matrixdecomposition",
-    "matrixregression",
+    # "matrixcompletion",
+    # "matrixdecomposition",
+    # "matrixregression",
     # spectral function:
-    "experimentdesign",
-    "inversecovariance",
-    "vectorregression",
+    # "experimentdesign",
+    # "inversecovariance",
+    # "vectorregression",
     # nonconvex:
-    "ballpacking",
-    "nonconvexrelax",
+    # "ballpacking",
+    "modulardesign",
 ]
 
 # load all examples
