@@ -31,7 +31,7 @@ function build(inst::BallPacking)
         # balls inside box
         [i in 1:m, k in 1:n], C[i, k] >= R[i]
         [i in 1:m, k in 1:n], C[i, k] + R[i] <= 1
-        # break symmetry
+        # break some symmetry TODO more
         [i in 1:(m - 1)], C[i, 1] <= C[i + 1, 1]
     end)
 
@@ -47,11 +47,10 @@ function build(inst::BallPacking)
             Cij .== C[i, :] - C[j, :]
         end)
 
-        # 3-dim cone constraints
+        # 3-dim cone constraints; note Cij ∈ [-1, 1]ⁿ, ‖Cij‖ ≤ √n, Rij ∈ [0, 1]
         for k in 1:n
             aff = [λ[k], Rij, Cij[k]]
-            σ = add_PWL_3D(aff, model, pts, f_pts)
-            add_PWL(inst.pwl, model, σ, one(JuMP.AffExpr))
+            add_PWL_3D(inst.pwl, model, aff, 1.0, pts, f_pts)
         end
     end
 
@@ -62,8 +61,6 @@ function build(inst::BallPacking)
     return model
 end
 
-using Gurobi
-
 function test_extra(inst::BallPacking, model::JuMP.Model)
     stat = JuMP.termination_status(model)
     @test stat == MOI.OPTIMAL
@@ -72,13 +69,12 @@ function test_extra(inst::BallPacking, model::JuMP.Model)
     R = JuMP.value.(model.ext[:R])
     C = JuMP.value.(model.ext[:C])
     # check feasibility for linear constraints
-    tol_tight = eps()^0.4
-    @test all(-tol_tight .<= R .<= 0.5 + tol_tight)
-    @test all(-tol_tight .<= C .<= 1 + tol_tight)
+    tol = eps()^0.4
+    @test all(-tol .<= R .<= 0.5 + tol)
+    @test all(-tol .<= C .<= 1 + tol)
     # check near-feasibility for nonconvex constraints
     tol_loose = eps()^0.1
-    for i in 1:(inst.m), j in 1:(i - 1)
-        @test R[i] + R[j] <= norm(C[i, :] - C[j, :]) + tol_loose
-    end
+    approxij(i, j) = (R[i] + R[j] <= norm(C[i, :] - C[j, :]) + tol_loose)
+    @test all(approxij(i, j) for i in 1:(inst.m) for j in 1:(i - 1))
     return
 end

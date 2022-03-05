@@ -68,7 +68,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     h = cache.h
     ws = s[3:end]
     if dom_pos(D, h)
-        ws = max.(ws, 1e-7)
+        ws = max.(ws, 1e-10)
     end
 
     (us, vs) = swap_epiper(D, s[1:2]...)
@@ -113,6 +113,9 @@ function MOIPajarito.Cones.extend_start(
     opt::Optimizer,
 ) where {D}
     (_, v_start) = swap_epiper(D, s_start[1:2]...)
+    if v_start < 1e-8
+        return zeros(cache.d)
+    end
     @views w_start = s_start[3:end]
     return [per_sepspec(val_or_conj(D), cache.h, v_start, [w_i]) for w_i in w_start]
 end

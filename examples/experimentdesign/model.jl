@@ -16,13 +16,13 @@ experiment, and f is a convex spectral function
 
 struct ExperimentDesign <: ExampleInstance
     d::Int
-    ext::MatSpecExt # formulation specifier
+    f::MatSpecExt # formulation specifier
 end
 
 function build(inst::ExperimentDesign)
     d = inst.d
     @assert d >= 1
-    @assert is_domain_pos(inst.ext)
+    @assert is_domain_pos(inst.f)
     k = 2 * d
 
     # generate data
@@ -46,7 +46,7 @@ function build(inst::ExperimentDesign)
     # convex objective
     JuMP.@variable(model, epi)
     JuMP.@objective(model, Min, epi)
-    add_homog_spectral(inst.ext, d, vcat(1.0 * epi, Q_vec), model)
+    add_homog_spectral(inst.f, d, vcat(1.0 * epi, Q_vec), model)
 
     # save for use in tests
     model.ext[:V] = V
@@ -67,7 +67,7 @@ function test_extra(inst::ExperimentDesign, model::JuMP.Model)
     V = model.ext[:V]
     λ = eigvals(Symmetric(V * Diagonal(x) * V', :U))
     @test minimum(λ) >= -tol
-    obj_result = get_val(pos_only(λ), inst.ext)
+    obj_result = get_val(pos_only(λ), inst.f)
     @test JuMP.objective_value(model) ≈ obj_result atol = tol rtol = tol
     return
 end

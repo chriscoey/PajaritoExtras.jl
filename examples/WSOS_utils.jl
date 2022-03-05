@@ -59,7 +59,6 @@ function check_nonneg(vals::Vector{Float64}, Ps::Vector{Matrix{Float64}})
     JuMP.@constraint(model, vals in K)
 
     JuMP.optimize!(model)
-    @show JuMP.termination_status(model)
     return (JuMP.termination_status(model) in (MOI.OPTIMAL, MOI.ALMOST_OPTIMAL))
 end
 

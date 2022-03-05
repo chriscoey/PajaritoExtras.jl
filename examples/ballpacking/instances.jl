@@ -12,9 +12,6 @@ insts["test"] = [
     ((3, 3, LogIBBounded(), 11), nosubp_options),
     # ((2, 2, CCUnbounded(), 11), nosubp_options),
     # ((2, 2, LogIBUnbounded(), 11), nosubp_options),
-    # ((3, 3, MC(), 21), nosubp_options),
-    # ((3, 3, Log(), 21), nosubp_options),
-    # ((3, 3, ZigZag(), 21), nosubp_options),
 ]
 
 return (BallPacking, insts)

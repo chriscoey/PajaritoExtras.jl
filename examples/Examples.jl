@@ -46,28 +46,27 @@ include("WSOS_utils.jl")
 include("specnuc_utils.jl")
 include(joinpath(pkgdir(Hypatia), "examples", "spectral_functions_JuMP.jl"))
 include("SOS2_utils.jl")
-include("nonconvex_utils.jl")
 
 include(joinpath(@__DIR__, "..", "test", "model_utils.jl"))
 
 # list of names of JuMP examples to run
 const JuMP_examples = [
     # PSD:
-    # "completablepsd",
+    "completablepsd",
     # WSOS:
-    # "polyfacilitylocation",
-    # "polyregression",
-    # "twostagestochastic",
+    "polyfacilitylocation",
+    "polyregression",
+    "twostagestochastic",
     # norm:
-    # "matrixcompletion",
-    # "matrixdecomposition",
-    # "matrixregression",
+    "matrixcompletion",
+    "matrixdecomposition",
+    "matrixregression",
     # spectral function:
-    # "experimentdesign",
-    # "inversecovariance",
-    # "vectorregression",
+    "experimentdesign",
+    "inversecovariance",
+    "vectorregression",
     # nonconvex:
-    # "ballpacking",
+    "ballpacking",
     "modulardesign",
 ]
 
