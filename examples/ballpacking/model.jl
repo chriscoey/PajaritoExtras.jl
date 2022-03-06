@@ -49,8 +49,16 @@ function build(inst::BallPacking)
 
         # 3-dim cone constraints; note Cij ∈ [-1, 1]ⁿ, ‖Cij‖ ≤ √n, Rij ∈ [0, 1]
         for k in 1:n
-            aff = [λ[k], Rij, Cij[k]]
-            add_PWL_3D(inst.pwl, model, aff, 1.0, pts, f_pts)
+            # auxiliary variables and SOS2 formulation
+            σ = JuMP.@variable(model, [1:length(pts)], lower_bound = 0)
+            PWL_SOS2(inst.pwl, model, σ, 1.0)
+
+            # data constraints
+            JuMP.@constraints(model, begin
+                dot(σ, f_pts) == λ[k]
+                sum(σ) == Rij
+                dot(σ, pts) == Cij[k]
+            end)
         end
     end
 

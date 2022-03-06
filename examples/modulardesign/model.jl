@@ -31,7 +31,7 @@ struct ModularDesign <: ExampleInstance
     jmax::Int # number of part options per module
     n::Int # number of design variables
     use_nonconvex::Bool # use nonconvex equality constraints, else convex constraints
-    add_convex::Bool # add convex constraints, else just PWL inequality
+    add_convex::Bool # (if use_nonconvex) add convex constraints, else just PWL inequality
     pwl::PWLSOS2 # type of piecewise linear SOS2 formulation to use
     max_pts::Int # maximum number of points per piecewise linearization
 end
@@ -48,9 +48,6 @@ function build(inst::ModularDesign)
     @assert ymax > ymin > 0
     Sdim = 1 + div(n, 2) # dimension of convex epigraph sets
     @assert Sdim >= 2
-    if !inst.use_nonconvex
-        @assert inst.add_convex
-    end
 
     # generate data
     c = 10 * rand(m, jmax)
@@ -117,32 +114,46 @@ function build(inst::ModularDesign)
         d = length(w)
         f = fs[i, j]
 
-        if inst.add_convex
+        if !inst.use_nonconvex
             # add convex constraint
             add_spectral(f, d, vcat(u, x_ij, w), model)
+            continue
         end
-        inst.use_nonconvex || continue
-        # add nonconvex constraint
 
-        # EF variables and linear constraint
+        # add nonconvex constraint
         λ = JuMP.@variable(model, [1:d])
-        JuMP.@constraint(model, u <= sum(λ))
+        JuMP.@constraint(model, u == sum(λ))
 
         for k in 1:d
-            # interpolation
+            # bounds
             G_k = G_ij[1 + k, :]
             min_ij = h_ij[1 + k] - sum((g < 0 ? ymin : ymax) * g for g in G_k)
             max_ij = h_ij[1 + k] - sum((g < 0 ? ymax : ymin) * g for g in G_k)
             @assert min_ij <= max_ij
             max_ij = max(1e-5, max_ij)
             min_ij = max(1e-5, min_ij)
+
+            # interpolation
             # TODO instead of fixed number of points, could use a fixed spacing interval between points
             pts = collect(range(min_ij, max_ij, length = inst.max_pts))
             f_pts = [get_val([pt], f) for pt in pts]
 
-            # 3-dim PWL constraints
-            aff_k = [λ[k], x_ij, w[k]]
-            add_PWL_3D(inst.pwl, model, aff_k, x_ij, pts, f_pts)
+            # auxiliary variables and SOS2 formulation
+            σ = JuMP.@variable(model, [1:length(pts)], lower_bound = 0)
+            PWL_SOS2(inst.pwl, model, σ, x_ij)
+
+            # data constraints
+            JuMP.@constraints(model, begin
+                dot(σ, f_pts) >= λ[k] # below the convex graph
+                sum(σ) == x_ij
+                dot(σ, pts) == w[k]
+            end)
+
+            if inst.add_convex
+                # convex 3D constraint
+                # TODO can use NF if handle nonconvex formulations inside this package
+                add_spectral(f, 1, vcat(λ[k], x_ij, w[k]), model)
+            end
         end
     end
 
@@ -189,14 +200,14 @@ function test_extra(inst::ModularDesign, model::JuMP.Model)
     if inst.use_nonconvex
         tol_loose = eps()^0.1
         if inst.add_convex
-            # check approximate equality
-            conicfeas = (a -> abs(a) < tol_loose)
+            # check approximate equality (and inside cone)
+            conicfeas = (a -> -tol_loose < a < tol)
         else
             # check approximately outside cone
             conicfeas = >(-tol_loose)
         end
     else
-        # convex constraints: check in epigraph
+        # convex constraints: check inside cone
         conicfeas = <(tol)
     end
     ϵs = [viol((fs[i, j], x_int[i, j], JuMP.value.(affs[i, j]))) for i in 1:m, j in 1:jmax]

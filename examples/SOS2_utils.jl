@@ -13,32 +13,9 @@ const PLO = PiecewiseLinearOpt
 
 const FloatOrVar = Union{Float64, JuMP.VariableRef}
 
+# SOS2 formulation types
 abstract type PWLSOS2 end
 
-function add_PWL_3D(
-    pwl::PWLSOS2,
-    model::JuMP.Model,
-    aff::Vector{<:JuMPScalar},
-    binper::FloatOrVar, # binary perspective variable or 1.0
-    pts::Vector{Float64},
-    f_pts::Vector{Float64},
-)
-    @assert length(aff) == 3
-
-    # auxiliary variables and SOS2 formulation
-    σ = JuMP.@variable(model, [1:length(pts)], lower_bound = 0)
-    PWL_SOS2(pwl, model, σ, binper)
-
-    # data constraints
-    JuMP.@constraints(model, begin
-        dot(σ, f_pts) == aff[1]
-        sum(σ) == aff[2]
-        dot(σ, pts) == aff[3]
-    end)
-    return
-end
-
-# SOS2 formulation types
 struct SOS2 <: PWLSOS2 end
 struct CCBounded <: PWLSOS2 end
 struct CCUnbounded <: PWLSOS2 end
