@@ -36,20 +36,21 @@ function MOIPajarito.Cones.add_init_cuts(
     @views w = cache.oa_s[3:end]
     W_diag = [w[svec_idx(C, i, i)] for i in 1:d]
 
-    # variable bounds
+    # add variable bounds
     JuMP.@constraint(opt.oa_model, v >= 0)
     if dom_pos(D, h)
         JuMP.@constraint(opt.oa_model, W_diag .>= 0)
     end
+    opt.use_init_fixed_oa || return
 
-    # cuts using values of p = 1 and R = r₀ I
+    # add cuts at p = 1 and R = r₀ I
     r_vals = init_r_vals(D, h)
     for r0 in r_vals
         R_diag = fill(r0, d)
         q = per_sepspec(conj_or_val(D), h, 1.0, R_diag)
         JuMP.@constraint(opt.oa_model, u + q * v + JuMP.dot(R_diag, W_diag) >= 0)
     end
-    return 1 + d + length(r_vals)
+    return
 end
 
 function MOIPajarito.Cones.get_subp_cuts(
@@ -102,11 +103,11 @@ function MOIPajarito.Cones.get_sep_cuts(
             cuts = _get_psd_cuts(V_neg, w, cache, opt)
         end
 
-        ω = max.(ω, 1e-7)
+        ω = max.(ω, 1e-10)
     end
 
     (us, vs) = swap_epiper(D, s[1:2]...)
-    v_pos = max(vs, 1e-7)
+    v_pos = max(vs, 1e-9)
     if us - per_sepspec(val_or_conj(D), h, v_pos, ω) > -opt.tol_feas
         return cuts
     end

@@ -66,15 +66,15 @@ end
 # unextended formulation
 
 function MOIPajarito.Cones.add_init_cuts(cache::HypoGeoMean{Nat}, opt::Optimizer)
+    # add variable bounds wᵢ ≥ 0
+    @views w = cache.oa_s[2:end]
+    JuMP.@constraint(opt.oa_model, w .>= 0)
+    opt.use_init_fixed_oa || return
+
+    # add cut (-d, e) on (u, w), a linearization at w = e
     u = cache.oa_s[1]
-    @views w = cache.oa_s[2:end] # TODO cache?
-    d = cache.d
-    # variable bounds wᵢ ≥ 0 and cut (-d, e)
-    JuMP.@constraints(opt.oa_model, begin
-        [i in 1:d], w[i] >= 0
-        -d * u + sum(w) >= 0
-    end)
-    return d + 1
+    JuMP.@constraint(opt.oa_model, -cache.d * u + sum(w) >= 0)
+    return
 end
 
 function _get_cuts(r::Vector{RealF}, cache::HypoGeoMean{Nat}, opt::Optimizer)
@@ -116,18 +116,16 @@ function MOIPajarito.Cones.setup_auxiliary(cache::HypoGeoMean{Ext}, opt::Optimiz
 end
 
 function MOIPajarito.Cones.add_init_cuts(cache::HypoGeoMean{Ext}, opt::Optimizer)
+    # add variable bounds wᵢ ≥ 0
     @views w = cache.oa_s[2:end]
-    d = cache.d
+    JuMP.@constraint(opt.oa_model, w .>= 0)
+    opt.use_init_fixed_oa || return
+
+    # add disaggregated cuts (-1, -1, 1) on (λᵢ, θ, wᵢ) TODO check
     θ = cache.θ
     λ = cache.λ
-    # variable bounds wᵢ ≥ 0 and cut (-d, e)
-    # disaggregated cut on (λᵢ, θ, wᵢ) is (-1, -1, 1)
-    # TODO check implication in math
-    JuMP.@constraints(opt.oa_model, begin
-        [i in 1:d], w[i] >= 0
-        [i in 1:d], -λ[i] - θ + w[i] >= 0
-    end)
-    return 2d
+    JuMP.@constraint(opt.oa_model, [i in 1:(cache.d)], -λ[i] - θ + w[i] >= 0)
+    return
 end
 
 function _get_cuts(r::Vector{RealF}, cache::HypoGeoMean{Ext}, opt::Optimizer)

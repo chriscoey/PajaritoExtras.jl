@@ -33,22 +33,21 @@ function MOIPajarito.Cones.add_init_cuts(
     (_, v) = swap_epiper(D, cache.oa_s[1:2]...)
     @views w = cache.oa_s[3:end]
 
-    # variable bounds
+    # add variable bounds
     JuMP.@constraint(opt.oa_model, v >= 0)
     if dom_pos(D, cache.h)
         JuMP.@constraint(opt.oa_model, w .>= 0)
     end
-    num_cuts = 1 + cache.d
+    opt.use_init_fixed_oa || return
 
-    # cuts using values of p = 1 and r = r₀ e
+    # add cuts at p = 1 and R = r₀ e
     r_vals = init_r_vals(D, cache.h)
     for r0 in r_vals
         r = fill(r0, cache.d)
         cuts = _get_cuts(1.0, r, cache, opt)
         JuMP.@constraint(opt.oa_model, cuts .>= 0)
-        num_cuts += length(cuts)
     end
-    return num_cuts
+    return
 end
 
 function MOIPajarito.Cones.get_subp_cuts(

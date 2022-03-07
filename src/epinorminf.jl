@@ -42,22 +42,29 @@ end
 # primal cone functions
 
 function MOIPajarito.Cones.add_init_cuts(cache::EpiNormInf{Prim, RealF}, opt::Optimizer)
+    # add variable bound
     u = cache.oa_s[1]
+    JuMP.@constraint(opt.oa_model, u >= 0)
+    opt.use_init_fixed_oa || return
+
+    # add all cuts necessary to define the polyhedral cone (no OA needed)
     @views w = cache.oa_s[2:end]
-    # polyhedral (no OA)
     JuMP.@constraints(opt.oa_model, begin
         u .>= w
         u .>= -w
     end)
-    return 2 * cache.d
+    return
 end
 
 function MOIPajarito.Cones.add_init_cuts(cache::EpiNormInf{Prim, CompF}, opt::Optimizer)
+    # add variable bound
     u = cache.oa_s[1]
+    JuMP.@constraint(opt.oa_model, u >= 0)
+    opt.use_init_fixed_oa || return
+
+    # add cuts (rt2, ±1, ±1) on (u, re(Wᵢ), im(Wᵢ))
     @views w = cache.oa_s[2:end]
-    d = cache.d
-    # cuts on (u, re(Wᵢ), im(Wᵢ)) are (rt2, ±1, ±1) ∈ EpiNormEucl
-    for i in 1:d
+    for i in 1:(cache.d)
         re_w = w[2i - 1]
         im_w = w[2i]
         JuMP.@constraints(opt.oa_model, begin
@@ -67,7 +74,7 @@ function MOIPajarito.Cones.add_init_cuts(cache::EpiNormInf{Prim, CompF}, opt::Op
             rt2 * u + re_w + im_w >= 0
         end)
     end
-    return 4d
+    return
 end
 
 function MOIPajarito.Cones.get_subp_cuts(
@@ -174,36 +181,48 @@ function MOIPajarito.Cones.add_init_cuts(
     cache::EpiNormInf{Dual, RealF, Nat},
     opt::Optimizer,
 )
+    # add variable bound
     u = cache.oa_s[1]
+    JuMP.@constraint(opt.oa_model, u >= 0)
+    opt.use_init_fixed_oa || return
+
+    # add cuts u ≥ ±e'w, u ≥ |wᵢ|
     @views w = cache.oa_s[2:end]
-    # polyhedral but needs exponentially many constraints
     JuMP.@constraints(opt.oa_model, begin
-        u >= 0
         u >= sum(w)
         u >= -sum(w)
-        [w_i in w], u >= w_i
-        [w_i in w], u >= -w_i
+        u .>= w
+        u .>= -w
     end)
-    return 3 + 2 * cache.d
+    return
 end
 
 function MOIPajarito.Cones.add_init_cuts(
     cache::EpiNormInf{Dual, CompF, Nat},
     opt::Optimizer,
 )
+    # add variable bound
     u = cache.oa_s[1]
+    JuMP.@constraint(opt.oa_model, u >= 0)
+    opt.use_init_fixed_oa || return
+
+    # add cuts rt2 * u ≥ ±e'w and linearizations of u ≥ |wᵢ|
     @views w = cache.oa_s[2:end]
-    d = cache.d
     JuMP.@constraints(opt.oa_model, begin
-        u >= 0
-        u >= irt2 * sum(w)
-        u >= -irt2 * sum(w)
-        [i in 1:d], u >= irt2 * (w[2i - 1] + w[2i])
-        [i in 1:d], u >= -irt2 * (w[2i - 1] + w[2i])
-        [i in 1:d], u >= irt2 * (w[2i - 1] - w[2i])
-        [i in 1:d], u >= -irt2 * (w[2i - 1] - w[2i])
+        rt2 * u >= sum(w)
+        rt2 * u >= -sum(w)
     end)
-    return 3 + 4 * cache.d
+    for i in 1:(cache.d)
+        re_w = w[2i - 1]
+        im_w = w[2i]
+        JuMP.@constraints(opt.oa_model, begin
+            rt2 * u - re_w - im_w >= 0
+            rt2 * u - re_w + im_w >= 0
+            rt2 * u + re_w - im_w >= 0
+            rt2 * u + re_w + im_w >= 0
+        end)
+    end
+    return
 end
 
 function _get_cuts(R::Vector{C}, cache::EpiNormInf{Dual, C, Nat}, opt::Optimizer) where {C}
@@ -251,27 +270,27 @@ function MOIPajarito.Cones.add_init_cuts(
     cache::EpiNormInf{Dual, RealF, Ext},
     opt::Optimizer,
 )
+    opt.use_init_fixed_oa || return
+
+    # add all cuts necessary to define the polyhedral cone (no OA needed)
     @views w = cache.oa_s[2:end]
     λ = cache.λ
-    d = cache.d
-    # polyhedral (no OA)
     JuMP.@constraints(opt.oa_model, begin
-        [i in 1:d], λ[i] >= w[i]
-        [i in 1:d], λ[i] >= -w[i]
+        λ .>= w
+        λ .>= -w
     end)
-    return 2d
+    return
 end
 
 function MOIPajarito.Cones.add_init_cuts(
     cache::EpiNormInf{Dual, CompF, Ext},
     opt::Optimizer,
 )
+    opt.use_init_fixed_oa || return
+
+    # add cuts (rt2, ±1, ±1) on (λᵢ, re(Wᵢ), im(Wᵢ))
     @views w = cache.oa_s[2:end]
-    λ = cache.λ
-    d = cache.d
-    # cuts on (λᵢ, re(Wᵢ), im(Wᵢ)) are (rt2, ±1, ±1) ∈ EpiNormEucl
-    for i in 1:d
-        λ_i = λ[i]
+    for (i, λ_i) in enumerate(cache.λ)
         re_w = w[2i - 1]
         im_w = w[2i]
         JuMP.@constraints(opt.oa_model, begin
@@ -281,7 +300,7 @@ function MOIPajarito.Cones.add_init_cuts(
             rt2 * λ_i + re_w + im_w >= 0
         end)
     end
-    return 4d
+    return
 end
 
 function MOIPajarito.Cones.get_subp_cuts(

@@ -44,16 +44,15 @@ function get_svd(sz::Vector{RealF}, cache::EpiNormSpectral)
 end
 
 function MOIPajarito.Cones.add_init_cuts(cache::EpiNormSpectral, opt::Optimizer)
+    # add variable bound
+    u = cache.oa_s[1]
+    JuMP.@constraint(opt.oa_model, u >= 0)
     # TODO use simple bounds to derive init cuts:
     # frob / rtd1 <= spec
     # opinf / rtd2 <= spec
     # op1 / rtd1 <= spec
-    # and
     # frob <= nuc
-    # u ≥ 0
-    u = cache.oa_s[1]
-    JuMP.@constraint(opt.oa_model, u >= 0)
-    return 1
+    return
 end
 
 # primal cone functions

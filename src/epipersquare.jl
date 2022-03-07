@@ -64,18 +64,21 @@ end
 # unextended formulation
 
 function MOIPajarito.Cones.add_init_cuts(cache::EpiPerSquare{Nat}, opt::Optimizer)
+    # add variable bounds
     u = cache.oa_s[1]
     v = cache.oa_s[2]
-    @views w = cache.oa_s[3:end] # TODO cache?
+    JuMP.@constraint(opt.oa_model, u >= 0)
+    JuMP.@constraint(opt.oa_model, v >= 0)
+    opt.use_init_fixed_oa || return
+
+    # add cuts (1, 2, ±2eᵢ) on (u, v, wᵢ)
+    @views w = cache.oa_s[3:end]
     d = cache.d
-    # variable bounds u ≥ 0, v ≥ 0 and cut (1, 2, ±2eᵢ)
     JuMP.@constraints(opt.oa_model, begin
-        u >= 0
-        v >= 0
         [i in 1:d], u + 2v + 2w[i] >= 0
         [i in 1:d], u + 2v - 2w[i] >= 0
     end)
-    return 2 + 2d
+    return
 end
 
 function _get_cuts(q::RealF, r::Vector{RealF}, cache::EpiPerSquare{Nat}, opt::Optimizer)
@@ -116,20 +119,22 @@ function MOIPajarito.Cones.setup_auxiliary(cache::EpiPerSquare{Ext}, opt::Optimi
 end
 
 function MOIPajarito.Cones.add_init_cuts(cache::EpiPerSquare{Ext}, opt::Optimizer)
+    # add variable bounds
     u = cache.oa_s[1]
     v = cache.oa_s[2]
+    JuMP.@constraint(opt.oa_model, u >= 0)
+    JuMP.@constraint(opt.oa_model, v >= 0)
+    opt.use_init_fixed_oa || return
+
+    # add disaggregated cuts (1, 2, ±2) on (λᵢ, v, wᵢ)
     @views w = cache.oa_s[3:end]
     d = cache.d
     λ = cache.λ
-    # variable bounds u ≥ 0, v ≥ 0 and cut (1, 2, ±2eᵢ)
-    # disaggregated cut on (λᵢ, v, wᵢ) is (1, 2, ±2) since u ≥ λᵢ
     JuMP.@constraints(opt.oa_model, begin
-        u >= 0
-        v >= 0
         [i in 1:d], λ[i] + 2v + 2w[i] >= 0
         [i in 1:d], λ[i] + 2v - 2w[i] >= 0
     end)
-    return 1 + 2d
+    return
 end
 
 function _get_cuts(q::RealF, r::Vector{RealF}, cache::EpiPerSquare{Ext}, opt::Optimizer)

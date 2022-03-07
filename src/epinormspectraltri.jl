@@ -38,10 +38,11 @@ function get_eig(sz::Vector{RealF}, cache::EpiNormSpectralTri)
 end
 
 function MOIPajarito.Cones.add_init_cuts(cache::EpiNormSpectralTri, opt::Optimizer)
-    # TODO use simple bounds to derive init cuts
+    # add variable bound
     u = cache.oa_s[1]
     JuMP.@constraint(opt.oa_model, u >= 0)
-    return 1
+    # TODO see comment in epinormspectral
+    return
 end
 
 # primal cone functions

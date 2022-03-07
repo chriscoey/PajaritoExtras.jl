@@ -23,20 +23,27 @@ insts["test"] = [
     ((2, MatPower12EigOrd(1.3)),),
 ]
 
-experimentdesign_insts(ext::MatSpecExt) = [((d, ext),) for d in vcat(3, 10:10:10)]
+function experimentdesign_insts(specs::Vector)
+    ts = Tuple[]
+    for (max_d, f) in specs
+        t = [((d, f),) for d in vcat(2, 3:3:max_d)]
+        append!(ts, t)
+    end
+    return ts
+end
 
-insts["nat"] = vcat(experimentdesign_insts.([
-    # MatNegRtdet(),
-    MatNegLog(), # TODO or MatLogdetCone if supported
-    # MatNegSqrtConj(),
-    # MatNegPower01(1/3),
-])...)
+insts["nat"] = experimentdesign_insts([
+    (15, MatNegRtdet()),
+    (15, MatNegLog()),
+    (15, MatNegSqrtConj()),
+    (15, MatNegPower01(1 / 3)),
+])
 
-insts["ext"] = vcat(experimentdesign_insts.([
-    # MatNegRtdetEFExp(),
-    MatNegLogDirect(),
-    # MatNegSqrtConjDirect(),
-    # MatNegPower01EigOrd(1/3),
-])...)
+insts["ext"] = experimentdesign_insts([
+    (15, MatNegRtdetEFExp()),
+    (15, MatNegLogDirect()),
+    (15, MatNegSqrtConjDirect()),
+    (15, MatNegPower01EigOrd(1 / 3)),
+])
 
 return (ExperimentDesign, insts)

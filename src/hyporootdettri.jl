@@ -31,17 +31,17 @@ function MOIPajarito.Cones.create_cache(
 end
 
 function MOIPajarito.Cones.add_init_cuts(cache::HypoRootdetTri{C}, opt::Optimizer) where {C}
+    # add variable bounds W_ii ≥ 0
     d = cache.d
-    u = cache.oa_s[1]
     @views w = cache.oa_s[2:end]
-    # W_ii ≥ 0
-    # linearize at W = I, cut on (u, W) is (-d, I)
     W_diag = [w[svec_idx(C, i, i)] for i in 1:d]
-    JuMP.@constraints(opt.oa_model, begin
-        W_diag .>= 0
-        -d * u + sum(W_diag) >= 0
-    end)
-    return d + 1
+    JuMP.@constraint(opt.oa_model, W_diag .>= 0)
+    opt.use_init_fixed_oa || return
+
+    # add cut (-d, I) on (u, W), a linearization at W = I
+    u = cache.oa_s[1]
+    JuMP.@constraint(opt.oa_model, -d * u + sum(W_diag) >= 0)
+    return
 end
 
 function MOIPajarito.Cones.get_subp_cuts(

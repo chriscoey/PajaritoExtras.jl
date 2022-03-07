@@ -44,9 +44,9 @@ end
 # primal cone functions
 
 function MOIPajarito.Cones.add_init_cuts(cache::WSOSInterpNonnegative{Prim}, opt::Optimizer)
-    # wᵢ ≥ 0
+    # add variable bounds wᵢ ≥ 0
     JuMP.@constraint(opt.oa_model, cache.oa_s .>= 0)
-    return cache.d
+    return
 end
 
 function MOIPajarito.Cones.get_subp_cuts(
@@ -61,7 +61,9 @@ end
 # dual cone functions
 
 function MOIPajarito.Cones.add_init_cuts(cache::WSOSInterpNonnegative{Dual}, opt::Optimizer)
-    # cuts enforce that diagonal of each Pₗ' Diagonal(w) Pₗ is nonnegative
+    opt.use_init_fixed_oa || return
+
+    # add cuts to make diagonal of each Pₗ' Diagonal(w) Pₗ nonnegative
     # TODO could add SOC cuts or linearizations for 2x2 principal matrix PSD condition
     w = cache.oa_s
     r = zeros(cache.d)
@@ -69,7 +71,7 @@ function MOIPajarito.Cones.add_init_cuts(cache::WSOSInterpNonnegative{Dual}, opt
         @. r = abs2(P_i)
         JuMP.@constraint(opt.oa_model, JuMP.dot(r, w) >= 0)
     end
-    return sum(size(P, 2) for P in cache.Ps)
+    return
 end
 
 function MOIPajarito.Cones.get_subp_cuts(

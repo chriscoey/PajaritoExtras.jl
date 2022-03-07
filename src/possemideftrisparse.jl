@@ -41,22 +41,19 @@ function MOIPajarito.Cones.add_init_cuts(
     cache::PosSemidefTriSparse{<:PrimDual, C},
     opt::Optimizer,
 ) where {C}
-    # diagonal nonnegative
-    # TODO for each offdiag, add linearization of 2x2 principal matrix condition
-    num_cuts = 0
+    # add variable bounds for nonnegative diagonal
+    # TODO for each offdiag, could add linearization of 2x2 principal matrix condition
     incr = (C == CompF ? 2 : 1)
     i = 1
     for (r, c) in zip(cache.row_idxs, cache.col_idxs)
         if r == c
             JuMP.@constraint(opt.oa_model, cache.oa_s[i] >= 0)
-            num_cuts += 1
             i += 1
         else
             i += incr
         end
     end
-    @assert num_cuts == cache.side # all diagonal elements should be present
-    return num_cuts
+    return
 end
 
 # primal cone functions

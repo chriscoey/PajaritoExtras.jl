@@ -26,17 +26,20 @@ function MOIPajarito.Cones.create_cache(
     return cache
 end
 
-# initial OA polyhedron is the dual cone of diagonally dominant matrices
 function MOIPajarito.Cones.add_init_cuts(cache::PosSemidefTri{C}, opt::Optimizer) where {C}
+    # add variable bounds W_ii ≥ 0
     d = cache.d
     w = cache.oa_s
-    # W_ii ≥ 0
     JuMP.@constraint(opt.oa_model, [i in 1:d], w[svec_idx(C, i, i)] >= 0)
-    # a linearization of W_ii * W_jj ≥ |W_ij|^2
+    opt.use_init_fixed_oa || return
+
+    # add cuts (1, 1, ±2) on (W_ii, W_jj, W_ij), ∀i != j
+    # (a linearization of W_ii * W_jj ≥ W_ij^2)
+    # initial OA polyhedron is the dual cone of diagonally dominant matrices
     for j in 1:d, i in 1:(j - 1)
         _add_init_cuts(i, j, cache, opt)
     end
-    return (C == CompF ? 2d^2 - d : d^2)
+    return
 end
 
 # real: cuts on (w_ii, w_jj, w_ij) are (1, 1, ±rt2), ∀i != j

@@ -6,12 +6,17 @@ adapted from Boyd and Vandenberghe, "Convex Optimization", section 7.5
 
 min f(V × Diagonal(x) × V')
 subject to:
-x ≥ 0, Integer
-∑x = k
+x ∈ ℤᵏ
+0 ≤ x ≤ xmax
+∑x = xsum
 
-where k = 2d, variable x ∈ ℝᵏ is the frequency of each experiment, k is the
-number of experiments to run, the columns of V ∈ ℝ^(d × k) correspond to each
-experiment, and f is a convex spectral function
+where:
+- there are k = 2d experiments
+- the menu of experiments is V ∈ ℝ^(d × k)
+- variable x is the frequency of each experiment
+- f is a convex spectral function
+- xsum = k is the total number of experiments to run
+- xmax = 2 is the maximum frequency of each experiment
 =#
 
 struct ExperimentDesign <: ExampleInstance
@@ -32,6 +37,7 @@ function build(inst::ExperimentDesign)
     # build model
     model = JuMP.Model()
     JuMP.@variable(model, x[1:k] >= 0)
+    JuMP.@constraint(model, x .<= 2)
     JuMP.set_integer.(x)
     JuMP.@constraint(model, sum(x) == k)
 
@@ -63,6 +69,7 @@ function test_extra(inst::ExperimentDesign, model::JuMP.Model)
     tol = eps()^0.2
     x = JuMP.value.(model.ext[:x])
     @test x ≈ round.(Int, x) atol = tol rtol = tol
+    @test all(0 .<= x .<= 2)
     # check objective
     V = model.ext[:V]
     λ = eigvals(Symmetric(V * Diagonal(x) * V', :U))

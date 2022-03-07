@@ -58,16 +58,18 @@ end
 # unextended formulation
 
 function MOIPajarito.Cones.add_init_cuts(cache::EpiNormEucl{Nat}, opt::Optimizer)
+    # add variable bound
     u = cache.oa_s[1]
-    @views w = cache.oa_s[2:end] # TODO cache?
-    d = cache.d
-    # u ≥ 0, u ≥ |wᵢ|
+    JuMP.@constraint(opt.oa_model, u >= 0)
+    opt.use_init_fixed_oa || return
+
+    # add cuts u ≥ |wᵢ|
+    @views w = cache.oa_s[2:end]
     JuMP.@constraints(opt.oa_model, begin
-        u >= 0
-        [i in 1:d], u >= w[i]
-        [i in 1:d], u >= -w[i]
+        u .>= w
+        u .>= -w
     end)
-    return 1 + 2d
+    return
 end
 
 function _get_cuts(r::Vector{RealF}, cache::EpiNormEucl{Nat}, opt::Optimizer)
@@ -106,18 +108,20 @@ function MOIPajarito.Cones.setup_auxiliary(cache::EpiNormEucl{Ext}, opt::Optimiz
 end
 
 function MOIPajarito.Cones.add_init_cuts(cache::EpiNormEucl{Ext}, opt::Optimizer)
+    # add variable bound
     u = cache.oa_s[1]
+    JuMP.@constraint(opt.oa_model, u >= 0)
+    opt.use_init_fixed_oa || return
+
+    # add disaggregated cuts (1, 2, ±2) on (u, λᵢ, wᵢ), implying u ≥ |wᵢ|
     @views w = cache.oa_s[2:end]
     d = cache.d
     λ = cache.λ
-    # u ≥ 0, u ≥ |wᵢ|
-    # disaggregated cut on (u, λᵢ, wᵢ) is (1, 2, ±2)
     JuMP.@constraints(opt.oa_model, begin
-        u >= 0
-        [i in 1:d], u + 2 * λ[i] + 2 * w[i] >= 0
-        [i in 1:d], u + 2 * λ[i] - 2 * w[i] >= 0
+        [i in 1:d], u + 2λ[i] + 2w[i] >= 0
+        [i in 1:d], u + 2λ[i] - 2w[i] >= 0
     end)
-    return 1 + 2d
+    return
 end
 
 function _get_cuts(r::Vector{RealF}, cache::EpiNormEucl{Ext}, opt::Optimizer)
