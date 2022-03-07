@@ -15,8 +15,8 @@ where:
 
 struct CompletablePSD <: ExampleInstance
     d::Int # side dimension
-    sparsity::Real # fraction of elements in the pattern
-    frac_known::Real # fraction of sparse entries known
+    sparsity::Float64 # fraction of elements in the pattern
+    frac_known::Float64 # fraction of sparse entries known
     use_nat::Bool # use sparse PSD cone, else PSD cone formulation
 end
 
@@ -89,7 +89,7 @@ end
 
 function test_extra(inst::CompletablePSD, model::JuMP.Model)
     stat = JuMP.termination_status(model)
-    @test stat == MOI.OPTIMAL
+    @test stat in OPT_OR_LIMIT
     (stat == MOI.OPTIMAL) || return
 
     tol = eps()^0.2

@@ -10,8 +10,20 @@ insts["test"] = [
     ((3, 3, SOS2(), 11), nosubp_options),
     ((3, 3, CCBounded(), 11), nosubp_options),
     ((3, 3, LogIBBounded(), 11), nosubp_options),
-    # ((2, 2, CCUnbounded(), 11), nosubp_options),
-    # ((2, 2, LogIBUnbounded(), 11), nosubp_options),
+    # ((1, 2, CCUnbounded(), 11), nosubp_options),
+    # ((1, 2, LogIBUnbounded(), 11), nosubp_options),
 ]
+
+function ballpacking_insts(pwl::PWLSOS2)
+    ts = [((2, 2, pwl, 7), nosubp_options)] # compile
+    for p in 3:2:9
+        push!(ts, ((4, 3, pwl, 2^p - 1), nosubp_options))
+    end
+    return ts
+end
+
+insts["sos2"] = ballpacking_insts(SOS2())
+insts["cc"] = ballpacking_insts(CCBounded())
+insts["logib"] = ballpacking_insts(LogIBBounded())
 
 return (BallPacking, insts)

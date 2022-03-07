@@ -3,10 +3,11 @@ run examples tests from the examples folder
 =#
 
 include(joinpath(@__DIR__, "Examples.jl"))
+using Test
 
 # uncomment path for writing to results CSV
-results_path = nothing
-# results_path = joinpath(mkpath(joinpath(@__DIR__, "..", "benchmarks", "raw")), "tests.csv")
+csv = nothing
+# csv = joinpath(mkpath(joinpath(@__DIR__, "..", "benchmarks", "raw")), "tests.csv")
 
 import MathOptInterface
 const MOI = MathOptInterface
@@ -32,7 +33,7 @@ gurobi = MOI.OptimizerWithAttributes(
 )
 
 # default MOIPajarito options
-default_options = (;
+options = (;
     iteration_limit = 500,
     time_limit = 120.0,
     # verbose = false,
@@ -45,5 +46,35 @@ default_options = (;
     # use_init_fixed_oa = false,
 )
 
-perf = Examples.run_examples(["test"], default_options, results_path)
-println()
+# list of names of JuMP examples to run
+examples = [
+    # PSD:
+    "completablepsd",
+    # WSOS:
+    "polyfacilitylocation",
+    "polyregression",
+    "twostagestochastic",
+    # norm:
+    "matrixcompletion",
+    "matrixdecomposition",
+    "matrixregression",
+    # spectral function:
+    "experimentdesign",
+    "inversecovariance",
+    "vectorregression",
+    # nonconvex:
+    "ballpacking",
+    "modulardesign",
+]
+
+Examples.load_examples(examples)
+
+function run_examples_tests()
+    @testset "examples tests" begin
+        Examples.run_examples(examples, ["test"], options, csv, false, false)
+    end
+    println()
+    return
+end
+
+run_examples_tests()

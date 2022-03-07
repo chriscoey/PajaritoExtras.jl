@@ -38,8 +38,10 @@ const JuMPScalar = JuMP.AbstractJuMPScalar
 
 abstract type ExampleInstance end
 
-include("JuMP_utils.jl")
 include("benchmark_utils.jl")
+include("JuMP_utils.jl")
+
+const OPT_OR_LIMIT = [MOI.OPTIMAL, MOI.TIME_LIMIT, MOI.ITERATION_LIMIT]
 
 # TODO maybe move to Hypatia
 include("WSOS_utils.jl")
@@ -49,39 +51,11 @@ include("SOS2_utils.jl")
 
 include(joinpath(@__DIR__, "..", "test", "model_utils.jl"))
 
-# list of names of JuMP examples to run
-const JuMP_examples = [
-    # PSD:
-    "completablepsd",
-    # WSOS:
-    "polyfacilitylocation",
-    "polyregression",
-    "twostagestochastic",
-    # norm:
-    "matrixcompletion",
-    "matrixdecomposition",
-    "matrixregression",
-    # spectral function:
-    "experimentdesign",
-    "inversecovariance",
-    "vectorregression",
-    # nonconvex:
-    "ballpacking",
-    "modulardesign",
-]
-
 # load all examples
-for ex in JuMP_examples
-    include(joinpath(@__DIR__, ex, "model.jl"))
-end
-
-# build ordered dictionary of all test instances
-function get_test_instances()
-    test_insts = OrderedDict()
-    for ex in JuMP_examples
-        test_insts[ex] = include(joinpath(@__DIR__, ex, "instances.jl"))
+function load_examples(examples::Vector{String})
+    for ex in examples
+        include(joinpath(@__DIR__, ex, "model.jl"))
     end
-    return test_insts
 end
 
 end

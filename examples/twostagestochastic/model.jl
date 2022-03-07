@@ -103,7 +103,7 @@ end
 
 function test_extra(inst::TwoStageStochastic, model::JuMP.Model)
     stat = JuMP.termination_status(model)
-    @test stat == MOI.OPTIMAL
+    @test stat in OPT_OR_LIMIT
     (stat == MOI.OPTIMAL) || return
 
     tol = eps()^0.2

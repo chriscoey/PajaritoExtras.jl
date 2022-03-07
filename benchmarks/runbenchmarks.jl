@@ -3,22 +3,14 @@ run examples benchmarks from the examples folder
 =#
 
 include(joinpath(@__DIR__, "..", "examples", "Examples.jl"))
+using Test
 
 # uncomment path for writing to results CSV
-# results_path = nothing
-results_path = joinpath(mkpath(joinpath(@__DIR__, "raw")), "bench.csv")
+# csv = nothing
+csv = joinpath(mkpath(joinpath(@__DIR__, "raw")), "bench.csv")
 
 import MathOptInterface
 const MOI = MathOptInterface
-
-# import GLPK
-# glpk = MOI.OptimizerWithAttributes(
-#     GLPK.Optimizer,
-#     MOI.Silent() => true,
-#     "tol_int" => 1e-10,
-#     "tol_bnd" => 1e-10,
-#     "mip_gap" => 1e-10,
-# )
 
 import Gurobi
 gurobi = MOI.OptimizerWithAttributes(
@@ -32,25 +24,60 @@ gurobi = MOI.OptimizerWithAttributes(
 )
 
 # default MOIPajarito options
-default_options = (;
+options = (;
     iteration_limit = 10000,
     time_limit = 600.0,
     verbose = true,
-    # verbose = false,
     oa_solver = gurobi,
-    # oa_solver = glpk,
-    # use_extended_form = false,
     use_iterative_method = true,
-    # use_iterative_method = false,
-    # solve_relaxation = true,
-    # solve_subproblems = true,
-    # solve_subproblems = false,
-    # use_init_fixed_oa = true,
     use_init_fixed_oa = false,
 )
 
 # instance sets to run
-inst_sets = ["nat", "ext"]
+inst_sets = [
+    # generic nat vs ext:
+    "nat",
+    "ext",
+    # experiment design:
+    "nat_rtdet",
+    "ext_rtdet",
+    "nat_entr",
+    "ext_entr",
+    # PWL formulations:
+    "sos2",
+    "cc",
+    "logib",
+]
 
-perf = Examples.run_examples(inst_sets, default_options, results_path)
-println()
+# list of names of JuMP examples to run
+examples = [
+    # # PSD:
+    "completablepsd",
+    # # WSOS:
+    # "polyfacilitylocation",
+    # "polyregression",
+    # "twostagestochastic",
+    # # norm:
+    # "matrixcompletion",
+    # "matrixdecomposition",
+    # "matrixregression",
+    # # spectral function:
+    "experimentdesign",
+    "inversecovariance",
+    # "vectorregression",
+    # # nonconvex:
+    "ballpacking",
+    # "modulardesign",
+]
+
+Examples.load_examples(examples)
+
+function run_benchmarks()
+    @testset "benchmarks" begin
+        Examples.run_examples(examples, inst_sets, options, csv, true, true)
+    end
+    println()
+    return
+end
+
+run_benchmarks()

@@ -24,4 +24,16 @@ insts["test"] = [
     ((1, 6, 5, true, false, SOS2(), 20), nosubp_options),
 ]
 
+# function modulardesign_insts(specs::Vector)
+#     ts = Tuple[]
+#     for (max_d, f) in specs
+#         t = [((d, nothing, f),) for d in vcat(3, 3:3:max_d)]
+#         append!(ts, t)
+#     end
+#     return ts
+# end
+
+# insts["nat"] = modulardesign_insts([(12, MatNegLog())])
+# insts["ext"] = modulardesign_insts([(12, MatNegLogDirect())])
+
 return (ModularDesign, insts)

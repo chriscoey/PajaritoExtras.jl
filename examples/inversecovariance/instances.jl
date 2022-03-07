@@ -10,16 +10,9 @@ insts["test"] = [
     ((10, true, MatNegRtdetEFExp()),),
 ]
 
-function inversecovariance_insts(specs::Vector)
-    ts = Tuple[]
-    for (max_d, f) in specs
-        t = [((d, nothing, f),) for d in vcat(3, 3:3:max_d)]
-        append!(ts, t)
-    end
-    return ts
-end
+inversecovariance_insts(f::MatSpecExt) = [((d, nothing, f),) for d in vcat(3, 4:4:16)]
 
-insts["nat"] = inversecovariance_insts([(12, MatNegLog())])
-insts["ext"] = inversecovariance_insts([(12, MatNegLogDirect())])
+insts["nat"] = inversecovariance_insts(MatNegLog())
+insts["ext"] = inversecovariance_insts(MatNegLogDirect())
 
 return (InverseCovariance, insts)
