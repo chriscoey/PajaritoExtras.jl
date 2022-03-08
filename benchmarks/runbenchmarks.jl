@@ -56,19 +56,19 @@ examples = [
     # # PSD:
     # "completablepsd",
     # # WSOS:
-    "polyfacilitylocation",
-    # "polyregression",
-    "twostagestochastic",
+    # "polyfacilitylocation",
+    "polyregression",
+    # "twostagestochastic",
     # # norm:
     # "matrixcompletion",
     # "matrixdecomposition",
     # "matrixregression",
     # # spectral function:
-    "experimentdesign",
+    # "experimentdesign",
     # "inversecovariance",
     # "vectorregression",
     # # nonconvex:
-    # "ballpacking",
+    "ballpacking",
     # "modulardesign",
 ]
 

@@ -10,7 +10,7 @@ insts["test"] = [
 ]
 
 function polyregression_insts(use_nat::Bool)
-    return [((n, 2, 50, 10.0, use_nat), sparse_options) for n in vcat(1, 1:6)]
+    return [((2, 2, m, 25.0, use_nat),) for m in vcat(30, 30:5:70)]
 end
 
 insts["nat"] = polyregression_insts(true)

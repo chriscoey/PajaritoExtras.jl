@@ -32,7 +32,7 @@ function build(inst::PolyRegression)
     # setup interpolation
     D = PolyUtils.BoxDomain{Float64}(zeros(n), ones(n))
     (U, _, Ps, V) = PolyUtils.interpolate(D, inst.halfdeg, calc_V = true)
-    @assert m > 2U
+    @assert m >= 2U
     F = qr!(Array(V'), ColumnNorm())
 
     # generate noisy data in D = [0, 1]ⁿ from two underlying functions
