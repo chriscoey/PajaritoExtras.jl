@@ -108,7 +108,6 @@ function run_examples(
                         default_options,
                         perf,
                         results_path,
-                        first_compile,
                         skip_limit,
                     )
                 end
