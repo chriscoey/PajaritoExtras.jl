@@ -97,10 +97,10 @@ function MOIPajarito.Cones.extend_start(
     opt::Optimizer,
 )
     u_start = s_start[1]
-    w_start = s_start[2:end]
     if u_start < 1e-8
         return zeros(1 + cache.d)
     end
+    w_start = [max(s_start[i], 1e-9) for i in 2:length(s_start)]
     λ_start = [u_start * log(w_i / u_start) for w_i in w_start]
     return vcat(u_start, λ_start)
 end

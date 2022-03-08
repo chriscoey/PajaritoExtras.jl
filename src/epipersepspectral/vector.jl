@@ -115,7 +115,7 @@ function MOIPajarito.Cones.extend_start(
     if v_start < 1e-8
         return zeros(cache.d)
     end
-    @views w_start = s_start[3:end]
+    w_start = [max(s_start[i], 1e-9) for i in 3:length(s_start)]
     return [per_sepspec(val_or_conj(D), cache.h, v_start, [w_i]) for w_i in w_start]
 end
 
