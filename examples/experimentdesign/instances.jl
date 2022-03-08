@@ -23,7 +23,7 @@ insts["test"] = [
     ((2, MatPower12EigOrd(1.3)),),
 ]
 
-experimentdesign_insts(f::MatSpecExt) = [((d, f),) for d in vcat(3, 3:2:15)]
+experimentdesign_insts(f::MatSpecExt) = [((d, f),) for d in vcat(3, 3:2:17)]
 
 insts["nat_rtdet"] = experimentdesign_insts(MatNegRtdet())
 insts["ext_rtdet"] = experimentdesign_insts(MatNegRtdetEFExp())

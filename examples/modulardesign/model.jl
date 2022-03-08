@@ -30,13 +30,15 @@ struct ModularDesign <: ExampleInstance
     m::Int # number of modules
     jmax::Int # number of part options per module
     n::Int # number of design variables
+    use_nat::Bool # for convex case, use natural formulations
     use_nonconvex::Bool # use nonconvex equality constraints, else convex constraints
-    add_convex::Bool # (if use_nonconvex) add convex constraints, else just PWL inequality
     pwl::PWLSOS2 # type of piecewise linear SOS2 formulation to use
     max_pts::Int # maximum number of points per piecewise linearization
 end
 
-ModularDesign(m::Int, jmax::Int, n::Int) = ModularDesign(m, jmax, n, false, true, SOS2(), 0)
+function ModularDesign(m::Int, jmax::Int, n::Int, use_nat::Bool)
+    return ModularDesign(m, jmax, n, use_nat, false, SOS2(), 0)
+end
 
 function build(inst::ModularDesign)
     (m, jmax, n) = (inst.m, inst.jmax, inst.n)
@@ -56,13 +58,23 @@ function build(inst::ModularDesign)
     y0 = (ymax - ymin) * rand(n) .+ ymin
 
     # functions and affine data defining the conic constraints
-    f_list = VecSepSpecPrim[
-        VecNegLog(),
-        VecNegEntropy(),
-        VecNegSqrt(),
-        VecPower12(2.0),
-        VecNegPower01(0.8),
-    ]
+    if inst.use_nat
+        f_list = VecSepSpecPrim[
+            VecNegLog(),
+            VecNegEntropy(),
+            VecNegSqrt(),
+            VecNegPower01(0.8),
+            VecPower12(2.0),
+        ]
+    else
+        f_list = VecSepSpecPrimEF[
+            VecNegLogEF(),
+            VecNegEntropyEF(),
+            VecNegSqrtEF(),
+            VecNegPower01EF(0.8),
+            VecPower12EF(2.0),
+        ]
+    end
     fs = rand(f_list, m, jmax)
     Gs = Matrix{Matrix{Float64}}(undef, m, jmax)
     hs = Matrix{Vector{Float64}}(undef, m, jmax)
@@ -144,16 +156,10 @@ function build(inst::ModularDesign)
 
             # data constraints
             JuMP.@constraints(model, begin
-                dot(σ, f_pts) >= λ[k] # below the convex graph
+                dot(σ, f_pts) == λ[k]
                 sum(σ) == x_ij
                 dot(σ, pts) == w[k]
             end)
-
-            if inst.add_convex
-                # convex 3D constraint
-                # TODO can use NF if handle nonconvex formulations inside this package
-                add_spectral(f, 1, vcat(λ[k], x_ij, w[k]), model)
-            end
         end
     end
 
@@ -195,17 +201,13 @@ function test_extra(inst::ModularDesign, model::JuMP.Model)
         (u, w) = (aff[1], aff[2:end])
         iszero(v) && return -u
         @assert v == 1
-        return get_val(w, f) - u
+        any(<(-tol), w) && return NaN
+        return get_val(max.(w, 1e-9), f) - u
     end
     if inst.use_nonconvex
         tol_loose = eps()^0.1
-        if inst.add_convex
-            # check approximate equality (and inside cone)
-            conicfeas = (a -> -tol_loose < a < tol)
-        else
-            # check approximately outside cone
-            conicfeas = >(-tol_loose)
-        end
+        # check approximate equality (and inside cone)
+        conicfeas = (a -> -tol_loose < a < tol)
     else
         # convex constraints: check inside cone
         conicfeas = <(tol)

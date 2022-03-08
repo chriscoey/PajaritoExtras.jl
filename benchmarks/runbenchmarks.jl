@@ -46,9 +46,9 @@ inst_sets = [
     "nat_entr",
     "ext_entr",
     # PWL formulations:
-    "sos2",
-    "cc",
     "logib",
+    "cc",
+    "sos2",
 ]
 
 # list of names of JuMP examples to run
@@ -57,7 +57,7 @@ examples = [
     # "completablepsd",
     # # WSOS:
     # "polyfacilitylocation",
-    "polyregression",
+    # "polyregression",
     # "twostagestochastic",
     # # norm:
     # "matrixcompletion",
@@ -68,8 +68,8 @@ examples = [
     # "inversecovariance",
     # "vectorregression",
     # # nonconvex:
-    "ballpacking",
-    # "modulardesign",
+    # "ballpacking",
+    "modulardesign",
 ]
 
 Examples.load_examples(examples)
