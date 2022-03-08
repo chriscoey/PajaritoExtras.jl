@@ -29,14 +29,14 @@ constraints:
 struct PolyFacilityLocation <: ExampleInstance
     n::Int
     m::Int
-    deg::Int
+    halfdeg::Int
     use_nat::Bool # use WSOS cone formulation, else SDP formulation
 end
 
 function build(inst::PolyFacilityLocation)
     # setup polynomial interpolation
     dom = PolyUtils.BoxDomain{Float64}([0.0], [1.0])
-    (U, _, Ps, _, w) = PolyUtils.interpolate(dom, inst.deg, get_quadr = true)
+    (U, _, Ps, _, w) = PolyUtils.interpolate(dom, inst.halfdeg, get_quadr = true)
 
     # generate parameter values
     (n, m) = (inst.n, inst.m)

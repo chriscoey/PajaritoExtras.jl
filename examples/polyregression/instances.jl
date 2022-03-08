@@ -9,16 +9,11 @@ insts["test"] = [
     ((2, 2, 40, 100.0, true),),
 ]
 
-# function polyregression_insts(specs::Vector)
-#     ts = Tuple[]
-#     for (max_d, f) in specs
-#         t = [((d, nothing, f),) for d in vcat(3, 3:3:max_d)]
-#         append!(ts, t)
-#     end
-#     return ts
-# end
+function polyregression_insts(use_nat::Bool)
+    return [((n, 2, 50, 10.0, use_nat), sparse_options) for n in vcat(1, 1:6)]
+end
 
-# insts["nat"] = polyregression_insts([(12, MatNegLog())])
-# insts["ext"] = polyregression_insts([(12, MatNegLogDirect())])
+insts["nat"] = polyregression_insts(true)
+insts["ext"] = polyregression_insts(false)
 
 return (PolyRegression, insts)

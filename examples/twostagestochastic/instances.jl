@@ -15,16 +15,11 @@ insts["test"] = [
     ((5, 2, true, true), sparse_options),
 ]
 
-# function twostagestochastic_insts(specs::Vector)
-#     ts = Tuple[]
-#     for (max_d, f) in specs
-#         t = [((d, nothing, f),) for d in vcat(3, 3:3:max_d)]
-#         append!(ts, t)
-#     end
-#     return ts
-# end
+function twostagestochastic_insts(use_nat::Bool)
+    return [((3, d, false, use_nat), sparse_options) for d in [3, 10, 30, 100, 300, 1000]]
+end
 
-# insts["nat"] = twostagestochastic_insts([(12, MatNegLog())])
-# insts["ext"] = twostagestochastic_insts([(12, MatNegLogDirect())])
+insts["nat"] = twostagestochastic_insts(true)
+insts["ext"] = twostagestochastic_insts(false)
 
 return (TwoStageStochastic, insts)

@@ -38,7 +38,7 @@ TODO
 
 struct TwoStageStochastic <: ExampleInstance
     n::Int
-    deg::Int
+    halfdeg::Int
     linked::Bool # whether stage two decisions are linked or independent
     use_nat::Bool # use WSOS cone formulation, else SDP formulation
 end
@@ -57,7 +57,7 @@ function build(inst::TwoStageStochastic)
     # setup polynomial interpolation
     n0 = (inst.linked ? n : 1)
     dom = PolyUtils.BoxDomain{Float64}(zeros(n0), ones(n0))
-    (U, pts, Ps, _, w) = PolyUtils.interpolate(dom, inst.deg, get_quadr = true)
+    (U, pts, Ps, _, w) = PolyUtils.interpolate(dom, inst.halfdeg, get_quadr = true)
     w .*= (inst.linked ? 1 : 2^(n - 1))
 
     # build model
