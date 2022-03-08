@@ -26,7 +26,7 @@ insts["test"] = [
 
 # convex instances
 function modulardesign_insts(use_nat::Bool)
-    return [((5, 5, n, use_nat), sparse_options) for n in vcat(20, 20:20:180)]
+    return [((5, 5, n, use_nat), sparse_options) for n in vcat(20, 25:25:250)]
 end
 
 insts["nat"] = modulardesign_insts(true)
