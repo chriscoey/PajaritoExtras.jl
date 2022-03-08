@@ -97,25 +97,28 @@ function run_examples(
         (ex_type, ex_insts) = include(joinpath(@__DIR__, ex, "instances.jl"))
 
         # run instance sets
-        @testset "$inst_set" for inst_set in inst_sets
+        for inst_set in inst_sets
             haskey(ex_insts, inst_set) || continue
-            inst_subset = ex_insts[inst_set]
-            isempty(inst_subset) && continue
 
-            info_perf = (; inst_set, :example => ex)
-            str = "$ex $inst_set"
-            println("\nstarting $str tests\n")
-            @testset "$str" begin
-                run_instance_set(
-                    inst_subset,
-                    ex_type,
-                    info_perf,
-                    default_options,
-                    perf,
-                    results_path,
-                    first_compile,
-                    skip_limit,
-                )
+            @testset "$inst_set" begin
+                inst_subset = ex_insts[inst_set]
+                isempty(inst_subset) && continue
+
+                info_perf = (; inst_set, :example => ex)
+                str = "$ex $inst_set"
+                println("\nstarting $str tests\n")
+                @testset "$str" begin
+                    run_instance_set(
+                        inst_subset,
+                        ex_type,
+                        info_perf,
+                        default_options,
+                        perf,
+                        results_path,
+                        first_compile,
+                        skip_limit,
+                    )
+                end
             end
         end
     end

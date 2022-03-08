@@ -6,3 +6,4 @@ Manifest.toml
 myruntests.jl
 scratch.jl
 *.csv
+*/raw/*
