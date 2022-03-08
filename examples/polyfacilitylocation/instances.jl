@@ -14,7 +14,7 @@ insts["test"] = [
 ]
 
 function polyfacilitylocation_insts(use_nat::Bool)
-    return [((n, 2n, 3, use_nat), sparse_options) for n in vcat(2, 5:5:40)]
+    return [((n, 2n, 3, use_nat), sparse_options) for n in vcat(5, 5:5:60)]
 end
 
 insts["nat"] = polyfacilitylocation_insts(true)

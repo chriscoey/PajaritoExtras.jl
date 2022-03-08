@@ -16,7 +16,7 @@ insts["test"] = [
 ]
 
 function twostagestochastic_insts(use_nat::Bool)
-    return [((3, d, false, use_nat), sparse_options) for d in [3, 10, 30, 100, 300, 1000]]
+    return [((3, 2^p, false, use_nat), sparse_options) for p in vcat(3, 3:11)]
 end
 
 insts["nat"] = twostagestochastic_insts(true)

@@ -52,7 +52,6 @@ function run_instance_set(
     default_options::NamedTuple,
     perf::DataFrames.DataFrame,
     results_path::Union{String, Nothing},
-    first_compile::Bool,
     skip_limit::Bool,
 )
     @testset "inst $inst_num: $(inst[1])" for (inst_num, inst) in enumerate(inst_subset)
@@ -61,11 +60,6 @@ function run_instance_set(
         total_time = @elapsed run_perf =
             run_instance(ex_type, inst..., default_options = default_options)
         @printf("%8.2e seconds\n", total_time)
-
-        if first_compile && isone(inst_num)
-            println("compile instance finished; excluding from results\n")
-            continue
-        end
 
         p = (; info_perf..., run_perf..., total_time, inst_num, :inst_data => inst[1])
         write_perf(perf, results_path, p)
@@ -84,7 +78,6 @@ function run_examples(
     inst_sets::Vector{String},
     default_options::NamedTuple,
     results_path::Union{String, Nothing},
-    first_compile::Bool, # first instance compiles - do not write to results
     skip_limit::Bool, # skip larger instances after hitting a solver limit
 )
     # setup dataframe

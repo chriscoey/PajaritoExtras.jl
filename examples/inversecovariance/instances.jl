@@ -10,7 +10,7 @@ insts["test"] = [
     ((10, true, MatNegRtdetEFExp()),),
 ]
 
-inversecovariance_insts(f::MatSpecExt) = [((d, nothing, f),) for d in vcat(3, 4:2:16)]
+inversecovariance_insts(f::MatSpecExt) = [((d, nothing, f),) for d in vcat(4, 4:2:16)]
 
 insts["nat"] = inversecovariance_insts(MatNegLog())
 insts["ext"] = inversecovariance_insts(MatNegLogDirect())

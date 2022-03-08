@@ -54,21 +54,21 @@ inst_sets = [
 # list of names of JuMP examples to run
 examples = [
     # # PSD:
-    "completablepsd",
+    # "completablepsd",
     # # WSOS:
-    # "polyfacilitylocation",
+    "polyfacilitylocation",
     # "polyregression",
-    # "twostagestochastic",
+    "twostagestochastic",
     # # norm:
     # "matrixcompletion",
     # "matrixdecomposition",
     # "matrixregression",
     # # spectral function:
     "experimentdesign",
-    "inversecovariance",
+    # "inversecovariance",
     # "vectorregression",
     # # nonconvex:
-    "ballpacking",
+    # "ballpacking",
     # "modulardesign",
 ]
 
@@ -76,7 +76,7 @@ Examples.load_examples(examples)
 
 function run_benchmarks()
     @testset "benchmarks" begin
-        Examples.run_examples(examples, inst_sets, options, csv, true, true)
+        Examples.run_examples(examples, inst_sets, options, csv, true)
     end
     println()
     return
