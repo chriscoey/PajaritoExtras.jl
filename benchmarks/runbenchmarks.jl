@@ -37,18 +37,18 @@ options = (;
 
 # instance sets to run
 inst_sets = [
-    # generic nat vs ext:
-    "nat",
-    "ext",
-    # experiment design:
-    "nat_rtdet",
-    "ext_rtdet",
-    "nat_entr",
-    "ext_entr",
-    # PWL formulations:
+    # # generic nat vs ext:
+    # "nat",
+    # "ext",
+    # # experiment design:
+    # "nat_rtdet",
+    # "ext_rtdet",
+    # "nat_entr",
+    # "ext_entr",
+    # # PWL formulations:
+    "sos2",
     "logib",
     "cc",
-    "sos2",
 ]
 
 # list of names of JuMP examples to run

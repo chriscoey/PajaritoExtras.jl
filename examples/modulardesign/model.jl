@@ -50,6 +50,9 @@ function build(inst::ModularDesign)
     @assert ymax > ymin > 0
     Sdim = 1 + div(n, 2) # dimension of convex epigraph sets
     @assert Sdim >= 2
+    if inst.use_nonconvex
+        @assert inst.use_nat
+    end
 
     # generate data
     c = 10 * rand(m, jmax)
@@ -58,9 +61,10 @@ function build(inst::ModularDesign)
     y0 = (ymax - ymin) * rand(n) .+ ymin
 
     # functions and affine data defining the conic constraints
+    # TODO -log has high slope near zero, so need non-evenly-spaced points
     if inst.use_nat
         f_list = VecSepSpecPrim[
-            VecNegLog(),
+            # VecNegLog(),
             VecNegEntropy(),
             VecNegSqrt(),
             VecNegPower01(0.8),
@@ -68,7 +72,7 @@ function build(inst::ModularDesign)
         ]
     else
         f_list = VecSepSpecPrimEF[
-            VecNegLogEF(),
+            # VecNegLogEF(),
             VecNegEntropyEF(),
             VecNegSqrtEF(),
             VecNegPower01EF(0.8),
@@ -132,21 +136,23 @@ function build(inst::ModularDesign)
             continue
         end
 
-        # add nonconvex constraint
+        # relaxation of nonconvex constraint
         λ = JuMP.@variable(model, [1:d])
         JuMP.@constraint(model, u == sum(λ))
 
         for k in 1:d
+            # convex constraint (above graph)
+            add_spectral(f, 1, vcat(λ[k], x_ij, w[k]), model)
+
             # bounds
             G_k = G_ij[1 + k, :]
             min_ij = h_ij[1 + k] - sum((g < 0 ? ymin : ymax) * g for g in G_k)
             max_ij = h_ij[1 + k] - sum((g < 0 ? ymax : ymin) * g for g in G_k)
             @assert min_ij <= max_ij
-            max_ij = max(1e-5, max_ij)
-            min_ij = max(1e-5, min_ij)
+            max_ij = max(1e-4, max_ij)
+            min_ij = max(1e-4, min_ij)
 
             # interpolation
-            # TODO instead of fixed number of points, could use a fixed spacing interval between points
             pts = collect(range(min_ij, max_ij, length = inst.max_pts))
             f_pts = [get_val([pt], f) for pt in pts]
 
@@ -156,7 +162,7 @@ function build(inst::ModularDesign)
 
             # data constraints
             JuMP.@constraints(model, begin
-                dot(σ, f_pts) == λ[k]
+                dot(σ, f_pts) >= λ[k] # (below PWL graph)
                 sum(σ) == x_ij
                 dot(σ, pts) == w[k]
             end)
@@ -213,6 +219,7 @@ function test_extra(inst::ModularDesign, model::JuMP.Model)
         conicfeas = <(tol)
     end
     ϵs = [viol((fs[i, j], x_int[i, j], JuMP.value.(affs[i, j]))) for i in 1:m, j in 1:jmax]
+    @show maximum(abs, ϵs) # TODO delete
     @test all(conicfeas, ϵs)
     return
 end
