@@ -50,9 +50,6 @@ function build(inst::ModularDesign)
     @assert ymax > ymin > 0
     Sdim = 1 + div(n, 2) # dimension of convex epigraph sets
     @assert Sdim >= 2
-    if inst.use_nonconvex
-        @assert inst.use_nat
-    end
 
     # generate data
     c = 10 * rand(m, jmax)

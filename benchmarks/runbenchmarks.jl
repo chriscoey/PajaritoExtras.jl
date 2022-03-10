@@ -38,9 +38,9 @@ options = (;
 # instance sets to run
 inst_sets = [
     # # generic nat vs ext:
-    "nat",
-    "nat_noext",
-    "ext",
+    # "nat",
+    # "nat_noext",
+    # "ext",
     # # experiment design:
     # "nat_rtdet",
     # "ext_rtdet",
