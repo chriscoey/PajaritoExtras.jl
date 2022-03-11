@@ -84,7 +84,7 @@ function build(inst::PolyRegression)
 
     # TODO tighten big-Ms, inefficient sparsity
     JuMP.@constraints(model, begin
-        vcat(epi, z) in JuMP.SecondOrderCone()
+        vcat(epi, z) in Hypatia.EpiNormEuclCone{Float64}(1 + m)
         r1 .== z - Y + p_X' * p1
         r2 .== z - Y + p_X' * p2
         ceil(0.4 * m) <= sum(b)

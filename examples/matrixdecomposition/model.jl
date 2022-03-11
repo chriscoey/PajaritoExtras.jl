@@ -14,18 +14,17 @@ see http://www.mit.edu/~parrilo/pubs/talkfiles/ISMP2009.pdf
 struct MatrixDecomposition <: ExampleInstance
     d1::Int
     d2::Int
-    A_sparsity::Float64
-    B_rank::Int
     use_nat::Bool # use nuclear norm cone, else PSD cone formulation
 end
 
 function build(inst::MatrixDecomposition)
     (d1, d2) = (inst.d1, inst.d2)
-    B_rank = inst.B_rank
+    B_rank = 1 + div(d1, 2)
     @assert 1 <= B_rank <= d1 <= d2
+    A_sparsity = 0.2
 
     # generate data
-    A0 = sprand(d1, d2, inst.A_sparsity)
+    A0 = sprand(d1, d2, A_sparsity)
     B0 = randn(d1, B_rank) * randn(B_rank, d2)
     C = A0 + B0
     λ = 0.02 # TODO?

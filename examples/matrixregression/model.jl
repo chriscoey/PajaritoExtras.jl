@@ -39,18 +39,21 @@ function build(inst::MatrixRegression)
     model = JuMP.Model()
     JuMP.@variable(model, loss)
     JuMP.@variable(model, nuc)
-    JuMP.@variable(model, row[1:p])
     JuMP.@variable(model, A[1:p, 1:m])
     JuMP.@variable(model, row_on[1:p], Bin)
 
     JuMP.@objective(model, Min, loss + λ * nuc)
 
-    JuMP.@constraints(model, begin
-        vcat(loss, vec(Y - X * A)) in JuMP.SecondOrderCone()
-        [i = 1:p], A[i, :] .<= row_on[i]
-        [i = 1:p], A[i, :] .>= -row_on[i]
-        sum(row_on) <= k
-    end)
+    JuMP.@constraints(
+        model,
+        begin
+            vcat(loss, vec(Y - X * A)) in
+            Hypatia.EpiNormEuclCone{Float64}(1 + length(vec(Y)))
+            [i = 1:p], A[i, :] .<= row_on[i]
+            [i = 1:p], A[i, :] .>= -row_on[i]
+            sum(row_on) <= k
+        end
+    )
 
     add_nonsymm_specnuc(inst.use_nat, true, nuc, A', model)
 

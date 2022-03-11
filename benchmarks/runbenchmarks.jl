@@ -62,12 +62,12 @@ examples = [
     # "twostagestochastic",
     # norm:
     # "matrixcompletion",
-    # "matrixdecomposition",
+    "matrixdecomposition",
     # "matrixregression",
     # # spectral function:
     # "experimentdesign",
     # "inversecovariance",
-    "vectorregression",
+    # "vectorregression",
     # # nonconvex:
     # "ballpacking",
     # "modulardesign",
