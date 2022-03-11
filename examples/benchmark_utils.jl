@@ -22,7 +22,6 @@ function setup_benchmark_dataframe()
         optimize_time = Float64[],
         total_time = Float64[],
     )
-    # DataFrames.allowmissing!(perf, 11:DataFrames.ncol(perf))
     return perf
 end
 

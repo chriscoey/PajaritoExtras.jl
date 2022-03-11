@@ -41,44 +41,44 @@ inst_sets = [
     "nat",
     "nat_noext",
     "ext",
-    # # experiment design:
-    # "nat_rtdet",
-    # "ext_rtdet",
-    # "nat_entr",
-    # "ext_entr",
-    # # PWL formulations:
-    # "sos2",
-    # "logib",
-    # "cc",
+    # experiment design:
+    "nat_rtdet",
+    "ext_rtdet",
+    "nat_entr",
+    "ext_entr",
+    # PWL formulations:
+    "sos2",
+    "logib",
+    "cc",
 ]
 
 # list of names of JuMP examples to run
 examples = [
-    # # PSD:
-    # "completablepsd",
-    # # WSOS:
-    # "polyfacilitylocation",
-    # "polyregression",
-    # "twostagestochastic",
+    # PSD:
+    "completablepsd",
+    # WSOS:
+    "polyfacilitylocation",
+    "polyregression",
+    "twostagestochastic",
     # norm:
-    # "matrixcompletion",
+    "matrixcompletion",
     "matrixdecomposition",
-    # "matrixregression",
-    # # spectral function:
-    # "experimentdesign",
-    # "inversecovariance",
-    # "vectorregression",
-    # # nonconvex:
-    # "ballpacking",
-    # "modulardesign",
+    "matrixregression",
+    # spectral function:
+    "experimentdesign",
+    "inversecovariance",
+    "vectorregression",
+    # nonconvex:
+    "ballpacking",
+    "modulardesign",
 ]
 
 Examples.load_examples(examples)
 
 function run_benchmarks()
     @testset "benchmarks" begin
-        # Examples.run_examples(examples, inst_sets, options, csv, false) # TODO final run
-        Examples.run_examples(examples, inst_sets, options, csv, true)
+        Examples.run_examples(examples, inst_sets, options, csv, false) # TODO final run
+        # Examples.run_examples(examples, inst_sets, options, csv, true)
     end
     println()
     return

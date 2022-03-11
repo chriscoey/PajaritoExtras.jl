@@ -13,7 +13,7 @@ insts["test"] = [
 ]
 
 function matrixregression_insts(use_nat::Bool)
-    return [((2 * p, p, 5, use_nat), sparse_options) for p in vcat(10, 10:10:100)]
+    return [((2 * p, p, 5, use_nat), sparse_options) for p in vcat(10, 15:15:150)]
 end
 
 insts["nat"] = matrixregression_insts(true)

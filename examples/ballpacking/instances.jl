@@ -22,8 +22,8 @@ function ballpacking_insts(pwl::PWLSOS2)
     return ts
 end
 
+insts["sos2"] = ballpacking_insts(SOS2())
 insts["logib"] = ballpacking_insts(LogIBBounded())
 insts["cc"] = ballpacking_insts(CCBounded())
-insts["sos2"] = ballpacking_insts(SOS2())
 
 return (BallPacking, insts)
