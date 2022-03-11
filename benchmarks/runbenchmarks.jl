@@ -54,31 +54,33 @@ inst_sets = [
 
 # list of names of JuMP examples to run
 examples = [
-    # PSD:
-    "completablepsd",
-    # WSOS:
-    "polyfacilitylocation",
+    # # PSD:
+    # "completablepsd",
+    # WSOS: NOTE larger sizes of ext run out of memory, so use skip_limit below
+    # "polyfacilitylocation",
     "polyregression",
     "twostagestochastic",
-    # norm:
-    "matrixcompletion",
-    "matrixdecomposition",
-    "matrixregression",
-    # spectral function:
-    "experimentdesign",
-    "inversecovariance",
-    "vectorregression",
-    # nonconvex:
-    "ballpacking",
-    "modulardesign",
+    # # norm:
+    # "matrixcompletion",
+    # "matrixdecomposition",
+    # "matrixregression",
+    # # spectral function:
+    # "experimentdesign",
+    # "inversecovariance",
+    # "vectorregression",
+    # # nonconvex:
+    # "ballpacking",
+    # "modulardesign",
 ]
+
+# skip_limit = false
+skip_limit = true
 
 Examples.load_examples(examples)
 
 function run_benchmarks()
     @testset "benchmarks" begin
-        Examples.run_examples(examples, inst_sets, options, csv, false) # TODO final run
-        # Examples.run_examples(examples, inst_sets, options, csv, true)
+        Examples.run_examples(examples, inst_sets, options, csv, skip_limit)
     end
     println()
     return
