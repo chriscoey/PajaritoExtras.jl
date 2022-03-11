@@ -56,10 +56,10 @@ inst_sets = [
 examples = [
     # # PSD:
     # "completablepsd",
-    # WSOS: NOTE larger sizes of ext run out of memory, so use skip_limit below
+    # # WSOS: NOTE larger sizes of ext run out of memory, so use skip_limit below
     # "polyfacilitylocation",
     "polyregression",
-    "twostagestochastic",
+    # "twostagestochastic",
     # # norm:
     # "matrixcompletion",
     # "matrixdecomposition",
