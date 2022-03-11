@@ -14,7 +14,7 @@ insts["test"] = [
 
 function matrixcompletion_insts(use_nat::Bool)
     options = (; tol_rel_gap = 1e-4)
-    return [((true, true, nrow, nrow, use_nat), options) for nrow in vcat(10, 10:10:150)]
+    return [((true, true, nrow, nrow, use_nat), options) for nrow in vcat(20, 20:20:200)]
 end
 
 insts["nat"] = matrixcompletion_insts(true)

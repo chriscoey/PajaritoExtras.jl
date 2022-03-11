@@ -11,7 +11,7 @@ insts["test"] = [
 function vectorregression_insts(use_extended_form::Bool)
     options = (; use_extended_form = use_extended_form)
     hs = [VecNegEntropy(), VecNegSqrtConj()]
-    return [((n, n, false, hs), options) for n in vcat(10, 15:15:150)]
+    return [((n, n, true, hs), options) for n in vcat(10, 10:10:150)]
 end
 
 insts["nat"] = vectorregression_insts(true)

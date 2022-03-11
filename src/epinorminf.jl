@@ -78,19 +78,10 @@ function MOIPajarito.Cones.add_init_cuts(cache::EpiNormInf{Prim, CompF}, opt::Op
 end
 
 function MOIPajarito.Cones.get_subp_cuts(
-    ::Vector{RealF},
-    ::EpiNormInf{Prim, RealF},
-    ::Optimizer,
-)
-    return AE[]
-end
-
-function MOIPajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
-    cache::EpiNormInf{Prim, CompF},
+    cache::EpiNormInf{Prim, <:RealCompF},
     opt::Optimizer,
 )
-    # strengthened cut on (u, re(Wᵢ), im(Wᵢ)) is (‖Rᵢ‖, re(Rᵢ), im(Rᵢ))
     R = cache.W_temp
     @views vec_copyto!(R, z[2:end])
     cuts = AE[]
@@ -103,16 +94,8 @@ function MOIPajarito.Cones.get_subp_cuts(
 end
 
 function MOIPajarito.Cones.get_sep_cuts(
-    ::Vector{RealF},
-    ::EpiNormInf{Prim, RealF},
-    ::Optimizer,
-)
-    return AE[]
-end
-
-function MOIPajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
-    cache::EpiNormInf{Prim, CompF},
+    cache::EpiNormInf{Prim, <:RealCompF},
     opt::Optimizer,
 )
     # decomposed gradient cut on (u, Wᵢ) is (1, -Wsᵢ / ‖Wsᵢ‖)
@@ -131,14 +114,20 @@ function MOIPajarito.Cones.get_sep_cuts(
     return cuts
 end
 
+function _get_cut(R_i::RealF, i::Int, cache::EpiNormInf{Prim, RealF}, opt::Optimizer)
+    # strengthened disaggregated cut on (u, Wᵢ) is (‖Rᵢ‖, Rᵢ)
+    u = cache.oa_s[1]
+    w_i = cache.oa_s[1 + i]
+    return JuMP.@expression(opt.oa_model, abs(R_i) * u + R_i * w_i)
+end
+
 function _get_cut(R_i::CompF, i::Int, cache::EpiNormInf{Prim, CompF}, opt::Optimizer)
+    # strengthened cut on (u, re(Wᵢ), im(Wᵢ)) is (‖Rᵢ‖, re(Rᵢ), im(Rᵢ))
     u = cache.oa_s[1]
     re_w = cache.oa_s[2i]
     im_w = cache.oa_s[2i + 1]
-    return JuMP.@expression(
-        opt.oa_model,
-        abs(R_i) * u + real(R_i) * re_w + imag(R_i) * im_w
-    )
+    (re_i, im_i) = reim(R_i)
+    return JuMP.@expression(opt.oa_model, abs(R_i) * u + re_i * re_w + im_i * im_w)
 end
 
 # dual cone functions
@@ -303,26 +292,13 @@ function MOIPajarito.Cones.add_init_cuts(
     return
 end
 
-function MOIPajarito.Cones.get_subp_cuts(
-    ::Vector{RealF},
-    ::EpiNormInf{Dual, RealF, Ext},
-    ::Optimizer,
+function _get_cuts(
+    R::Vector{<:RealCompF},
+    cache::EpiNormInf{Dual, <:RealCompF, Ext},
+    opt::Optimizer,
 )
-    return AE[]
-end
-
-function MOIPajarito.Cones.get_sep_cuts(
-    ::Vector{RealF},
-    ::EpiNormInf{Dual, RealF, Ext},
-    ::Optimizer,
-)
-    return AE[]
-end
-
-function _get_cuts(R::Vector{CompF}, cache::EpiNormInf{Dual, CompF, Ext}, opt::Optimizer)
     cuts = AE[]
     for (i, R_i) in enumerate(R)
-        # strengthened disaggregated cut on (λᵢ, re(Wᵢ), im(Wᵢ)) is (‖Rᵢ‖, re(Rᵢ), im(Rᵢ))
         abs(R_i) < 1e-9 && continue
         cut = _get_cut(R_i, i, cache, opt)
         push!(cuts, cut)
@@ -330,12 +306,18 @@ function _get_cuts(R::Vector{CompF}, cache::EpiNormInf{Dual, CompF, Ext}, opt::O
     return cuts
 end
 
+function _get_cut(R_i::RealF, i::Int, cache::EpiNormInf{Dual, RealF, Ext}, opt::Optimizer)
+    # strengthened disaggregated cut on (λᵢ, Wᵢ) is (‖Rᵢ‖, Rᵢ)
+    λ_i = cache.λ[i]
+    w_i = cache.oa_s[1 + i]
+    return JuMP.@expression(opt.oa_model, abs(R_i) * λ_i + R_i * w_i)
+end
+
 function _get_cut(R_i::CompF, i::Int, cache::EpiNormInf{Dual, CompF, Ext}, opt::Optimizer)
+    # strengthened disaggregated cut on (λᵢ, re(Wᵢ), im(Wᵢ)) is (‖Rᵢ‖, re(Rᵢ), im(Rᵢ))
     λ_i = cache.λ[i]
     re_w = cache.oa_s[2i]
     im_w = cache.oa_s[2i + 1]
-    return JuMP.@expression(
-        opt.oa_model,
-        abs(R_i) * λ_i + real(R_i) * re_w + imag(R_i) * im_w
-    )
+    (re_i, im_i) = reim(R_i)
+    return JuMP.@expression(opt.oa_model, abs(R_i) * λ_i + re_i * re_w + im_i * im_w)
 end

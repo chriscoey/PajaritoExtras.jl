@@ -61,13 +61,13 @@ examples = [
     # "polyregression",
     # "twostagestochastic",
     # norm:
-    "matrixcompletion",
+    # "matrixcompletion",
     # "matrixdecomposition",
     # "matrixregression",
     # # spectral function:
     # "experimentdesign",
     # "inversecovariance",
-    # "vectorregression",
+    "vectorregression",
     # # nonconvex:
     # "ballpacking",
     # "modulardesign",
