@@ -8,16 +8,13 @@ insts["test"] = [
     ((6, 4, true, [VecNegEntropy(), VecNegSqrtConj()]),),
 ]
 
-# function vectorregression_insts(specs::Vector)
-#     ts = Tuple[]
-#     for (max_d, f) in specs
-#         t = [((d, nothing, f),) for d in vcat(3, 3:3:max_d)]
-#         append!(ts, t)
-#     end
-#     return ts
-# end
+function vectorregression_insts(use_extended_form::Bool)
+    options = (; use_extended_form = use_extended_form)
+    hs = [VecNegEntropy(), VecNegSqrtConj()]
+    return [((n, n, false, hs), options) for n in vcat(10, 15:15:150)]
+end
 
-# insts["nat"] = vectorregression_insts([(12, MatNegLog())])
-# insts["ext"] = vectorregression_insts([(12, MatNegLogDirect())])
+insts["nat"] = vectorregression_insts(true)
+insts["nat_noext"] = vectorregression_insts(false)
 
 return (VectorRegression, insts)

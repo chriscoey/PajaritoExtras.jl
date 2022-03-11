@@ -34,7 +34,7 @@ insts["ext"] = modulardesign_insts(false, sparse_options)
 
 # nonconvex instances
 function modulardesign_insts(pwl::PWLSOS2, options::NamedTuple)
-    return [((3, 3, n, true, true, pwl, 512), options) for n in vcat(4, 4:2:24)]
+    return [((3, 3, n, true, true, pwl, 512), options) for n in vcat(4, 4:2:26)]
 end
 
 insts["sos2"] = modulardesign_insts(SOS2(), noconic_options)

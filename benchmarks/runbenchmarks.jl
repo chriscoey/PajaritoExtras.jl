@@ -37,19 +37,19 @@ options = (;
 
 # instance sets to run
 inst_sets = [
-    # # generic nat vs ext:
-    # "nat",
-    # "nat_noext",
-    # "ext",
+    # generic nat vs ext:
+    "nat",
+    "nat_noext",
+    "ext",
     # # experiment design:
     # "nat_rtdet",
     # "ext_rtdet",
     # "nat_entr",
     # "ext_entr",
     # # PWL formulations:
-    "sos2",
-    "logib",
-    "cc",
+    # "sos2",
+    # "logib",
+    # "cc",
 ]
 
 # list of names of JuMP examples to run
@@ -60,8 +60,8 @@ examples = [
     # "polyfacilitylocation",
     # "polyregression",
     # "twostagestochastic",
-    # # norm:
-    # "matrixcompletion",
+    # norm:
+    "matrixcompletion",
     # "matrixdecomposition",
     # "matrixregression",
     # # spectral function:
@@ -70,13 +70,14 @@ examples = [
     # "vectorregression",
     # # nonconvex:
     # "ballpacking",
-    "modulardesign",
+    # "modulardesign",
 ]
 
 Examples.load_examples(examples)
 
 function run_benchmarks()
     @testset "benchmarks" begin
+        # Examples.run_examples(examples, inst_sets, options, csv, false) # TODO final run
         Examples.run_examples(examples, inst_sets, options, csv, true)
     end
     println()

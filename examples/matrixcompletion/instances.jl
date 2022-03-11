@@ -12,16 +12,12 @@ insts["test"] = [
     ((false, true, 6, 6, false),),
 ]
 
-# function matrixcompletion_insts(specs::Vector)
-#     ts = Tuple[]
-#     for (max_d, f) in specs
-#         t = [((d, nothing, f),) for d in vcat(3, 3:3:max_d)]
-#         append!(ts, t)
-#     end
-#     return ts
-# end
+function matrixcompletion_insts(use_nat::Bool)
+    options = (; tol_rel_gap = 1e-4)
+    return [((true, true, nrow, nrow, use_nat), options) for nrow in vcat(10, 10:10:150)]
+end
 
-# insts["nat"] = matrixcompletion_insts([(12, MatNegLog())])
-# insts["ext"] = matrixcompletion_insts([(12, MatNegLogDirect())])
+insts["nat"] = matrixcompletion_insts(true)
+insts["ext"] = matrixcompletion_insts(false)
 
 return (MatrixCompletion, insts)

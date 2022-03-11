@@ -12,16 +12,6 @@ insts["test"] = [
     ((50, 15, 10, false), sparse_options),
 ]
 
-# function matrixregression_insts(specs::Vector)
-#     ts = Tuple[]
-#     for (max_d, f) in specs
-#         t = [((d, nothing, f),) for d in vcat(3, 3:3:max_d)]
-#         append!(ts, t)
-#     end
-#     return ts
-# end
-
-# insts["nat"] = matrixregression_insts([(12, MatNegLog())])
-# insts["ext"] = matrixregression_insts([(12, MatNegLogDirect())])
+# matrixregression_insts
 
 return (MatrixRegression, insts)

@@ -42,7 +42,7 @@ function build(inst::VectorRegression)
     X = randn(n, m)
     Y = X * β0 + 0.1 * randn(n)
     λ = 0.1
-    a = [get_val(β0, h_l) for h_l in hs]
+    a = [get_val(1 .+ β0, h_l) for h_l in hs]
 
     K_f = if inst.f_l2
         Hypatia.EpiNormEuclCone{Float64}(1 + n)
@@ -52,7 +52,7 @@ function build(inst::VectorRegression)
 
     # build model
     model = JuMP.Model()
-    JuMP.@variable(model, β[1:m])
+    JuMP.@variable(model, β[1:m] >= 0)
     JuMP.@variable(model, z[1:m], Bin)
     JuMP.@constraint(model, β .<= βmax * z)
 
@@ -63,7 +63,7 @@ function build(inst::VectorRegression)
     JuMP.@objective(model, Min, f_epi + λ * sum(z))
 
     for (h_l, a_l) in zip(hs, a)
-        add_homog_spectral(h_l, m, vcat(a_l, β), model)
+        add_homog_spectral(h_l, m, vcat(a_l, 1 .+ β), model)
     end
 
     # save for use in tests
@@ -89,6 +89,7 @@ function test_extra(inst::VectorRegression, model::JuMP.Model)
     f_val = norm(f_aff[2:end], (inst.f_l2 ? 2 : 1))
     @test f_aff[1] ≈ f_val atol = tol rtol = tol
     β = JuMP.value.(model.ext[:β])
-    @test all(a_l >= get_val(β, h_l) - tol for (h_l, a_l) in zip(inst.hs, model.ext[:a]))
+    a = model.ext[:a]
+    @test all(a_l >= get_val(1 .+ β, h_l) - tol for (h_l, a_l) in zip(inst.hs, a))
     return
 end
