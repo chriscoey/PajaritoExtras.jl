@@ -16,7 +16,7 @@ insts["test"] = [
 
 function ballpacking_insts(pwl::PWLSOS2)
     ts = [((4, 3, pwl, 7), nosubp_options)] # compile
-    for p in 3:2:13
+    for p in 3:13
         push!(ts, ((4, 3, pwl, 2^p - 1), nosubp_options))
     end
     return ts

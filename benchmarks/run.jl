@@ -1,7 +1,6 @@
 #=
 run from the benchmarks folder
-
-~/julia/julia runbenchmarks.jl &> raw/bench.txt
+~/julia/julia run.jl &> raw/bench.txt
 =#
 
 include(joinpath(@__DIR__, "..", "examples", "Examples.jl"))
@@ -54,23 +53,23 @@ inst_sets = [
 
 # list of names of JuMP examples to run
 examples = [
-    # # PSD:
-    # "completablepsd",
-    # # WSOS: NOTE larger sizes of ext run out of memory, so use skip_limit below
-    # "polyfacilitylocation",
+    # PSD:
+    "completablepsd",
+    # WSOS: (NOTE larger sizes of ext run out of memory, so use skip_limit below)
+    "polyfacilitylocation",
     "polyregression",
-    # "twostagestochastic",
-    # # norm:
-    # "matrixcompletion",
-    # "matrixdecomposition",
-    # "matrixregression",
-    # # spectral function:
-    # "experimentdesign",
-    # "inversecovariance",
-    # "vectorregression",
-    # # nonconvex:
-    # "ballpacking",
-    # "modulardesign",
+    "twostagestochastic",
+    # norm:
+    "matrixcompletion",
+    "matrixdecomposition",
+    "matrixregression",
+    # spectral function:
+    "experimentdesign",
+    "inversecovariance",
+    "vectorregression",
+    # nonconvex:
+    "ballpacking",
+    "modulardesign",
 ]
 
 # skip_limit = false
