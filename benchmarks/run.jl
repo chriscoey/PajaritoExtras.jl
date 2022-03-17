@@ -36,6 +36,8 @@ options = (;
 
 # instance sets to run
 inst_sets = [
+    # test instances (comment out usually):
+    # "test",
     # generic nat vs ext:
     "nat",
     "nat_noext",

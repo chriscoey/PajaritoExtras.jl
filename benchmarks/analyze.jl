@@ -10,7 +10,7 @@ using DataFrames
 include(joinpath(@__DIR__, "../examples/Examples.jl"))
 import Main.Examples
 
-bench_file = joinpath(@__DIR__, "raw", "bench_temp.csv")
+bench_file = joinpath(@__DIR__, "raw", "mar12.csv")
 # bench_file = joinpath(@__DIR__, "raw", "bench.csv")
 
 output_dir = mkpath(joinpath(@__DIR__, "analysis"))
@@ -51,8 +51,9 @@ function analyze()
         println()
         @info("starting $ex_name with params: $ex_params")
 
+        sets = string.(ex_params[3])
         ex_df = filter(
-            t -> (t.example == ex_name) && (t.inst_set in string.(ex_params[3])),
+            t -> (t.inst_num > 1) && (t.example == ex_name) && (t.inst_set in sets),
             all_df,
         )
         if isempty(ex_df)
@@ -101,7 +102,7 @@ function make_wide_csv(ex_df, ex_name, ex_params)
     end
 
     # check objectives if solver claims optimality
-    show_cols = [:inst_set, :inst_num, :status, :primal_obj, :dual_obj, :rel_obj_diff]
+    show_cols = [:inst_set, :inst_num, :status, :primal_obj]
     for group_df in groupby(ex_df, inst_keys)
         # check all pairs of verified converged results
         co_idxs = findall(group_df[:, :status] .== "co")

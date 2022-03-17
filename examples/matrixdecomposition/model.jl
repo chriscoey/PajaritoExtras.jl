@@ -1,51 +1,48 @@
 #=
-decompose a matrix into a sum of a sparse and a low rank matrix
-for the rank condition, use the nuclear norm convex relaxation
-assume all entries of the sparse matrix are in [0, 1]
+decompose a matrix C into a sum of a sparse binary matrix A and a matrix B with small
+spectral norm, constraining the number of nonzeros in A
 
-given real or complex matrix C, solve:
-min λ ‖A‖₀ + ‖B‖∗
-s.t. A + B = C
+given matrix C, solve:
+min specnorm(C - A) :
+Aᵢⱼ ∈ {0,1}
+sum(A) = k
 
 TODO add continuous variant to Hypatia: relax sparsity to L1
 see http://www.mit.edu/~parrilo/pubs/talkfiles/ISMP2009.pdf
 =#
 
 struct MatrixDecomposition <: ExampleInstance
-    d1::Int
-    d2::Int
+    m::Int
+    n::Int
     use_nat::Bool # use nuclear norm cone, else PSD cone formulation
 end
 
 function build(inst::MatrixDecomposition)
-    (d1, d2) = (inst.d1, inst.d2)
-    B_rank = 1 + div(d1, 2)
-    @assert 1 <= B_rank <= d1 <= d2
-    A_sparsity = 0.2
+    (m, n) = (inst.m, inst.n)
+    B_rank = 1 + div(m, 2)
+    @assert 1 <= B_rank <= m <= n
 
     # generate data
-    A0 = sprand(d1, d2, A_sparsity)
-    B0 = randn(d1, B_rank) * randn(B_rank, d2)
+    A_sparsity = min(1.0, 2 / n)
+    A0 = sprand(Bool, m, n, A_sparsity)
+    k = nnz(A0)
+    B0 = randn(m, B_rank) * randn(B_rank, n)
     C = A0 + B0
-    λ = 0.02 # TODO?
 
     # build model
     model = JuMP.Model()
-    JuMP.@variable(model, X[1:d1, 1:d2], Bin)
-    JuMP.@variable(model, A[1:d1, 1:d2] >= 0)
-    JuMP.@constraint(model, A .<= X)
+    JuMP.@variable(model, A[1:m, 1:n], Bin)
+    JuMP.@constraint(model, sum(A) == k)
 
-    JuMP.@variable(model, B[1:d1, 1:d2])
     JuMP.@variable(model, u)
-    add_nonsymm_specnuc(inst.use_nat, true, u, B, model)
+    JuMP.@objective(model, Min, u)
 
-    JuMP.@constraint(model, A + B .== C)
-    JuMP.@objective(model, Min, λ * sum(X) + u)
+    add_nonsymm_specnuc(inst.use_nat, false, u, C - A, model)
 
     # save for use in tests
-    model.ext[:X] = X
     model.ext[:u] = u
-    model.ext[:B] = B
+    model.ext[:A] = A
+    model.ext[:B] = C - A
 
     return model
 end
@@ -56,13 +53,14 @@ function test_extra(inst::MatrixDecomposition, model::JuMP.Model)
     (stat == MOI.OPTIMAL) || return
 
     tol = eps()^0.2
-    X = JuMP.value.(model.ext[:X])
-    @test X ≈ round.(Int, X) atol = tol rtol = tol
-    @test all(-tol .<= X .<= 1 + tol)
+    A = JuMP.value.(model.ext[:A])
+    @test A ≈ round.(Int, A) atol = tol rtol = tol
+    @test all(-tol .<= A .<= 1 + tol)
     # check nuclear norm value
     tol = eps()^0.2
     u = JuMP.value.(model.ext[:u])
     B = JuMP.value.(model.ext[:B])
-    @test u ≈ sum(svdvals(B)) atol = tol rtol = tol
+    @test u ≈ maximum(svdvals(B)) atol = tol rtol = tol
+    @test JuMP.objective_value(model) ≈ u
     return
 end

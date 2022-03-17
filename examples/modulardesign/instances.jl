@@ -16,7 +16,7 @@ insts["test"] = [
     ((3, 2, 5, true), nosubp_options),
     ((3, 2, 5, false), noconic_options),
     ((1, 2, 3, true, true, SOS2(), 16), nosubp_options),
-    ((2, 2, 4, true, true, SOS2(), 16), noext_options),
+    ((2, 2, 4, true, true, SOS2(), 16), noconic_options),
     ((2, 2, 4, true, true, CCBounded(), 16), sparse_options),
     ((2, 2, 4, true, true, CCBounded(), 16), noconic_options),
     ((3, 3, 6, true, true, LogIBBounded(), 32), nosubp_options),
@@ -33,12 +33,12 @@ insts["nat_noext"] = modulardesign_insts(true, noext_options)
 insts["ext"] = modulardesign_insts(false, sparse_options)
 
 # nonconvex instances
-function modulardesign_insts(pwl::PWLSOS2, options::NamedTuple)
-    return [((3, 3, n, true, true, pwl, 512), options) for n in vcat(4, 4:2:26)]
+function modulardesign_insts(pwl::PWLSOS2)
+    return [((3, 3, n, true, true, pwl, 512), noconic_options) for n in vcat(4, 4:2:26)]
 end
 
-insts["sos2"] = modulardesign_insts(SOS2(), noconic_options)
-insts["logib"] = modulardesign_insts(LogIBBounded(), noconic_options)
-insts["cc"] = modulardesign_insts(CCBounded(), noconic_options)
+insts["sos2"] = modulardesign_insts(SOS2())
+insts["logib"] = modulardesign_insts(LogIBBounded())
+insts["cc"] = modulardesign_insts(CCBounded())
 
 return (ModularDesign, insts)

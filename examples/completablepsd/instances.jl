@@ -13,7 +13,7 @@ insts["test"] = [
 ]
 
 function completablepsd_insts(use_nat::Bool)
-    return [((d, inv(sqrt(d)), 0.7, use_nat),) for d in vcat(10, 10:10:100)]
+    return [((d, inv(sqrt(d)), 0.7, use_nat),) for d in vcat(10, 10:5:70)]
 end
 
 insts["nat"] = completablepsd_insts(true)

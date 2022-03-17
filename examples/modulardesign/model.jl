@@ -28,31 +28,31 @@ use the conic copies-of-variables formulation for the disjunctions
 
 struct ModularDesign <: ExampleInstance
     m::Int # number of modules
-    jmax::Int # number of part options per module
+    p::Int # number of part options per module
     n::Int # number of design variables
     use_nat::Bool # for convex case, use natural formulations
     use_nonconvex::Bool # use nonconvex equality constraints, else convex constraints
     pwl::PWLSOS2 # type of piecewise linear SOS2 formulation to use
-    max_pts::Int # maximum number of points per piecewise linearization
+    num_pts::Int # maximum number of points per piecewise linearization
 end
 
-function ModularDesign(m::Int, jmax::Int, n::Int, use_nat::Bool)
-    return ModularDesign(m, jmax, n, use_nat, false, SOS2(), 0)
+function ModularDesign(m::Int, p::Int, n::Int, use_nat::Bool)
+    return ModularDesign(m, p, n, use_nat, false, SOS2(), 0)
 end
 
 function build(inst::ModularDesign)
-    (m, jmax, n) = (inst.m, inst.jmax, inst.n)
+    (m, p, n) = (inst.m, inst.p, inst.n)
     @assert m >= 1
-    @assert jmax >= 1
+    @assert p >= 1
     @assert n >= 2
     ymin = 1e-3
     ymax = 2.0
     @assert ymax > ymin > 0
-    Sdim = 1 + div(n, 2) # dimension of convex epigraph sets
-    @assert Sdim >= 2
+    q = 1 + div(n, 2) # dimension of convex epigraph sets
+    @assert q >= 2
 
     # generate data
-    c = 10 * rand(m, jmax)
+    c = 10 * rand(m, p)
     d = vec(sprandn(n, 1, 0.3))
     # random solution to ensure feasibility
     y0 = (ymax - ymin) * rand(n) .+ ymin
@@ -76,20 +76,20 @@ function build(inst::ModularDesign)
             VecPower12EF(2.0),
         ]
     end
-    fs = rand(f_list, m, jmax)
-    Gs = Matrix{Matrix{Float64}}(undef, m, jmax)
-    hs = Matrix{Vector{Float64}}(undef, m, jmax)
-    G_sparsity = min(0.7, 4 / (Sdim * n))
-    for i in 1:m, j in 1:jmax
+    fs = rand(f_list, m, p)
+    Gs = Matrix{Matrix{Float64}}(undef, m, p)
+    hs = Matrix{Vector{Float64}}(undef, m, p)
+    G_sparsity = min(0.7, 4 / (q * n))
+    for i in 1:m, j in 1:p
         f_ij = fs[i, j]
-        G_ij = sprandn(Sdim, n, G_sparsity)
-        for k in 2:Sdim
+        G_ij = sprandn(q, n, G_sparsity)
+        for k in 2:q
             if iszero(G_ij[k, :])
                 G_ij[k, rand(1:n)] = randn()
             end
         end
         h_ij = G_ij * y0
-        w = rand(Sdim - 1) .+ 1e-3
+        w = rand(q - 1) .+ 1e-3
         h_ij[2:end] .+= w
         h_ij[1] += get_val(w, f_ij)
         if !inst.use_nonconvex
@@ -102,18 +102,18 @@ function build(inst::ModularDesign)
     # build model
     model = JuMP.Model()
     JuMP.@variable(model, y[1:n])
-    JuMP.@variable(model, x[1:m, 1:jmax], Bin)
+    JuMP.@variable(model, x[1:m, 1:p], Bin)
     JuMP.@objective(model, Min, dot(c, x) + dot(d, y))
 
     # disjunctive copies-of-variables formulation
     # x[i, j] switches on conic constraint for part j of module i
-    JuMP.@variable(model, z[1:m, 1:jmax, 1:n])
+    JuMP.@variable(model, z[1:m, 1:p, 1:n])
     JuMP.@constraint(model, [i in 1:m], sum(x[i, :]) == 1)
-    JuMP.@constraint(model, [i in 1:m], sum(z[i, j, :] for j in 1:jmax) .== y)
+    JuMP.@constraint(model, [i in 1:m], sum(z[i, j, :] for j in 1:p) .== y)
 
     # x[i, j] = 0 ⇒ z[i, j, :] = 0, x[i, j] = 1 ⇒ z[i, j, :] = y
-    affs = Matrix{Vector{JuMP.AffExpr}}(undef, m, jmax)
-    for i in 1:m, j in 1:jmax
+    affs = Matrix{Vector{JuMP.AffExpr}}(undef, m, p)
+    for i in 1:m, j in 1:p
         x_ij = x[i, j]
         z_ij = z[i, j, :]
         JuMP.@constraint(model, z_ij .<= ymax * x_ij)
@@ -124,20 +124,20 @@ function build(inst::ModularDesign)
         aff = affs[i, j] = h_ij * x_ij - G_ij * z_ij
         u = aff[1]
         w = aff[2:end]
-        d = length(w)
+        K = length(w)
         f = fs[i, j]
 
         if !inst.use_nonconvex
             # add convex constraint
-            add_spectral(f, d, vcat(u, x_ij, w), model)
+            add_spectral(f, K, vcat(u, x_ij, w), model)
             continue
         end
 
         # relaxation of nonconvex constraint
-        λ = JuMP.@variable(model, [1:d])
+        λ = JuMP.@variable(model, [1:K])
         JuMP.@constraint(model, u == sum(λ))
 
-        for k in 1:d
+        for k in 1:K
             # convex constraint (above graph)
             add_spectral(f, 1, vcat(λ[k], x_ij, w[k]), model)
 
@@ -150,7 +150,7 @@ function build(inst::ModularDesign)
             min_ij = max(1e-4, min_ij)
 
             # interpolation
-            pts = collect(range(min_ij, max_ij, length = inst.max_pts))
+            pts = collect(range(min_ij, max_ij, length = inst.num_pts))
             f_pts = [get_val([pt], f) for pt in pts]
 
             # auxiliary variables and SOS2 formulation
@@ -188,13 +188,13 @@ function test_extra(inst::ModularDesign, model::JuMP.Model)
     @test all(-tol .<= x .<= 1 + tol)
 
     # check feasibility for disjunctive linear constraints
-    (m, jmax) = (inst.m, inst.jmax)
+    (m, p) = (inst.m, inst.p)
     y = JuMP.value.(model.ext[:y])
     z = JuMP.value.(model.ext[:z])
     @test all(sum(x_int[i, :]) == 1 for i in 1:m)
     z0ij(i, j) = (iszero(x_int[i, j]) ? zero(y) : y)
     approxij(i, j) = isapprox(z[i, j, :], z0ij(i, j), atol = tol, rtol = tol)
-    @test all(approxij(i, j) for i in 1:m for j in 1:jmax)
+    @test all(approxij(i, j) for i in 1:m for j in 1:p)
 
     # check feasibility for nonlinear constraints
     fs = model.ext[:fs]
@@ -215,7 +215,7 @@ function test_extra(inst::ModularDesign, model::JuMP.Model)
         # convex constraints: check inside cone
         conicfeas = <(tol)
     end
-    ϵs = [viol((fs[i, j], x_int[i, j], JuMP.value.(affs[i, j]))) for i in 1:m, j in 1:jmax]
+    ϵs = [viol((fs[i, j], x_int[i, j], JuMP.value.(affs[i, j]))) for i in 1:m, j in 1:p]
     @show maximum(abs, ϵs) # TODO delete
     @test all(conicfeas, ϵs)
     return

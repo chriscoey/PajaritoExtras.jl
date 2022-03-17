@@ -13,8 +13,7 @@ insts["test"] = [
 ]
 
 function matrixdecomposition_insts(use_nat::Bool)
-    options = (; tol_rel_gap = 1e-3)
-    return [((5, d2, use_nat), options) for d2 in vcat(5, 5:15)]
+    return [((10, d2, use_nat),) for d2 in vcat(30, 30:30:360)]
 end
 
 insts["nat"] = matrixdecomposition_insts(true)

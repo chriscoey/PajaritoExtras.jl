@@ -5,7 +5,7 @@ sets:
 i ∈ 1..n  crops
 
 parameters:
-̄̄m  ∈ ℝ₊  number of available plots
+m  ∈ ℝ₊  number of available plots
 aᵢ ∈ ℝ₊  fixed cost per farm plot for i
 bᵢ ∈ ℝ₊  purchase cost for i
 cᵢ ∈ ℝ₊  selling price for i
@@ -22,7 +22,7 @@ zᵢ ∈ P₊  amount of crop i to sell (2nd stage)
 where P₊ are nonnegative polynomials in ξ
 
 objective:
-min ∑ᵢ aᵢ xᵢ + 𝔼(ξ ~ Ξ)[∑ᵢ(bᵢ yᵢ - cᵢ zᵢ)]  minimize total expected profit
+min ∑ᵢ aᵢ xᵢ + 𝔼(ξ ~ Ξ)[∑ᵢ(bᵢ yᵢ - cᵢ zᵢ)]  minimize total expected cost
 
 constraints:
 ∑ᵢ xᵢ ≤ m  available plots
