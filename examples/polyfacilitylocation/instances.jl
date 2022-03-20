@@ -14,7 +14,8 @@ insts["test"] = [
 ]
 
 function polyfacilitylocation_insts(use_nat::Bool)
-    return [((n, 2n, 3, use_nat), sparse_options) for n in vcat(5, 5:5:60)]
+    n_max = (use_nat ? 55 : 40) # ext runs out of memory early
+    return [((n, 2n, 3, use_nat), sparse_options) for n in vcat(5, 5:5:n_max)]
 end
 
 insts["nat"] = polyfacilitylocation_insts(true)

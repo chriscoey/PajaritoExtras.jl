@@ -5,7 +5,7 @@ Copyright (c) 2016: Joey Huchette
 
 We homogenize using a given perspective variable v. σ ≥ 0 and sum(σ) = v are already imposed.
 In the "bounded" case, we assume v ∈ [0,1] (MIP formulation can be linear/big-M).
-In the "unbounded" case, we assume v ≥ 0 (MIP formulation needs conic constraints).
+In the "nonneg" case, we assume v ≥ 0 (MIP formulation needs conic constraints).
 =#
 
 import PiecewiseLinearOpt
@@ -18,9 +18,9 @@ abstract type PWLSOS2 end
 
 struct SOS2 <: PWLSOS2 end
 struct CCBounded <: PWLSOS2 end
-struct CCUnbounded <: PWLSOS2 end
+struct CCNonneg <: PWLSOS2 end
 struct LogIBBounded <: PWLSOS2 end
-struct LogIBUnbounded <: PWLSOS2 end
+struct LogIBNonneg <: PWLSOS2 end
 
 function PWL_SOS2(::SOS2, model::JuMP.Model, σ::Vector{JuMP.VariableRef}, ::FloatOrVar)
     JuMP.@constraint(model, σ in JuMP.SOS2())
@@ -36,7 +36,7 @@ function PWL_SOS2(
     n = length(σ)
     y = JuMP.@variable(model, [1:(n - 1)], Bin)
     JuMP.@constraints(model, begin
-        sum(y) == binper
+        sum(y) <= binper
         σ[1] <= y[1]
         [i in 2:(n - 1)], σ[i] <= y[i - 1] + y[i]
         σ[n] <= y[n - 1]
@@ -45,7 +45,7 @@ function PWL_SOS2(
 end
 
 function PWL_SOS2(
-    ::CCUnbounded,
+    ::CCNonneg,
     model::JuMP.Model,
     σ::Vector{JuMP.VariableRef},
     binper::FloatOrVar, # binary or 1
@@ -55,7 +55,7 @@ function PWL_SOS2(
     z = JuMP.@variable(model) # TODO or add n variables?
     RSOC = JuMP.RotatedSecondOrderCone()
     JuMP.@constraints(model, begin
-        sum(y) == binper
+        sum(y) <= binper
         [z, y[1], σ[1]] in RSOC
         [i in 2:(n - 1)], [z, y[i - 1] + y[i], σ[i]] in RSOC
         [z, y[n - 1], σ[n]] in RSOC
@@ -92,7 +92,7 @@ function PWL_SOS2(
 end
 
 function PWL_SOS2(
-    ::LogIBUnbounded,
+    ::LogIBNonneg,
     model::JuMP.Model,
     σ::Vector{JuMP.VariableRef},
     binper::FloatOrVar,

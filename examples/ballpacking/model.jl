@@ -23,14 +23,14 @@ function build(inst::BallPacking)
 
     # build model
     model = JuMP.Model()
+    JuMP.@variable(model, C[1:m, 1:n]) # centers
     JuMP.@variable(model, 0 <= R[1:m] <= 0.5) # radii
-    JuMP.@variable(model, 0 <= C[1:m, 1:n] <= 1) # centers
     JuMP.@objective(model, Max, sum(R))
 
     JuMP.@constraints(model, begin
         # balls inside box
         [i in 1:m, k in 1:n], C[i, k] >= R[i]
-        [i in 1:m, k in 1:n], C[i, k] + R[i] <= 1
+        [i in 1:m, k in 1:n], C[i, k] <= 1 - R[i]
         # break some symmetry TODO more
         [i in 1:(m - 1)], C[i, 1] <= C[i + 1, 1]
     end)
@@ -38,16 +38,12 @@ function build(inst::BallPacking)
     # for each pair of balls i < j, need Rᵢ + Rⱼ ≤ ‖Cᵢ - Cⱼ‖
     for i in 1:m, j in (i + 1):m
         # EF variables and linear constraint
-        λ = JuMP.@variable(model, [1:n], lower_bound = 0)
+        λ = JuMP.@variable(model, [1:n])
         Rij = JuMP.@variable(model)
-        Cij = JuMP.@variable(model, [1:n])
-        JuMP.@constraints(model, begin
-            Rij == R[i] + R[j]
-            Rij <= sum(λ)
-            Cij .== C[i, :] - C[j, :]
-        end)
+        JuMP.@constraint(model, Rij == R[i] + R[j])
+        JuMP.@constraint(model, Rij <= sum(λ))
 
-        # 3-dim cone constraints; note Cij ∈ [-1, 1]ⁿ, ‖Cij‖ ≤ √n, Rij ∈ [0, 1]
+        # 3-dim cone constraints; note Cᵢ - Cⱼ ∈ [-1, 1]ⁿ, ‖Cᵢ - Cⱼ‖ ≤ √n, Rij ∈ [0, 1]
         for k in 1:n
             # auxiliary variables and SOS2 formulation
             σ = JuMP.@variable(model, [1:length(pts)], lower_bound = 0)
@@ -57,7 +53,7 @@ function build(inst::BallPacking)
             JuMP.@constraints(model, begin
                 dot(σ, f_pts) == λ[k]
                 sum(σ) == Rij
-                dot(σ, pts) == Cij[k]
+                dot(σ, pts) == C[i, k] - C[j, k]
             end)
         end
     end

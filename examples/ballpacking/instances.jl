@@ -10,8 +10,8 @@ insts["test"] = [
     ((3, 3, SOS2(), 11), nosubp_options),
     ((3, 3, CCBounded(), 11), nosubp_options),
     ((3, 3, LogIBBounded(), 11), nosubp_options),
-    # ((1, 2, CCUnbounded(), 11), nosubp_options),
-    # ((1, 2, LogIBUnbounded(), 11), nosubp_options),
+    # ((1, 2, CCNonneg(), 11), nosubp_options),
+    # ((1, 2, LogIBNonneg(), 11), nosubp_options),
 ]
 
 function ballpacking_insts(pwl::PWLSOS2)

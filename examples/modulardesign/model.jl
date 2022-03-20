@@ -122,24 +122,28 @@ function build(inst::ModularDesign)
         h_ij = hs[i, j]
         G_ij = Gs[i, j]
         aff = affs[i, j] = h_ij * x_ij - G_ij * z_ij
-        u = aff[1]
-        w = aff[2:end]
-        K = length(w)
+        u_aff = aff[1]
+        w_aff = aff[2:end]
+        K = length(w_aff)
         f = fs[i, j]
 
         if !inst.use_nonconvex
             # add convex constraint
-            add_spectral(f, K, vcat(u, x_ij, w), model)
+            add_spectral(f, K, vcat(u_aff, x_ij, w_aff), model)
             continue
         end
 
         # relaxation of nonconvex constraint
         λ = JuMP.@variable(model, [1:K])
-        JuMP.@constraint(model, u == sum(λ))
+        JuMP.@constraint(model, u_aff == sum(λ))
 
         for k in 1:K
+            # auxiliary variable for w_aff[k]
+            w_k = JuMP.@variable(model)
+            JuMP.@constraint(model, w_k == w_aff[k])
+
             # convex constraint (above graph)
-            add_spectral(f, 1, vcat(λ[k], x_ij, w[k]), model)
+            add_spectral(f, 1, vcat(λ[k], x_ij, 1.0 * w_k), model)
 
             # bounds
             G_k = G_ij[1 + k, :]
@@ -159,9 +163,9 @@ function build(inst::ModularDesign)
 
             # data constraints
             JuMP.@constraints(model, begin
-                dot(σ, f_pts) >= λ[k] # (below PWL graph)
+                dot(σ, f_pts) >= λ[k] # below PWL graph
                 sum(σ) == x_ij
-                dot(σ, pts) == w[k]
+                dot(σ, pts) == w_k
             end)
         end
     end

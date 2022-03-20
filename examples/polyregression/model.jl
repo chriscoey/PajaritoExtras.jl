@@ -12,9 +12,6 @@ bᵢ ∈ {0,1}, ∀i                          assignment of points
 0.4m <= Σᵢbᵢ <= 0.6m                    approximately balance assignments
 |zᵢ - (Yᵢ - p₁(Xᵢ))| ≤ Mᵢ(1 - bᵢ), ∀i   residuals for p1
 |zᵢ - (Yᵢ - p₂(Xᵢ))| ≤ Mᵢbᵢ, ∀i         residuals for p2
-
-TODO
-- complex case
 =#
 
 struct PolyRegression <: ExampleInstance

@@ -57,7 +57,7 @@ inst_sets = [
 examples = [
     # PSD:
     "completablepsd",
-    # WSOS: (NOTE larger sizes of ext run out of memory, so use skip_limit below)
+    # WSOS:
     "polyfacilitylocation",
     "polyregression",
     "twostagestochastic",
@@ -74,8 +74,8 @@ examples = [
     "modulardesign",
 ]
 
-# skip_limit = false
-skip_limit = true
+skip_limit = false
+# skip_limit = true
 
 Examples.load_examples(examples)
 
