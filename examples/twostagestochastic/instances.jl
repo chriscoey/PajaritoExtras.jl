@@ -15,12 +15,11 @@ insts["test"] = [
     ((5, 2, true, true), sparse_options),
 ]
 
-function twostagestochastic_insts(use_nat::Bool)
-    p_max = (use_nat ? 11 : 7) # ext runs out of memory early
+function twostagestochastic_insts(use_nat::Bool, p_max::Int)
     return [((3, 2^p, false, use_nat), sparse_options) for p in vcat(3, 3:p_max)]
 end
 
-insts["nat"] = twostagestochastic_insts(true)
-insts["ext"] = twostagestochastic_insts(false)
+insts["nat"] = twostagestochastic_insts(true, 10)
+insts["ext"] = twostagestochastic_insts(false, 5)
 
 return (TwoStageStochastic, insts)

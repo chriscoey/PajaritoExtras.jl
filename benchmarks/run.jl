@@ -55,15 +55,15 @@ inst_sets = [
 
 # list of names of JuMP examples to run
 examples = [
-    # PSD:
-    "completablepsd",
-    # WSOS:
-    "polyfacilitylocation",
-    "polyregression",
-    "twostagestochastic",
-    # norm:
-    "matrixcompletion",
-    "matrixdecomposition",
+    # # PSD:
+    # "completablepsd",
+    # # WSOS:
+    # "polyfacilitylocation",
+    # "polyregression",
+    # "twostagestochastic",
+    # # norm:
+    # "matrixcompletion",
+    # "matrixdecomposition",
     "matrixregression",
     # spectral function:
     "experimentdesign",
@@ -80,7 +80,7 @@ skip_limit = false
 Examples.load_examples(examples)
 
 function run_benchmarks()
-    @testset "benchmarks" begin
+    @testset verbose = true "benchmarks" begin
         Examples.run_examples(examples, inst_sets, options, csv, skip_limit)
     end
     println()

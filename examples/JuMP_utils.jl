@@ -67,9 +67,7 @@ function run_instance(
 
     println("setup JuMP model")
     setup_time = @elapsed model = build(inst)
-    # TODO get model_stats
 
-    # set solver options
     println("set solver options")
     JuMP.set_optimizer(model, MOIPajarito.Optimizer)
     options = (; default_options..., conic_solver = dense_hypatia, inst_options...)
@@ -87,16 +85,10 @@ function run_instance(
     solve_stats = get_solve_stats(model)
 
     println("check")
-    test_extra(inst, model)
-    # TODO get solve_stats
+    @testset test_extra(inst, model)
 
     println("done")
-    return (;
-        # model_stats...,
-        solve_stats...,
-        setup_time,
-        optimize_time,
-    )
+    return (; solve_stats..., setup_time, optimize_time)
 end
 
 function get_solve_stats(model::JuMP.Model)

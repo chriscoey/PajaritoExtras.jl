@@ -70,7 +70,7 @@ examples = [
 Examples.load_examples(examples)
 
 function run_examples_tests()
-    @testset "examples tests" begin
+    @testset verbose = true "examples tests" begin
         Examples.run_examples(examples, ["test"], options, csv, false)
     end
     println()

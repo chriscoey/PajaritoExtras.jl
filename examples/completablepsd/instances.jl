@@ -12,11 +12,11 @@ insts["test"] = [
     ((15, 0.2, 0.3, false),),
 ]
 
-function completablepsd_insts(use_nat::Bool)
-    return [((d, inv(sqrt(d)), 0.7, use_nat),) for d in vcat(10, 10:5:70)]
+function completablepsd_insts(use_nat::Bool, d_max::Int)
+    return [((d, inv(sqrt(d)), 0.7, use_nat),) for d in vcat(10, 10:5:d_max)]
 end
 
-insts["nat"] = completablepsd_insts(true)
-insts["ext"] = completablepsd_insts(false)
+insts["nat"] = completablepsd_insts(true, 65)
+insts["ext"] = completablepsd_insts(false, 55)
 
 return (CompletablePSD, insts)

@@ -12,11 +12,11 @@ insts["test"] = [
     ((false, true, 6, 6, false),),
 ]
 
-function matrixcompletion_insts(use_nat::Bool)
-    return [((true, true, nrow, nrow, use_nat),) for nrow in vcat(20, 20:20:220)]
+function matrixcompletion_insts(use_nat::Bool, nrow_max::Int)
+    return [((true, true, nrow, nrow, use_nat),) for nrow in vcat(20, 20:20:nrow_max)]
 end
 
-insts["nat"] = matrixcompletion_insts(true)
-insts["ext"] = matrixcompletion_insts(false)
+insts["nat"] = matrixcompletion_insts(true, 220)
+insts["ext"] = matrixcompletion_insts(false, 120)
 
 return (MatrixCompletion, insts)
