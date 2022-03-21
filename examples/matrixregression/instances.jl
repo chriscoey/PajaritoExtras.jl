@@ -17,6 +17,6 @@ function matrixregression_insts(use_nat::Bool, max_p::Int)
 end
 
 insts["nat"] = matrixregression_insts(true, 120)
-insts["ext"] = matrixregression_insts(false, 120)
+insts["ext"] = matrixregression_insts(false, 60)
 
 return (MatrixRegression, insts)

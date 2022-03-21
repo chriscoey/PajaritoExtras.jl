@@ -24,21 +24,21 @@ insts["test"] = [
 ]
 
 # convex instances
-function modulardesign_insts(use_nat::Bool, options::NamedTuple)
-    return [((8, 5, n, use_nat), options) for n in vcat(20, 20:20:200)]
+function modulardesign_insts(use_nat::Bool, max_n::Int, options::NamedTuple)
+    return [((8, 4, n, use_nat), options) for n in vcat(20, 20:20:max_n)]
 end
 
-insts["nat"] = modulardesign_insts(true, sparse_options)
-insts["nat_noext"] = modulardesign_insts(true, noext_options)
-insts["ext"] = modulardesign_insts(false, sparse_options)
+insts["nat"] = modulardesign_insts(true, 240, sparse_options)
+insts["nat_noext"] = modulardesign_insts(true, 240, noext_options)
+insts["ext"] = modulardesign_insts(false, 240, sparse_options)
 
 # nonconvex instances
-function modulardesign_insts(pwl::PWLSOS2)
-    return [((3, 3, n, true, true, pwl, 512), noconic_options) for n in vcat(4, 4:2:26)]
+function modulardesign_insts(pwl::PWLSOS2, max_n::Int)
+    return [((3, 3, n, true, true, pwl, 512), noconic_options) for n in vcat(4, 4:2:max_n)]
 end
 
-insts["sos2"] = modulardesign_insts(SOS2())
-insts["logib"] = modulardesign_insts(LogIBBounded())
-insts["cc"] = modulardesign_insts(CCBounded())
+insts["sos2"] = modulardesign_insts(SOS2(), 30)
+insts["logib"] = modulardesign_insts(LogIBBounded(), 30)
+insts["cc"] = modulardesign_insts(CCBounded(), 18)
 
 return (ModularDesign, insts)

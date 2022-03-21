@@ -8,13 +8,13 @@ insts["test"] = [
     ((6, 4, true, [VecNegEntropy(), VecNegSqrtConj()]),),
 ]
 
-function vectorregression_insts(use_extended_form::Bool)
+function vectorregression_insts(use_extended_form::Bool, max_n::Int)
     options = (; use_extended_form = use_extended_form)
     hs = [VecNegEntropy(), VecNegSqrtConj()]
-    return [((n, n, true, hs), options) for n in vcat(10, 10:10:120)]
+    return [((n, n, true, hs), options) for n in vcat(10, 10:10:max_n)]
 end
 
-insts["nat"] = vectorregression_insts(true)
-insts["nat_noext"] = vectorregression_insts(false)
+insts["nat"] = vectorregression_insts(true, 100)
+insts["nat_noext"] = vectorregression_insts(false, 60)
 
 return (VectorRegression, insts)

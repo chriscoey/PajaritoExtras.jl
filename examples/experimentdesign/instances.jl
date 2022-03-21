@@ -23,11 +23,11 @@ insts["test"] = [
     ((2, MatPower12EigOrd(1.3)),),
 ]
 
-experimentdesign_insts(f::MatSpecExt) = [((d, f),) for d in vcat(3, 3:2:17)]
+experimentdesign_insts(f::MatSpecExt, max_d::Int) = [((d, f),) for d in vcat(3, 3:2:max_d)]
 
-insts["nat_rtdet"] = experimentdesign_insts(MatNegRtdet())
-insts["ext_rtdet"] = experimentdesign_insts(MatNegRtdetEFExp())
-insts["nat_entr"] = experimentdesign_insts(MatNegEntropy())
-insts["ext_entr"] = experimentdesign_insts(MatNegEntropyEigOrd())
+insts["nat_rtdet"] = experimentdesign_insts(MatNegRtdet(), 15)
+insts["ext_rtdet"] = experimentdesign_insts(MatNegRtdetEFExp(), 15)
+insts["nat_entr"] = experimentdesign_insts(MatNegEntropy(), 17)
+insts["ext_entr"] = experimentdesign_insts(MatNegEntropyEigOrd(), 17)
 
 return (ExperimentDesign, insts)
