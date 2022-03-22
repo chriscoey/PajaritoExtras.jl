@@ -10,8 +10,7 @@ using DataFrames
 include(joinpath(@__DIR__, "../examples/Examples.jl"))
 import Main.Examples
 
-bench_file = joinpath(@__DIR__, "raw", "mar12.csv")
-# bench_file = joinpath(@__DIR__, "raw", "bench.csv")
+bench_file = joinpath(@__DIR__, "raw", "bench.csv")
 
 output_dir = mkpath(joinpath(@__DIR__, "analysis"))
 tex_dir = mkpath(joinpath(output_dir, "tex"))

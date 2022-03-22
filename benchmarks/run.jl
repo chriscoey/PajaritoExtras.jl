@@ -55,15 +55,15 @@ inst_sets = [
 
 # list of names of JuMP examples to run
 examples = [
-    # # PSD:
-    # "completablepsd",
-    # # WSOS:
-    # "polyfacilitylocation",
-    # "polyregression",
-    # "twostagestochastic",
-    # # norm:
-    # "matrixcompletion",
-    # "matrixdecomposition",
+    # PSD:
+    "completablepsd",
+    # WSOS:
+    "polyfacilitylocation",
+    "polyregression",
+    "twostagestochastic",
+    # norm:
+    "matrixcompletion",
+    "matrixdecomposition",
     "matrixregression",
     # spectral function:
     "experimentdesign",
