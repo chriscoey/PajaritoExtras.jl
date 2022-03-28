@@ -26,7 +26,7 @@ gurobi = MOI.OptimizerWithAttributes(
 
 # default MOIPajarito options
 options = (;
-    iteration_limit = 10000,
+    # iteration_limit = 10000,
     time_limit = 600.0,
     verbose = true,
     oa_solver = gurobi,
@@ -42,6 +42,12 @@ inst_sets = [
     "nat",
     "nat_noext",
     "ext",
+    # knapsack:
+    "cont_geo",
+    "cont_noext_geo",
+    "nat_geo",
+    "noext_geo",
+    "ext_geo",
     # experiment design:
     "nat_rtdet",
     "ext_rtdet",
@@ -55,27 +61,28 @@ inst_sets = [
 
 # list of names of JuMP examples to run
 examples = [
-    # PSD:
-    "completablepsd",
-    # WSOS:
-    "polyfacilitylocation",
-    "polyregression",
-    "twostagestochastic",
-    # norm:
-    "matrixcompletion",
-    "matrixdecomposition",
-    "matrixregression",
-    # spectral function:
-    "experimentdesign",
-    "inversecovariance",
-    "vectorregression",
-    # nonconvex:
-    "ballpacking",
-    "modulardesign",
+    # # PSD:
+    # "completablepsd",
+    # # WSOS:
+    # "polyfacilitylocation",
+    # "polyregression",
+    # "twostagestochastic",
+    # # norm:
+    # "matrixcompletion",
+    # "matrixdecomposition",
+    # "matrixregression",
+    # # spectral function:
+    # "experimentdesign",
+    # "inversecovariance",
+    "knapsack",
+    # "vectorregression",
+    # # nonconvex:
+    # "ballpacking",
+    # "modulardesign",
 ]
 
-skip_limit = false
-# skip_limit = true
+# skip_limit = false
+skip_limit = true
 
 Examples.load_examples(examples)
 

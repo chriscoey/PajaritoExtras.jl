@@ -32,8 +32,10 @@ examples_params = [
     # spectral function:
     "inversecovariance" => ([:d], [1], [:nat, :ext], [:iters]),
     "vectorregression" => ([:n], [1], [:nat, :nat_noext], [:iters]),
-    "experimentdesign" => ([:d], [1], [:nat_entr, :ext_entr], [:iters], "entr"),
+    "knapsack" => ([:n], [1], [:nat_geo, :noext_geo, :ext_geo], [:iters], "geo"),
+    "knapsack" => ([:n], [1], [:inv_nat, :inv_noext, :inv_ext], [:iters], "inv"),
     "experimentdesign" => ([:d], [1], [:nat_rtdet, :ext_rtdet], [:iters], "rtdet"),
+    "experimentdesign" => ([:d], [1], [:nat_entr, :ext_entr], [:iters], "entr"),
     # nonconvex:
     "ballpacking" => ([:num_pts], [4], [:sos2, :logib, :cc], [:nodes]),
     # modulardesign (pick one):

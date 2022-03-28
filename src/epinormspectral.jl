@@ -8,8 +8,6 @@ dual cone is epigraph of matrix nuclear norm
 
 W = mat(w), in ℝ(d1, d2) or ℂ(d1, d2), where d1 ≤ d2
 SVD is W = U Diag(σ) Vt
-subdifferential characterized by e.g.
-G.A. Watson, "Characterization of the Subdifferential of Some Matrix Norms"
 =#
 
 mutable struct EpiNormSpectral{D <: PrimDual, C <: RealCompF} <: Cache

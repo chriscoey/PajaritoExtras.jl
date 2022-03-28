@@ -61,6 +61,7 @@ examples = [
     # spectral function:
     "experimentdesign",
     "inversecovariance",
+    "knapsack",
     "vectorregression",
     # nonconvex:
     "ballpacking",

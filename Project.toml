@@ -12,7 +12,7 @@ MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 
 [compat]
 Hypatia = "0.7"
-JuMP = "0.23"
+JuMP = "0.23, 1"
 MathOptInterface = "1"
 julia = "1.6"
 
