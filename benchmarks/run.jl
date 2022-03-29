@@ -36,15 +36,15 @@ options = (;
 
 # instance sets to run
 inst_sets = [
-    # test instances (comment out usually):
-    # "test",
-    # generic nat vs ext:
-    "nat",
-    "nat_noext",
-    "ext",
-    # knapsack:
-    "cont_geo",
-    "cont_noext_geo",
+    # # test instances (comment out usually):
+    # # "test",
+    # # generic nat vs ext:
+    # "nat",
+    # "nat_noext",
+    # "ext",
+    # # knapsack:
+    # "cont_geo",
+    # "cont_noext_geo",
     "nat_geo",
     "noext_geo",
     "ext_geo",
