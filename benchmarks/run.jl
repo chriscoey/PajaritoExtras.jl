@@ -45,18 +45,22 @@ inst_sets = [
     # # knapsack:
     # "cont_geo",
     # "cont_noext_geo",
-    "nat_geo",
-    "noext_geo",
-    "ext_geo",
-    # experiment design:
-    "nat_rtdet",
-    "ext_rtdet",
-    "nat_entr",
-    "ext_entr",
-    # PWL formulations:
-    "sos2",
-    "logib",
-    "cc",
+    "cont_log",
+    "cont_noext_log",
+    "cont_inv",
+    "cont_noext_inv",
+    # "nat_geo",
+    # "noext_geo",
+    # "ext_geo",
+    # # experiment design:
+    # "nat_rtdet",
+    # "ext_rtdet",
+    # "nat_entr",
+    # "ext_entr",
+    # # PWL formulations:
+    # "sos2",
+    # "logib",
+    # "cc",
 ]
 
 # list of names of JuMP examples to run

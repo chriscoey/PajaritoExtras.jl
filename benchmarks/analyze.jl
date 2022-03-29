@@ -188,6 +188,7 @@ end
 
 function transform_plot_cols(ex_df_wide, inst_set)
     old_cols = Symbol.([:status_, :solve_time_], inst_set)
+    # old_cols = Symbol.([:status_, :iters_], inst_set)
     return transform!(
         ex_df_wide,
         old_cols =>

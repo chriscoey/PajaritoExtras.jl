@@ -25,6 +25,10 @@ end
 
 insts["cont_geo"] = cont_knapsack_insts(VecNegRtdet(), 200, noconic_options)
 insts["cont_noext_geo"] = cont_knapsack_insts(VecNegRtdet(), 70, noext_noconic_options)
+insts["cont_log"] = cont_knapsack_insts(VecNegLog(), 200, noconic_options)
+insts["cont_noext_log"] = cont_knapsack_insts(VecNegLog(), 70, noext_noconic_options)
+insts["cont_inv"] = cont_knapsack_insts(VecNegSqrtConj(), 200, noconic_options)
+insts["cont_noext_inv"] = cont_knapsack_insts(VecNegSqrtConj(), 70, noext_noconic_options)
 
 # integer:
 function int_knapsack_insts(f::VecSpecExt, max_n::Int, options::NamedTuple)
