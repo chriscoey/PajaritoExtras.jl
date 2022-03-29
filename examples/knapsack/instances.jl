@@ -23,16 +23,16 @@ function cont_knapsack_insts(f::VecSpecExt, max_n::Int, options::NamedTuple)
 end
 
 insts["cont_geo"] = cont_knapsack_insts(VecNegRtdet(), 200, noconic_options)
-insts["cont_noext_geo"] = cont_knapsack_insts(VecNegRtdet(), 200, noext_noconic_options)
+insts["cont_noext_geo"] = cont_knapsack_insts(VecNegRtdet(), 70, noext_noconic_options)
 
 # integer:
 function int_knapsack_insts(f::VecSpecExt, max_n::Int, options::NamedTuple)
-    return [((n, f, false), options) for n in vcat(3, 3:3:15, 20:5:max_n)]
+    return [((n, f, false), options) for n in vcat(3, 3:3:15, 20, 25:25:100, 200:100:max_n)]
 end
 
-insts["nat_geo"] = int_knapsack_insts(VecNegRtdet(), 75, (;))
+insts["nat_geo"] = int_knapsack_insts(VecNegRtdet(), 1000, (;))
 insts["noext_geo"] = int_knapsack_insts(VecNegRtdet(), 25, noext_options)
-insts["ext_geo"] = int_knapsack_insts(VecNegRtdetEFExp(), 75, (;))
+insts["ext_geo"] = int_knapsack_insts(VecNegRtdetEFExp(), 1000, (;))
 # insts["nat_log"] = int_knapsack_insts(VecNegLog(), 75, (;))
 # insts["noext_log"] = int_knapsack_insts(VecNegLog(), 25, noext_options)
 # insts["ext_log"] = int_knapsack_insts(VecNegLogEF(), 75, (;))

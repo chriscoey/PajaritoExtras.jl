@@ -3,6 +3,7 @@ simple integer knapsack problem with convex objective
 
 minₓ f(c ⊙ x) :
 b' x ≤ B
+x ≥ 1
 x ∈ ℤⁿ
 
 where c > 0, b > 0, B > 0, and f : ℝⁿ₊ → ℝ is a convex spectral function
@@ -25,7 +26,7 @@ function build(inst::Knapsack)
 
     # build model
     model = JuMP.Model()
-    JuMP.@variable(model, x[1:n])
+    JuMP.@variable(model, x[1:n] >= 1)
     JuMP.@constraint(model, dot(b, x) <= B)
 
     if !inst.relax_int
@@ -53,8 +54,8 @@ function test_extra(inst::Knapsack, model::JuMP.Model)
     if !inst.relax_int
         @test x ≈ round.(Int, x) atol = tol rtol = tol
     end
+    @test all(>(1 - tol), x)
     # check conic feasibility
-    @test all(>(-tol), x)
     c = JuMP.value.(model.ext[:c])
     obj_result = get_val(pos_only(c .* x), inst.f)
     @test JuMP.objective_value(model) ≈ obj_result atol = tol rtol = tol
