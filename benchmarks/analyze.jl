@@ -32,8 +32,8 @@ examples_params = [
     # spectral function:
     "inversecovariance" => ([:d], [1], [:nat, :ext], [:iters]),
     "vectorregression" => ([:n], [1], [:nat, :nat_noext], [:iters]),
+    "knapsack" => ([:n], [1], [:cont_geo, :cont_noext_geo], [:iters], "cont_geo"),
     "knapsack" => ([:n], [1], [:nat_geo, :noext_geo, :ext_geo], [:iters], "geo"),
-    "knapsack" => ([:n], [1], [:inv_nat, :inv_noext, :inv_ext], [:iters], "inv"),
     "experimentdesign" => ([:d], [1], [:nat_rtdet, :ext_rtdet], [:iters], "rtdet"),
     "experimentdesign" => ([:d], [1], [:nat_entr, :ext_entr], [:iters], "entr"),
     # nonconvex:
