@@ -1,6 +1,7 @@
 
 noext_options = (; use_extended_form = false)
-noconic_options = (; solve_subproblems = false, solve_relaxation = false)
+noconic_options =
+    (; solve_subproblems = false, solve_relaxation = false, use_init_fixed_oa = true)
 noext_noconic_options = merge(noext_options, noconic_options)
 
 insts = OrderedDict()
