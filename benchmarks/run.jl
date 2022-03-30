@@ -36,53 +36,53 @@ options = (;
 
 # instance sets to run
 inst_sets = [
-    # # test instances (comment out usually):
-    # # "test",
-    # # generic nat vs ext:
-    # "nat",
-    # "nat_noext",
-    # "ext",
-    # # knapsack:
-    # "cont_geo",
-    # "cont_noext_geo",
+    # test instances (comment out usually):
+    # "test",
+    # generic nat vs ext:
+    "nat",
+    "nat_noext",
+    "ext",
+    # knapsack:
+    "cont_geo",
+    "cont_noext_geo",
     "cont_log",
     "cont_noext_log",
     "cont_inv",
     "cont_noext_inv",
-    # "nat_geo",
-    # "noext_geo",
-    # "ext_geo",
-    # # experiment design:
-    # "nat_rtdet",
-    # "ext_rtdet",
-    # "nat_entr",
-    # "ext_entr",
-    # # PWL formulations:
-    # "sos2",
-    # "logib",
-    # "cc",
+    "nat_geo",
+    "noext_geo",
+    "ext_geo",
+    # experiment design:
+    "nat_rtdet",
+    "ext_rtdet",
+    "nat_entr",
+    "ext_entr",
+    # PWL formulations:
+    "sos2",
+    "logib",
+    "cc",
 ]
 
 # list of names of JuMP examples to run
 examples = [
-    # # PSD:
-    # "completablepsd",
-    # # WSOS:
-    # "polyfacilitylocation",
-    # "polyregression",
-    # "twostagestochastic",
-    # # norm:
-    # "matrixcompletion",
-    # "matrixdecomposition",
-    # "matrixregression",
-    # # spectral function:
-    # "experimentdesign",
-    # "inversecovariance",
+    # PSD:
+    "completablepsd",
+    # WSOS:
+    "polyfacilitylocation",
+    "polyregression",
+    "twostagestochastic",
+    # norm:
+    "matrixcompletion",
+    "matrixdecomposition",
+    "matrixregression",
+    # spectral function:
+    "experimentdesign",
+    "inversecovariance",
     "knapsack",
-    # "vectorregression",
-    # # nonconvex:
-    # "ballpacking",
-    # "modulardesign",
+    "vectorregression",
+    # nonconvex:
+    "ballpacking",
+    "modulardesign",
 ]
 
 skip_limit = false

@@ -6,8 +6,7 @@ b' x ≤ B
 x ≥ 1
 x ∈ ℤⁿ
 
-where c > 0, b > 0, B > 0, and f : ℝⁿ₊ → ℝ is a convex spectral function
-on the nonnegative domain, which forces x ≥ 0
+where c > 0, b > 0, B > 0, and f : ℝⁿ → ℝ is a convex spectral function
 =#
 
 struct Knapsack <: ExampleInstance

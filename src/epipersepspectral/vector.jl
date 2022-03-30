@@ -81,7 +81,7 @@ function MOIPajarito.Cones.get_sep_cuts(
     return _get_cuts(1.0, r, cache, opt)
 end
 
-# primal unextended formulation
+# unextended formulation
 
 function _get_cuts(
     p::RealF,
@@ -98,7 +98,7 @@ function _get_cuts(
     return [cut]
 end
 
-# primal extended formulation
+# extended formulation
 
 function MOIPajarito.Cones.num_ext_variables(
     cache::VectorEpiPerSepSpectral{<:PrimDual, Ext},
