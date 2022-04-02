@@ -12,8 +12,8 @@ insts["test"] = [
     ((5, 8, false),)
 ]
 
-function matrixdecomposition_insts(use_nat::Bool, d2_max::Int)
-    return [((15, d2, use_nat),) for d2 in vcat(50, 50:50:d2_max)]
+function matrixdecomposition_insts(use_nat::Bool, n_max::Int)
+    return [((15, n, use_nat),) for n in vcat(50, 50:50:n_max)]
 end
 
 insts["nat"] = matrixdecomposition_insts(true, 700)

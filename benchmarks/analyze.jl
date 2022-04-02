@@ -27,7 +27,7 @@ examples_params = [
     "twostagestochastic" => ([:halfdeg], [2], [:nat, :ext], [:iters]),
     # norm:
     "matrixcompletion" => ([:nrow], [3], [:nat, :ext], [:iters]),
-    "matrixdecomposition" => ([:d2], [2], [:nat, :ext], [:iters]),
+    "matrixdecomposition" => ([:n], [2], [:nat, :ext], [:iters]),
     "matrixregression" => ([:p], [2], [:nat, :ext], [:iters]),
     # spectral function:
     "inversecovariance" => ([:d], [1], [:nat, :ext], [:iters]),

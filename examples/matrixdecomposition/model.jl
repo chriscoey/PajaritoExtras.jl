@@ -6,9 +6,6 @@ given matrix C, solve:
 min specnorm(C - A) :
 Aᵢⱼ ∈ {0,1}
 sum(A) = k
-
-TODO add continuous variant to Hypatia: relax sparsity to L1
-see http://www.mit.edu/~parrilo/pubs/talkfiles/ISMP2009.pdf
 =#
 
 struct MatrixDecomposition <: ExampleInstance
