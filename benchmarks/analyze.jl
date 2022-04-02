@@ -25,23 +25,22 @@ examples_params = [
     "polyfacilitylocation" => ([:n], [1], [:nat, :ext], [:iters]),
     "polyregression" => ([:m], [3], [:nat, :ext], [:iters]),
     "twostagestochastic" => ([:halfdeg], [2], [:nat, :ext], [:iters]),
-    # norm:
+    # spectral norm:
     "matrixcompletion" => ([:nrow], [3], [:nat, :ext], [:iters]),
     "matrixdecomposition" => ([:n], [2], [:nat, :ext], [:iters]),
     "matrixregression" => ([:p], [2], [:nat, :ext], [:iters]),
     # spectral function:
     "inversecovariance" => ([:d], [1], [:nat, :ext], [:iters]),
-    "vectorregression" => ([:n], [1], [:nat, :nat_noext], [:iters]),
+    "vectorregression" => ([:n], [1], [:nat, :noext], [:iters]),
     "knapsack" => ([:n], [1], [:cont_geo, :cont_noext_geo], [:iters], "cont_geo"),
     "knapsack" => ([:n], [1], [:cont_log, :cont_noext_log], [:iters], "cont_log"),
     "knapsack" => ([:n], [1], [:cont_inv, :cont_noext_inv], [:iters], "cont_inv"),
     "knapsack" => ([:n], [1], [:nat_geo, :noext_geo, :ext_geo], [:iters], "geo"),
     "experimentdesign" => ([:d], [1], [:nat_rtdet, :ext_rtdet], [:iters], "rtdet"),
     "experimentdesign" => ([:d], [1], [:nat_entr, :ext_entr], [:iters], "entr"),
-    # nonconvex:
+    # MIP formulations:
     "ballpacking" => ([:num_pts], [4], [:sos2, :logib, :cc], [:nodes]),
-    # modulardesign (pick one):
-    "modulardesign" => ([:n], [3], [:nat, :nat_noext, :ext], [:iters], "convex"),
+    "modulardesign" => ([:n], [3], [:nat, :noext], [:iters], "convex"),
     "modulardesign" => ([:n], [3], [:sos2, :logib, :cc], [:iters], "nonconvex"),
 ]
 

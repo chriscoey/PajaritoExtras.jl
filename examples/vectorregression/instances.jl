@@ -15,6 +15,6 @@ function vectorregression_insts(use_extended_form::Bool, max_n::Int)
 end
 
 insts["nat"] = vectorregression_insts(true, 100)
-insts["nat_noext"] = vectorregression_insts(false, 60)
+insts["noext"] = vectorregression_insts(false, 60)
 
 return (VectorRegression, insts)

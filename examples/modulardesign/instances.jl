@@ -24,13 +24,12 @@ insts["test"] = [
 ]
 
 # convex instances
-function modulardesign_insts(use_nat::Bool, max_n::Int, options::NamedTuple)
-    return [((8, 4, n, use_nat), options) for n in vcat(20, 20:20:max_n)]
+function modulardesign_insts(max_n::Int, options::NamedTuple)
+    return [((6, 5, n, true), options) for n in vcat(20, 20:20:max_n)]
 end
 
-insts["nat"] = modulardesign_insts(true, 240, sparse_options)
-insts["nat_noext"] = modulardesign_insts(true, 240, noext_options)
-insts["ext"] = modulardesign_insts(false, 240, sparse_options)
+insts["nat"] = modulardesign_insts(220, sparse_options)
+insts["noext"] = modulardesign_insts(220, noext_options)
 
 # nonconvex instances
 function modulardesign_insts(pwl::PWLSOS2, max_n::Int)

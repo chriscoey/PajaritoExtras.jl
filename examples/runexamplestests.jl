@@ -48,22 +48,17 @@ options = (;
 
 # list of names of JuMP examples to run
 examples = [
-    # PSD:
     "completablepsd",
-    # WSOS:
     "polyfacilitylocation",
     "polyregression",
     "twostagestochastic",
-    # norm:
     "matrixcompletion",
     "matrixdecomposition",
     "matrixregression",
-    # spectral function:
     "experimentdesign",
     "inversecovariance",
     "knapsack",
     "vectorregression",
-    # nonconvex:
     "ballpacking",
     "modulardesign",
 ]

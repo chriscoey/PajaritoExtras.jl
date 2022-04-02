@@ -38,9 +38,9 @@ options = (;
 inst_sets = [
     # test instances (comment out usually):
     # "test",
-    # generic nat vs ext:
+    # generic formulations:
     "nat",
-    "nat_noext",
+    "noext",
     "ext",
     # knapsack:
     "cont_geo",
@@ -71,7 +71,7 @@ examples = [
     "polyfacilitylocation",
     "polyregression",
     "twostagestochastic",
-    # norm:
+    # spectral norm:
     "matrixcompletion",
     "matrixdecomposition",
     "matrixregression",
@@ -80,7 +80,7 @@ examples = [
     "inversecovariance",
     "knapsack",
     "vectorregression",
-    # nonconvex:
+    # MIP formulations:
     "ballpacking",
     "modulardesign",
 ]
