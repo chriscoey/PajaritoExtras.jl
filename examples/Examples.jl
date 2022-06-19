@@ -28,7 +28,7 @@ import Hypatia.PolyUtils
 import Hypatia.Cones
 import Hypatia.Solvers
 
-import MOIPajarito
+import Pajarito
 import PajaritoExtras
 
 import JuMP

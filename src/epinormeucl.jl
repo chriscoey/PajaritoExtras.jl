@@ -15,7 +15,7 @@ mutable struct EpiNormEucl{E <: NatExt} <: Cache
     EpiNormEucl{E}() where {E <: NatExt} = new{E}()
 end
 
-function MOIPajarito.Cones.create_cache(
+function Pajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.EpiNormEuclCone{RealF},
     opt::Optimizer,
@@ -30,19 +30,11 @@ function MOIPajarito.Cones.create_cache(
     return cache
 end
 
-function MOIPajarito.Cones.get_subp_cuts(
-    z::Vector{RealF},
-    cache::EpiNormEucl,
-    opt::Optimizer,
-)
+function Pajarito.Cones.get_subp_cuts(z::Vector{RealF}, cache::EpiNormEucl, opt::Optimizer)
     return _get_cuts(z[2:end], cache, opt)
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
-    s::Vector{RealF},
-    cache::EpiNormEucl,
-    opt::Optimizer,
-)
+function Pajarito.Cones.get_sep_cuts(s::Vector{RealF}, cache::EpiNormEucl, opt::Optimizer)
     us = s[1]
     @views ws = s[2:end]
     ws_norm = LinearAlgebra.norm(ws)
@@ -57,7 +49,7 @@ end
 
 # unextended formulation
 
-function MOIPajarito.Cones.add_init_cuts(cache::EpiNormEucl{Nat}, opt::Optimizer)
+function Pajarito.Cones.add_init_cuts(cache::EpiNormEucl{Nat}, opt::Optimizer)
     # add variable bound
     u = cache.oa_s[1]
     JuMP.@constraint(opt.oa_model, u >= 0)
@@ -84,9 +76,9 @@ end
 
 # extended formulation
 
-MOIPajarito.Cones.num_ext_variables(cache::EpiNormEucl{Ext}) = cache.d
+Pajarito.Cones.num_ext_variables(cache::EpiNormEucl{Ext}) = cache.d
 
-function MOIPajarito.Cones.extend_start(
+function Pajarito.Cones.extend_start(
     cache::EpiNormEucl{Ext},
     s_start::Vector{RealF},
     opt::Optimizer,
@@ -99,7 +91,7 @@ function MOIPajarito.Cones.extend_start(
     return [w_i / 2u_start * w_i for w_i in w_start]
 end
 
-function MOIPajarito.Cones.setup_auxiliary(cache::EpiNormEucl{Ext}, opt::Optimizer)
+function Pajarito.Cones.setup_auxiliary(cache::EpiNormEucl{Ext}, opt::Optimizer)
     @assert cache.d >= 2
     λ = cache.λ = JuMP.@variable(opt.oa_model, [1:(cache.d)], lower_bound = 0)
     u = cache.oa_s[1]
@@ -107,7 +99,7 @@ function MOIPajarito.Cones.setup_auxiliary(cache::EpiNormEucl{Ext}, opt::Optimiz
     return λ
 end
 
-function MOIPajarito.Cones.add_init_cuts(cache::EpiNormEucl{Ext}, opt::Optimizer)
+function Pajarito.Cones.add_init_cuts(cache::EpiNormEucl{Ext}, opt::Optimizer)
     # add variable bound
     u = cache.oa_s[1]
     JuMP.@constraint(opt.oa_model, u >= 0)

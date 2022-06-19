@@ -1,5 +1,5 @@
 
-nosubp_options = (; solve_subproblems = false) # needed for SOS2 in MOIPajarito
+nosubp_options = (; solve_subproblems = false) # needed for SOS2 in Pajarito
 
 insts = OrderedDict()
 

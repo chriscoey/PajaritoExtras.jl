@@ -13,7 +13,7 @@ mutable struct PosSemidefTriSparse{D <: PrimDual, C <: RealCompF} <: Cache
     PosSemidefTriSparse{D, C}() where {D <: PrimDual, C <: RealCompF} = new{D, C}()
 end
 
-function MOIPajarito.Cones.create_cache(
+function Pajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.PosSemidefTriSparseCone{<:Hypatia.Cones.PSDSparseImpl, RealF, C},
     opt::Optimizer,
@@ -37,7 +37,7 @@ function hash_cone(cone::Hypatia.PosSemidefTriSparseCone{I, RealF, C}) where {I,
     return hash(I) + hash(C) + hash(cone.side) + hash(cone.row_idxs) + hash(cone.col_idxs)
 end
 
-function MOIPajarito.Cones.add_init_cuts(
+function Pajarito.Cones.add_init_cuts(
     cache::PosSemidefTriSparse{<:PrimDual, C},
     opt::Optimizer,
 ) where {C}
@@ -58,7 +58,7 @@ end
 
 # primal cone functions
 
-function MOIPajarito.Cones.get_subp_cuts(
+function Pajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::PosSemidefTriSparse{Prim},
     opt::Optimizer,
@@ -67,7 +67,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     return [cut]
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
+function Pajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
     cache::PosSemidefTriSparse{Prim, C},
     opt::Optimizer,
@@ -94,7 +94,7 @@ end
 
 # dual cone functions
 
-function MOIPajarito.Cones.get_subp_cuts(
+function Pajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::PosSemidefTriSparse{Dual},
     opt::Optimizer,

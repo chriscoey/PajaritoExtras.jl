@@ -32,7 +32,7 @@ gurobi = MOI.OptimizerWithAttributes(
     "InfUnbdInfo" => 1, # get ray of the primal OA continuous relaxation
 )
 
-# default MOIPajarito options
+# default Pajarito options
 options = (;
     iteration_limit = 500,
     time_limit = 120.0,

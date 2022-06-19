@@ -17,7 +17,7 @@ mutable struct WSOSInterpNonnegative{D <: PrimDual, C <: RealCompF} <: Cache
     WSOSInterpNonnegative{D, C}() where {D <: PrimDual, C <: RealCompF} = new{D, C}()
 end
 
-function MOIPajarito.Cones.create_cache(
+function Pajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.WSOSInterpNonnegativeCone{RealF, C},
     opt::Optimizer,
@@ -43,13 +43,13 @@ end
 
 # primal cone functions
 
-function MOIPajarito.Cones.add_init_cuts(cache::WSOSInterpNonnegative{Prim}, opt::Optimizer)
+function Pajarito.Cones.add_init_cuts(cache::WSOSInterpNonnegative{Prim}, opt::Optimizer)
     # add variable bounds wᵢ ≥ 0
     JuMP.@constraint(opt.oa_model, cache.oa_s .>= 0)
     return
 end
 
-function MOIPajarito.Cones.get_subp_cuts(
+function Pajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::WSOSInterpNonnegative{Prim},
     opt::Optimizer,
@@ -60,7 +60,7 @@ end
 
 # dual cone functions
 
-function MOIPajarito.Cones.add_init_cuts(cache::WSOSInterpNonnegative{Dual}, opt::Optimizer)
+function Pajarito.Cones.add_init_cuts(cache::WSOSInterpNonnegative{Dual}, opt::Optimizer)
     opt.use_init_fixed_oa || return
 
     # add cuts to make diagonal of each Pₗ' Diagonal(w) Pₗ nonnegative
@@ -74,7 +74,7 @@ function MOIPajarito.Cones.add_init_cuts(cache::WSOSInterpNonnegative{Dual}, opt
     return
 end
 
-function MOIPajarito.Cones.get_subp_cuts(
+function Pajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::WSOSInterpNonnegative{Dual},
     opt::Optimizer,
@@ -85,7 +85,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     return [cut]
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
+function Pajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
     cache::WSOSInterpNonnegative{Dual},
     opt::Optimizer,

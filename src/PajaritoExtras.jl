@@ -13,9 +13,9 @@ import Hypatia
 import Hypatia.Cones: vec_length, vec_copyto!, svec_length, svec_side
 import Hypatia.Cones: smat_to_svec!, svec_to_smat!
 
-import MOIPajarito
-import MOIPajarito: Cache, Optimizer
-import MOIPajarito.Cones: NatExt, Nat, Ext, nat_or_ext, clean_array!, dot_expr
+import Pajarito
+import Pajarito: Cache, Optimizer
+import Pajarito.Cones: NatExt, Nat, Ext, nat_or_ext, clean_array!, dot_expr
 
 const RealF = Float64
 const CompF = ComplexF64
@@ -59,11 +59,11 @@ const OACone = Union{
 
 # cone must be supported by both Pajarito and the conic solver
 function MOI.supports_constraint(
-    opt::MOIPajarito.Optimizer,
+    opt::Pajarito.Optimizer,
     F::Type{<:Union{MOI.VectorOfVariables, MOI.VectorAffineFunction{RealF}}},
     S::Type{<:OACone},
 )
-    return MOI.supports_constraint(MOIPajarito.get_conic_opt(opt), F, S)
+    return MOI.supports_constraint(Pajarito.get_conic_opt(opt), F, S)
 end
 
 function get_sep_constr(cone::MOI.AbstractVectorSet, opt::Optimizer)
@@ -81,7 +81,7 @@ function get_sep_constr(cone::MOI.AbstractVectorSet, opt::Optimizer)
 end
 
 # fallback for separation cuts solves the separation subproblem
-function MOIPajarito.Cones.get_sep_cuts(s::Vector{RealF}, cache::Cache, opt::Optimizer)
+function Pajarito.Cones.get_sep_cuts(s::Vector{RealF}, cache::Cache, opt::Optimizer)
     constr = cache.sep_constr
     model = JuMP.owner_model(constr)
     MOI.modify(JuMP.backend(model), JuMP.index(constr), MOI.VectorConstantChange(s))
@@ -96,7 +96,7 @@ function MOIPajarito.Cones.get_sep_cuts(s::Vector{RealF}, cache::Cache, opt::Opt
         @show LinearAlgebra.dot(s, z)
         if LinearAlgebra.dot(s, z) < -opt.tol_feas
             # TODO maybe rescale by norm, like for subproblem rays?
-            return MOIPajarito.Cones.get_subp_cuts(z, cache, opt)
+            return Pajarito.Cones.get_subp_cuts(z, cache, opt)
         end
     else
         @warn("separation subproblem status was $stat")

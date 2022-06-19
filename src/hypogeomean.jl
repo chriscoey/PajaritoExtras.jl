@@ -21,7 +21,7 @@ mutable struct HypoGeoMean{E <: NatExt} <: Cache
     HypoGeoMean{E}() where {E <: NatExt} = new{E}()
 end
 
-function MOIPajarito.Cones.create_cache(
+function Pajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.HypoGeoMeanCone{RealF},
     opt::Optimizer,
@@ -37,19 +37,11 @@ function MOIPajarito.Cones.create_cache(
     return cache
 end
 
-function MOIPajarito.Cones.get_subp_cuts(
-    z::Vector{RealF},
-    cache::HypoGeoMean,
-    opt::Optimizer,
-)
+function Pajarito.Cones.get_subp_cuts(z::Vector{RealF}, cache::HypoGeoMean, opt::Optimizer)
     return _get_cuts(z[2:end], cache, opt)
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
-    s::Vector{RealF},
-    cache::HypoGeoMean,
-    opt::Optimizer,
-)
+function Pajarito.Cones.get_sep_cuts(s::Vector{RealF}, cache::HypoGeoMean, opt::Optimizer)
     us = s[1]
     @views ws = s[2:end]
     if us < opt.tol_feas || geomean(ws) - us > -opt.tol_feas
@@ -65,7 +57,7 @@ end
 
 # unextended formulation
 
-function MOIPajarito.Cones.add_init_cuts(cache::HypoGeoMean{Nat}, opt::Optimizer)
+function Pajarito.Cones.add_init_cuts(cache::HypoGeoMean{Nat}, opt::Optimizer)
     # add variable bounds wᵢ ≥ 0
     @views w = cache.oa_s[2:end]
     JuMP.@constraint(opt.oa_model, w .>= 0)
@@ -89,9 +81,9 @@ end
 
 # extended formulation
 
-MOIPajarito.Cones.num_ext_variables(cache::HypoGeoMean{Ext}) = 1 + cache.d
+Pajarito.Cones.num_ext_variables(cache::HypoGeoMean{Ext}) = 1 + cache.d
 
-function MOIPajarito.Cones.extend_start(
+function Pajarito.Cones.extend_start(
     cache::HypoGeoMean{Ext},
     s_start::Vector{RealF},
     opt::Optimizer,
@@ -105,7 +97,7 @@ function MOIPajarito.Cones.extend_start(
     return vcat(θ_start, λ_start)
 end
 
-function MOIPajarito.Cones.setup_auxiliary(cache::HypoGeoMean{Ext}, opt::Optimizer)
+function Pajarito.Cones.setup_auxiliary(cache::HypoGeoMean{Ext}, opt::Optimizer)
     @assert cache.d >= 2
     θ = cache.θ = JuMP.@variable(opt.oa_model, lower_bound = 0)
     u = cache.oa_s[1]
@@ -115,7 +107,7 @@ function MOIPajarito.Cones.setup_auxiliary(cache::HypoGeoMean{Ext}, opt::Optimiz
     return vcat(θ, λ)
 end
 
-function MOIPajarito.Cones.add_init_cuts(cache::HypoGeoMean{Ext}, opt::Optimizer)
+function Pajarito.Cones.add_init_cuts(cache::HypoGeoMean{Ext}, opt::Optimizer)
     # add variable bounds wᵢ ≥ 0
     @views w = cache.oa_s[2:end]
     JuMP.@constraint(opt.oa_model, w .>= 0)

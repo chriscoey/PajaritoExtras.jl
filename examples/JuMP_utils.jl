@@ -69,7 +69,7 @@ function run_instance(
     setup_time = @elapsed model = build(inst)
 
     println("set solver options")
-    JuMP.set_optimizer(model, MOIPajarito.Optimizer)
+    JuMP.set_optimizer(model, Pajarito.Optimizer)
     options = (; default_options..., conic_solver = dense_hypatia, inst_options...)
     for (option, value) in pairs(options)
         JuMP.set_optimizer_attribute(model, string(option), value)
