@@ -22,7 +22,7 @@ mutable struct EpiNormInf{D <: PrimDual, C <: RealCompF, E <: NatExt} <: Cache
     end
 end
 
-function MOIPajarito.Cones.create_cache(
+function Pajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.EpiNormInfCone{RealF, C},
     opt::Optimizer,
@@ -41,7 +41,7 @@ end
 
 # primal cone functions
 
-function MOIPajarito.Cones.add_init_cuts(cache::EpiNormInf{Prim, RealF}, opt::Optimizer)
+function Pajarito.Cones.add_init_cuts(cache::EpiNormInf{Prim, RealF}, opt::Optimizer)
     # add variable bound
     u = cache.oa_s[1]
     JuMP.@constraint(opt.oa_model, u >= 0)
@@ -56,7 +56,7 @@ function MOIPajarito.Cones.add_init_cuts(cache::EpiNormInf{Prim, RealF}, opt::Op
     return
 end
 
-function MOIPajarito.Cones.add_init_cuts(cache::EpiNormInf{Prim, CompF}, opt::Optimizer)
+function Pajarito.Cones.add_init_cuts(cache::EpiNormInf{Prim, CompF}, opt::Optimizer)
     # add variable bound
     u = cache.oa_s[1]
     JuMP.@constraint(opt.oa_model, u >= 0)
@@ -77,7 +77,7 @@ function MOIPajarito.Cones.add_init_cuts(cache::EpiNormInf{Prim, CompF}, opt::Op
     return
 end
 
-function MOIPajarito.Cones.get_subp_cuts(
+function Pajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::EpiNormInf{Prim, <:RealCompF},
     opt::Optimizer,
@@ -93,7 +93,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     return cuts
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
+function Pajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
     cache::EpiNormInf{Prim, <:RealCompF},
     opt::Optimizer,
@@ -132,7 +132,7 @@ end
 
 # dual cone functions
 
-function MOIPajarito.Cones.get_subp_cuts(
+function Pajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::EpiNormInf{Dual},
     opt::Optimizer,
@@ -142,7 +142,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     return _get_cuts(R, cache, opt)
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
+function Pajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
     cache::EpiNormInf{Dual},
     opt::Optimizer,
@@ -166,10 +166,7 @@ end
 
 # unextended formulation
 
-function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiNormInf{Dual, RealF, Nat},
-    opt::Optimizer,
-)
+function Pajarito.Cones.add_init_cuts(cache::EpiNormInf{Dual, RealF, Nat}, opt::Optimizer)
     # add variable bound
     u = cache.oa_s[1]
     JuMP.@constraint(opt.oa_model, u >= 0)
@@ -186,10 +183,7 @@ function MOIPajarito.Cones.add_init_cuts(
     return
 end
 
-function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiNormInf{Dual, CompF, Nat},
-    opt::Optimizer,
-)
+function Pajarito.Cones.add_init_cuts(cache::EpiNormInf{Dual, CompF, Nat}, opt::Optimizer)
     # add variable bound
     u = cache.oa_s[1]
     JuMP.@constraint(opt.oa_model, u >= 0)
@@ -227,11 +221,11 @@ end
 
 # extended formulation
 
-function MOIPajarito.Cones.num_ext_variables(cache::EpiNormInf{Dual, <:RealCompF, Ext})
+function Pajarito.Cones.num_ext_variables(cache::EpiNormInf{Dual, <:RealCompF, Ext})
     return cache.d
 end
 
-function MOIPajarito.Cones.extend_start(
+function Pajarito.Cones.extend_start(
     cache::EpiNormInf{Dual, C, Ext},
     s_start::Vector{RealF},
     opt::Optimizer,
@@ -244,7 +238,7 @@ function MOIPajarito.Cones.extend_start(
     return λ_start
 end
 
-function MOIPajarito.Cones.setup_auxiliary(
+function Pajarito.Cones.setup_auxiliary(
     cache::EpiNormInf{Dual, <:RealCompF, Ext},
     opt::Optimizer,
 )
@@ -255,10 +249,7 @@ function MOIPajarito.Cones.setup_auxiliary(
     return λ
 end
 
-function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiNormInf{Dual, RealF, Ext},
-    opt::Optimizer,
-)
+function Pajarito.Cones.add_init_cuts(cache::EpiNormInf{Dual, RealF, Ext}, opt::Optimizer)
     opt.use_init_fixed_oa || return
 
     # add all cuts necessary to define the polyhedral cone (no OA needed)
@@ -271,10 +262,7 @@ function MOIPajarito.Cones.add_init_cuts(
     return
 end
 
-function MOIPajarito.Cones.add_init_cuts(
-    cache::EpiNormInf{Dual, CompF, Ext},
-    opt::Optimizer,
-)
+function Pajarito.Cones.add_init_cuts(cache::EpiNormInf{Dual, CompF, Ext}, opt::Optimizer)
     opt.use_init_fixed_oa || return
 
     # add cuts (rt2, ±1, ±1) on (λᵢ, re(Wᵢ), im(Wᵢ))

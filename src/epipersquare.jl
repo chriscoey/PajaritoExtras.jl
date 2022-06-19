@@ -15,7 +15,7 @@ mutable struct EpiPerSquare{E <: NatExt} <: Cache
     EpiPerSquare{E}() where {E <: NatExt} = new{E}()
 end
 
-function MOIPajarito.Cones.create_cache(
+function Pajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.EpiPerSquareCone{RealF},
     opt::Optimizer,
@@ -35,19 +35,11 @@ function per_square(v::RealF, w::AbstractVector{RealF})
     return sum(w_i / den * w_i for w_i in w)
 end
 
-function MOIPajarito.Cones.get_subp_cuts(
-    z::Vector{RealF},
-    cache::EpiPerSquare,
-    opt::Optimizer,
-)
+function Pajarito.Cones.get_subp_cuts(z::Vector{RealF}, cache::EpiPerSquare, opt::Optimizer)
     return _get_cuts(z[2], z[3:end], cache, opt)
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
-    s::Vector{RealF},
-    cache::EpiPerSquare,
-    opt::Optimizer,
-)
+function Pajarito.Cones.get_sep_cuts(s::Vector{RealF}, cache::EpiPerSquare, opt::Optimizer)
     us = s[1]
     vs = s[2]
     @views ws = s[3:end]
@@ -63,7 +55,7 @@ end
 
 # unextended formulation
 
-function MOIPajarito.Cones.add_init_cuts(cache::EpiPerSquare{Nat}, opt::Optimizer)
+function Pajarito.Cones.add_init_cuts(cache::EpiPerSquare{Nat}, opt::Optimizer)
     # add variable bounds
     u = cache.oa_s[1]
     v = cache.oa_s[2]
@@ -94,9 +86,9 @@ end
 
 # extended formulation
 
-MOIPajarito.Cones.num_ext_variables(cache::EpiPerSquare{Ext}) = cache.d
+Pajarito.Cones.num_ext_variables(cache::EpiPerSquare{Ext}) = cache.d
 
-function MOIPajarito.Cones.extend_start(
+function Pajarito.Cones.extend_start(
     cache::EpiPerSquare{Ext},
     s_start::Vector{RealF},
     opt::Optimizer,
@@ -110,7 +102,7 @@ function MOIPajarito.Cones.extend_start(
     return [w_i / 2u_start * w_i for w_i in w_start]
 end
 
-function MOIPajarito.Cones.setup_auxiliary(cache::EpiPerSquare{Ext}, opt::Optimizer)
+function Pajarito.Cones.setup_auxiliary(cache::EpiPerSquare{Ext}, opt::Optimizer)
     @assert cache.d >= 2
     λ = cache.λ = JuMP.@variable(opt.oa_model, [1:(cache.d)], lower_bound = 0)
     u = cache.oa_s[1]
@@ -118,7 +110,7 @@ function MOIPajarito.Cones.setup_auxiliary(cache::EpiPerSquare{Ext}, opt::Optimi
     return λ
 end
 
-function MOIPajarito.Cones.add_init_cuts(cache::EpiPerSquare{Ext}, opt::Optimizer)
+function Pajarito.Cones.add_init_cuts(cache::EpiPerSquare{Ext}, opt::Optimizer)
     # add variable bounds
     u = cache.oa_s[1]
     v = cache.oa_s[2]

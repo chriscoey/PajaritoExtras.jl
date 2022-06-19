@@ -763,7 +763,7 @@ function specialorderedset(opt)
     TOL = 1e-4
     for (S, sol) in [(MOI.SOS1, [1, 0, 0]), (MOI.SOS2, [1, 1, 0])]
         if !MOI.supports_constraint(MOI.instantiate(opt), MOI.VectorOfVariables, S{Float64})
-            # only test if MOIPajarito supports SOS1/2
+            # only test if Pajarito supports SOS1/2
             continue
         end
         m = JuMP.Model(opt)

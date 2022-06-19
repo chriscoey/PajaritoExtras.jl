@@ -12,7 +12,7 @@ mutable struct PosSemidefTri{C <: RealCompF} <: Cache
     PosSemidefTri{C}() where {C <: RealCompF} = new{C}()
 end
 
-function MOIPajarito.Cones.create_cache(
+function Pajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.PosSemidefTriCone{RealF, C},
     ::Optimizer,
@@ -26,7 +26,7 @@ function MOIPajarito.Cones.create_cache(
     return cache
 end
 
-function MOIPajarito.Cones.add_init_cuts(cache::PosSemidefTri{C}, opt::Optimizer) where {C}
+function Pajarito.Cones.add_init_cuts(cache::PosSemidefTri{C}, opt::Optimizer) where {C}
     # add variable bounds W_ii ≥ 0
     d = cache.d
     w = cache.oa_s
@@ -72,7 +72,7 @@ function _add_init_cuts(i::Int, j::Int, cache::PosSemidefTri{CompF}, opt::Optimi
     return
 end
 
-function MOIPajarito.Cones.get_subp_cuts(
+function Pajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::PosSemidefTri,
     opt::Optimizer,
@@ -86,11 +86,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     return _get_psd_cuts(R_eig, cache.oa_s, cache, opt)
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
-    s::Vector{RealF},
-    cache::PosSemidefTri,
-    opt::Optimizer,
-)
+function Pajarito.Cones.get_sep_cuts(s::Vector{RealF}, cache::PosSemidefTri, opt::Optimizer)
     Ws = cache.W_temp
     svec_to_smat!(Ws, s, rt2)
     F = eigen(Hermitian(Ws, :U), -Inf, -opt.tol_feas)

@@ -13,7 +13,7 @@ import Hypatia.Cones: h_val, h_conj_dom_pos, h_conj, h_der1
 include("vector.jl")
 include("matrix.jl")
 
-function MOIPajarito.Cones.create_cache(
+function Pajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.EpiPerSepSpectralCone{RealF},
     opt::Optimizer,

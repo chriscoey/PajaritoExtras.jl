@@ -26,7 +26,7 @@ function create_sepspectral_cache(
     return cache
 end
 
-function MOIPajarito.Cones.add_init_cuts(
+function Pajarito.Cones.add_init_cuts(
     cache::MatrixEpiPerSepSpectral{D, C},
     opt::Optimizer,
 ) where {D, C}
@@ -53,7 +53,7 @@ function MOIPajarito.Cones.add_init_cuts(
     return
 end
 
-function MOIPajarito.Cones.get_subp_cuts(
+function Pajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::MatrixEpiPerSepSpectral{D},
     opt::Optimizer,
@@ -81,7 +81,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     return cuts
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
+function Pajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
     cache::MatrixEpiPerSepSpectral{D},
     opt::Optimizer,

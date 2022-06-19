@@ -26,7 +26,7 @@ function create_sepspectral_cache(
     return VectorEpiPerSepSpectral{D, E}()
 end
 
-function MOIPajarito.Cones.add_init_cuts(
+function Pajarito.Cones.add_init_cuts(
     cache::VectorEpiPerSepSpectral{D},
     opt::Optimizer,
 ) where {D}
@@ -50,7 +50,7 @@ function MOIPajarito.Cones.add_init_cuts(
     return
 end
 
-function MOIPajarito.Cones.get_subp_cuts(
+function Pajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::VectorEpiPerSepSpectral{D},
     opt::Optimizer,
@@ -59,7 +59,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     return _get_cuts(p, z[3:end], cache, opt)
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
+function Pajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
     cache::VectorEpiPerSepSpectral{D},
     opt::Optimizer,
@@ -100,13 +100,11 @@ end
 
 # extended formulation
 
-function MOIPajarito.Cones.num_ext_variables(
-    cache::VectorEpiPerSepSpectral{<:PrimDual, Ext},
-)
+function Pajarito.Cones.num_ext_variables(cache::VectorEpiPerSepSpectral{<:PrimDual, Ext})
     return cache.d
 end
 
-function MOIPajarito.Cones.extend_start(
+function Pajarito.Cones.extend_start(
     cache::VectorEpiPerSepSpectral{D, Ext},
     s_start::Vector{RealF},
     opt::Optimizer,
@@ -119,7 +117,7 @@ function MOIPajarito.Cones.extend_start(
     return [per_sepspec(val_or_conj(D), cache.h, v_start, [w_i]) for w_i in w_start]
 end
 
-function MOIPajarito.Cones.setup_auxiliary(
+function Pajarito.Cones.setup_auxiliary(
     cache::VectorEpiPerSepSpectral{D, Ext},
     opt::Optimizer,
 ) where {D}

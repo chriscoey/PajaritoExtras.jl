@@ -16,7 +16,7 @@ mutable struct HypoRootdetTri{C <: RealCompF} <: Cache
     HypoRootdetTri{C}() where {C <: RealCompF} = new{C}()
 end
 
-function MOIPajarito.Cones.create_cache(
+function Pajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.HypoRootdetTriCone{RealF, C},
     ::Optimizer,
@@ -30,7 +30,7 @@ function MOIPajarito.Cones.create_cache(
     return cache
 end
 
-function MOIPajarito.Cones.add_init_cuts(cache::HypoRootdetTri{C}, opt::Optimizer) where {C}
+function Pajarito.Cones.add_init_cuts(cache::HypoRootdetTri{C}, opt::Optimizer) where {C}
     # add variable bounds W_ii ≥ 0
     d = cache.d
     @views w = cache.oa_s[2:end]
@@ -44,7 +44,7 @@ function MOIPajarito.Cones.add_init_cuts(cache::HypoRootdetTri{C}, opt::Optimize
     return
 end
 
-function MOIPajarito.Cones.get_subp_cuts(
+function Pajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::HypoRootdetTri,
     opt::Optimizer,
@@ -72,7 +72,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     return cuts
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
+function Pajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
     cache::HypoRootdetTri,
     opt::Optimizer,

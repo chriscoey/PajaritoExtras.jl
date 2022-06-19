@@ -17,7 +17,7 @@ mutable struct EpiNormSpectralTri{D <: PrimDual, C <: RealCompF} <: Cache
     EpiNormSpectralTri{D, C}() where {D <: PrimDual, C <: RealCompF} = new{D, C}()
 end
 
-function MOIPajarito.Cones.create_cache(
+function Pajarito.Cones.create_cache(
     oa_s::Vector{AE},
     cone::Hypatia.EpiNormSpectralTriCone{RealF, C},
     ::Optimizer,
@@ -37,7 +37,7 @@ function get_eig(sz::Vector{RealF}, cache::EpiNormSpectralTri)
     return eigen(Hermitian(W, :U))
 end
 
-function MOIPajarito.Cones.add_init_cuts(cache::EpiNormSpectralTri, opt::Optimizer)
+function Pajarito.Cones.add_init_cuts(cache::EpiNormSpectralTri, opt::Optimizer)
     # add variable bound
     u = cache.oa_s[1]
     JuMP.@constraint(opt.oa_model, u >= 0)
@@ -47,7 +47,7 @@ end
 
 # primal cone functions
 
-function MOIPajarito.Cones.get_subp_cuts(
+function Pajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::EpiNormSpectralTri{Prim},
     opt::Optimizer,
@@ -62,7 +62,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     return cuts
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
+function Pajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
     cache::EpiNormSpectralTri{Prim},
     opt::Optimizer,
@@ -100,7 +100,7 @@ end
 
 # dual cone functions
 
-function MOIPajarito.Cones.get_subp_cuts(
+function Pajarito.Cones.get_subp_cuts(
     z::Vector{RealF},
     cache::EpiNormSpectralTri{Dual},
     opt::Optimizer,
@@ -115,7 +115,7 @@ function MOIPajarito.Cones.get_subp_cuts(
     return [cut]
 end
 
-function MOIPajarito.Cones.get_sep_cuts(
+function Pajarito.Cones.get_sep_cuts(
     s::Vector{RealF},
     cache::EpiNormSpectralTri{Dual},
     opt::Optimizer,

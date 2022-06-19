@@ -7,7 +7,7 @@ using LinearAlgebra
 import MathOptInterface
 const MOI = MathOptInterface
 import JuMP
-import MOIPajarito
+import Pajarito
 import PajaritoExtras
 import PajaritoExtras: Prim, Dual, svec_idx
 import Hypatia
@@ -121,8 +121,8 @@ function run_jump_tests(
     )
 
     opt = JuMP.optimizer_with_attributes(
-        MOIPajarito.Optimizer,
-        "verbose" => true,
+        Pajarito.Optimizer,
+        "verbose" => false,
         "oa_solver" => oa_solver,
         "conic_solver" => hypatia,
         "sep_solver" => hypatia,
