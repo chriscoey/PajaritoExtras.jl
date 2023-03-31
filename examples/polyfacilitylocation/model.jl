@@ -62,7 +62,7 @@ function build(inst::PolyFacilityLocation)
     JuMP.@objective(
         model,
         Min,
-        sum(JuMP.dot(c[i, j] * w, y[i, j, :]) for j in 1:m, i in 1:n) + JuMP.dot(f, x)
+        sum(dot(c[i, j] * w, y[i, j, :]) for j in 1:m, i in 1:n) + dot(f, x)
     )
 
     add_wsos(aff) = (inst.use_nat ? add_wsos_nat : add_wsos_ext)(Ps, aff, model)

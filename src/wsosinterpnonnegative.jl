@@ -69,7 +69,7 @@ function Pajarito.Cones.add_init_cuts(cache::WSOSInterpNonnegative{Dual}, opt::O
     r = zeros(cache.d)
     for P in cache.Ps, P_i in eachcol(P)
         @. r = abs2(P_i)
-        JuMP.@constraint(opt.oa_model, JuMP.dot(r, w) >= 0)
+        JuMP.@constraint(opt.oa_model, dot(r, w) >= 0)
     end
     return
 end

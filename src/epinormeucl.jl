@@ -37,7 +37,7 @@ end
 function Pajarito.Cones.get_sep_cuts(s::Vector{RealF}, cache::EpiNormEucl, opt::Optimizer)
     us = s[1]
     @views ws = s[2:end]
-    ws_norm = LinearAlgebra.norm(ws)
+    ws_norm = norm(ws)
     if us - ws_norm > -opt.tol_feas
         return AE[]
     end
@@ -67,10 +67,10 @@ end
 function _get_cuts(r::Vector{RealF}, cache::EpiNormEucl{Nat}, opt::Optimizer)
     # strengthened cut is (‖r‖, r)
     clean_array!(r) && return AE[]
-    p = LinearAlgebra.norm(r)
+    p = norm(r)
     u = cache.oa_s[1]
     @views w = cache.oa_s[2:end]
-    cut = JuMP.@expression(opt.oa_model, p * u + JuMP.dot(r, w))
+    cut = JuMP.@expression(opt.oa_model, p * u + dot(r, w))
     return [cut]
 end
 
@@ -118,7 +118,7 @@ end
 
 function _get_cuts(r::Vector{RealF}, cache::EpiNormEucl{Ext}, opt::Optimizer)
     clean_array!(r) && return AE[]
-    p = LinearAlgebra.norm(r)
+    p = norm(r)
     u = cache.oa_s[1]
     @views w = cache.oa_s[2:end]
     λ = cache.λ

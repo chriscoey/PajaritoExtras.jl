@@ -95,7 +95,7 @@ function _get_cut(
     @views V_i = V[:, i]
     mul!(R_i, V_i, V_i', σ_i, false)
     R_vec_i = smat_to_svec!(cache.w_temp, R_i, rt2)
-    return JuMP.@expression(opt.oa_model, abs(σ_i) * u + JuMP.dot(R_vec_i, w))
+    return JuMP.@expression(opt.oa_model, abs(σ_i) * u + dot(R_vec_i, w))
 end
 
 # dual cone functions
