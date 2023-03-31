@@ -69,7 +69,7 @@ function build(inst::TwoStageStochastic)
     JuMP.@objective(
         model,
         Min,
-        JuMP.dot(a, x) + JuMP.dot(w, sum(b[i] * y[i, :] - c[i] * z[i, :] for i in 1:n))
+        dot(a, x) + dot(w, sum(b[i] * y[i, :] - c[i] * z[i, :] for i in 1:n))
     )
 
     JuMP.@constraint(model, x .>= 0)

@@ -69,7 +69,6 @@ end
 function get_sep_constr(cone::MOI.AbstractVectorSet, opt::Optimizer)
     # check whether cone is unique
     id = hash_cone(cone)
-    # @show opt.unique_cones
     haskey(opt.unique_cones, id) && return opt.unique_cones[id]
 
     # create unique separation model
@@ -92,9 +91,7 @@ function Pajarito.Cones.get_sep_cuts(s::Vector{RealF}, cache::Cache, opt::Optimi
         return AE[]
     elseif stat in (MOI.INFEASIBLE, MOI.ALMOST_INFEASIBLE) && JuMP.has_duals(model)
         z = JuMP.dual(constr)
-        @show norm(z)
-        @show LinearAlgebra.dot(s, z)
-        if LinearAlgebra.dot(s, z) < -opt.tol_feas
+        if dot(s, z) < -opt.tol_feas
             # TODO maybe rescale by norm, like for subproblem rays?
             return Pajarito.Cones.get_subp_cuts(z, cache, opt)
         end

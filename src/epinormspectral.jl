@@ -102,7 +102,7 @@ function _get_cut(
     R_i = cache.W_temp
     @views mul!(R_i, U[:, i], transpose(Vt[i, :]), σ_i, false)
     R_vec_i = vec_copyto!(cache.w_temp, R_i) # TODO maybe reinterpret
-    return JuMP.@expression(opt.oa_model, abs(σ_i) * u + JuMP.dot(R_vec_i, w))
+    return JuMP.@expression(opt.oa_model, abs(σ_i) * u + dot(R_vec_i, w))
 end
 
 # dual cone functions

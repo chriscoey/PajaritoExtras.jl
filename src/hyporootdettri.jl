@@ -118,5 +118,5 @@ function _get_cut(
     r = smat_to_svec!(cache.w_temp, R, rt2)
     u = cache.oa_s[1]
     @views w = cache.oa_s[2:end]
-    return JuMP.@expression(opt.oa_model, p * u + JuMP.dot(r, w))
+    return JuMP.@expression(opt.oa_model, p * u + dot(r, w))
 end

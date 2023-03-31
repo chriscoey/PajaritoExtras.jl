@@ -215,7 +215,7 @@ function _get_cuts(R::Vector{C}, cache::EpiNormInf{Dual, C, Nat}, opt::Optimizer
     r = reinterpret(RealF, R)
     u = cache.oa_s[1]
     @views w = cache.oa_s[2:end]
-    cut = JuMP.@expression(opt.oa_model, p * u + JuMP.dot(r, w))
+    cut = JuMP.@expression(opt.oa_model, p * u + dot(r, w))
     return [cut]
 end
 

@@ -748,7 +748,7 @@ function _setup_polymin(opt, use_dual, K, f_pts, bound)
             z_i = JuMP.@variable(m, [1:U])
             JuMP.@constraint(m, z_i in K)
             JuMP.@constraint(m, sum(z_i) == 1)
-            JuMP.@constraint(m, y >= JuMP.dot(f_pts[i], z_i) - bound * x[i])
+            JuMP.@constraint(m, y >= dot(f_pts[i], z_i) - bound * x[i])
         end
     else
         JuMP.@objective(m, Max, y)

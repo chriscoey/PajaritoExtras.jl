@@ -80,7 +80,7 @@ function _get_cuts(q::RealF, r::Vector{RealF}, cache::EpiPerSquare{Nat}, opt::Op
     u = cache.oa_s[1]
     v = cache.oa_s[2]
     @views w = cache.oa_s[3:end]
-    cut = JuMP.@expression(opt.oa_model, p * u + q * v + JuMP.dot(r, w))
+    cut = JuMP.@expression(opt.oa_model, p * u + q * v + dot(r, w))
     return [cut]
 end
 
